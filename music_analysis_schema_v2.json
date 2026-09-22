@@ -1,0 +1,45 @@
+{
+  "schema": "mv_music_analysis.v2",
+  "source": {
+    "file_name": "string",
+    "duration_sec": "number"
+  },
+  "rhythm": {
+    "selected_engine": "@audio/beat | Essentia.js",
+    "bpm": "number",
+    "confidence": "number|null",
+    "beat_times_sec": [
+      "number"
+    ],
+    "estimator_crosscheck": {
+      "selected_bpm": "number",
+      "essentia_bpm": "number",
+      "agreement_score": "0..1|null"
+    }
+  },
+  "tonal": {
+    "key": "string|null",
+    "scale": "string|null",
+    "strength": "number|null"
+  },
+  "onset": {
+    "onset_times_sec": [
+      "number"
+    ],
+    "low_band_onset_times_sec": [
+      "number"
+    ],
+    "high_band_onset_times_sec": [
+      "number"
+    ]
+  },
+  "dynamics_and_bands": {
+    "curves": "0.25秒刻みの帯域/音量系列"
+  },
+  "section_change_candidates": {
+    "candidates": "時刻付き候補"
+  },
+  "mv_sync_candidates": {
+    "candidates": "低域/高域/密度/構造変化/持続低域から作る映像同期候補"
+  }
+}

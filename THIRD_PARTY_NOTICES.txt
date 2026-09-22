@@ -1,0 +1,18 @@
+THIRD PARTY NOTICES
+===================
+
+This app loads the following libraries at runtime:
+
+1) Essentia.js
+   Project: https://github.com/MTG/essentia.js
+   Version targeted: 0.1.3
+   License: AGPL-3.0 (see upstream project for exact terms)
+
+2) @audio/beat
+   Project: https://github.com/audiojs/beat
+   Version targeted: 2.1.3
+   License: MIT
+
+The application code in this ZIP is a small integration layer and does not
+bundle the source code of those libraries. The libraries are fetched from
+public CDNs on first use.

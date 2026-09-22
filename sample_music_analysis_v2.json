@@ -1,0 +1,56 @@
+{
+  "schema": "mv_music_analysis.v2",
+  "source": {
+    "file_name": "example.wav",
+    "duration_sec": 184.872
+  },
+  "rhythm": {
+    "selected_engine": "@audio/beat",
+    "bpm": 123.05,
+    "confidence": 0.82,
+    "beat_times_sec": [
+      0.49,
+      0.98,
+      1.47
+    ],
+    "estimator_crosscheck": {
+      "selected_bpm": 123.05,
+      "essentia_bpm": 122.96,
+      "essentia_confidence": 0.74,
+      "agreement_score": 0.991
+    }
+  },
+  "tonal": {
+    "key": "A",
+    "scale": "minor",
+    "strength": 0.71
+  },
+  "onset": {
+    "onset_times_sec": [
+      0.31,
+      0.79,
+      1.28
+    ],
+    "low_band_onset_times_sec": [
+      0.79
+    ],
+    "high_band_onset_times_sec": [
+      0.31,
+      1.28
+    ]
+  },
+  "mv_sync_candidates": {
+    "candidates": [
+      {
+        "time_sec": 0.79,
+        "type": "low_band_accent",
+        "mv_use": "重量運動／回転／筐体振動候補"
+      },
+      {
+        "time_sec": 1.28,
+        "type": "high_band_accent",
+        "mv_use": "ヒール／指／金属接触候補"
+      }
+    ]
+  }
+}
