@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.2.0';
+const VERSION = '0.4.0';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
@@ -10,6 +10,7 @@ const ANALYSIS_SR = 44100;
 const $ = (id) => document.getElementById(id);
 const ui = {
   input:$('audioInput'), drop:$('dropZone'), fileInfo:$('fileInfo'), analyze:$('analyzeBtn'), reset:$('resetBtn'),
+  vocals:$('vocalsInput'), drums:$('drumsInput'), bass:$('bassInput'), other:$('otherInput'), stemInfo:$('stemInfo'),
   statusPanel:$('statusPanel'), statusText:$('statusText'), statusPercent:$('statusPercent'), progress:$('progressBar'),
   engineStatus:$('engineStatus'), warning:$('warningText'), results:$('results'),
   bpm:$('bpmValue'), bpmSub:$('bpmSub'), key:$('keyValue'), keySub:$('keySub'),
@@ -20,6 +21,7 @@ const ui = {
 };
 
 let selectedFile = null;
+const stemFiles = {vocals:null,drums:null,bass:null,other:null};
 let analysisResult = null;
 let essentia = null;
 let audioBeat = null;
@@ -60,6 +62,20 @@ ui.drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')ui.input.
 ['dragenter','dragover'].forEach(ev=>ui.drop.addEventListener(ev,e=>{e.preventDefault();ui.drop.classList.add('dragover');}));
 ['dragleave','drop'].forEach(ev=>ui.drop.addEventListener(ev,e=>{e.preventDefault();ui.drop.classList.remove('dragover');}));
 ui.drop.addEventListener('drop',e=>pickFile(e.dataTransfer.files?.[0]));
+
+function updateStemInfo(){
+  const chosen=Object.entries(stemFiles).filter(([,f])=>f);
+  ui.stemInfo.textContent=chosen.length
+    ? `詳細解析モード：${chosen.map(([k,f])=>`${k}=${f.name}`).join(' / ')}`
+    : 'Stem未選択：通常解析モード';
+}
+for(const role of ['vocals','drums','bass','other']){
+  ui[role].addEventListener('change',()=>{
+    stemFiles[role]=ui[role].files?.[0]||null;
+    updateStemInfo();
+  });
+}
+
 ui.reset.addEventListener('click',resetAll);
 ui.analyze.addEventListener('click',analyzeSelectedFile);
 ui.download.addEventListener('click',downloadJSON);
@@ -68,6 +84,7 @@ ui.copy.addEventListener('click',copySummary);
 
 function resetAll(){
   selectedFile=null;analysisResult=null;ui.input.value='';
+  for(const role of ['vocals','drums','bass','other']){stemFiles[role]=null;ui[role].value='';} updateStemInfo();
   ui.fileInfo.classList.add('hidden');ui.results.classList.add('hidden');ui.statusPanel.classList.add('hidden');
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');
 }
@@ -355,6 +372,53 @@ function essentiaOnsets(mono){
   }finally{try{if(vec)vec.delete();}catch(_){}}
 }
 
+
+function localDbAt(curves,t){
+  if(!curves?.length)return null;
+  const idx=Math.max(0,Math.min(curves.length-1,Math.round(t/.25)));
+  return curves[idx]?.loudness_db??null;
+}
+function compactStemCurves(curves){
+  return curves.map(x=>({t:x.t,loudness_db:x.loudness_db,low_ratio:x.low_ratio,mid_ratio:x.mid_ratio,high_ratio:x.high_ratio}));
+}
+async function analyzeStemFile(file,role,originalDuration){
+  const {buffer,sourceRate,sourceChannels}=await decodeAndResample(file);
+  const mono=downmixToMono(buffer),duration=mono.length/ANALYSIS_SR;
+  const bands=buildBandSignals(mono,ANALYSIS_SR);
+  const curves=buildBandCurves(mono,bands,ANALYSIS_SR);
+  let onsets=[];
+  if(audioBeat){
+    try{onsets=dedupeTimes(asArray(audioBeat.onsets(mono,{fs:ANALYSIS_SR}))).map(x=>round(x,4));}catch(_){}
+  }
+  if(!onsets.length)onsets=essentiaOnsets(mono).times;
+  const audible=onsets.filter(t=>(localDbAt(curves,t)??-120)>=-60);
+  const events=audible.map(t=>{
+    const db=localDbAt(curves,t);
+    return {time_sec:t,type:role==='vocals'?'unknown_vocal_event':'stem_onset',
+      stem:role,local_loudness_db:round(db,3),confidence:'candidate',
+      eligible_for_mv_sync:true,
+      note:role==='vocals'?'Vocal stem上の発声/子音/ブレス等の候補。意味種別は未確定。':'Stem上のオンセット候補。'};
+  });
+  return {
+    file_name:file.name,mime_type:file.type||null,file_size_bytes:file.size,
+    duration_sec:round(duration,5),source_sample_rate_hz:sourceRate,source_channels:sourceChannels,
+    duration_delta_from_original_sec:round(duration-originalDuration,5),
+    alignment_status:Math.abs(duration-originalDuration)<=.25?'aligned':'check_required',
+    onset_times_sec:onsets,audible_onset_times_sec:audible,
+    event_candidates:events,
+    dynamics_and_bands:{window_sec:.5,hop_sec:.25,curves:compactStemCurves(curves)}
+  };
+}
+function mergeStemMvCandidates(originalCandidates,stemAnalysis){
+  const all=[...(originalCandidates||[])];
+  for(const [role,s] of Object.entries(stemAnalysis||{})){
+    for(const e of (s?.event_candidates||[])){
+      all.push({...e,mv_use:role==='vocals'?'歌詞/スキャット/ボイパ等の時刻照合候補':'Stem由来の動作同期候補'});
+    }
+  }
+  return all.sort((a,b)=>(a.time_sec??0)-(b.time_sec??0));
+}
+
 async function analyzeSelectedFile(){
   if(!selectedFile)return;
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');ui.results.classList.add('hidden');
@@ -414,16 +478,28 @@ async function analyzeSelectedFile(){
     setProgress(86,'MV同期候補を生成中…');
     const mvSync=buildMvSyncCandidates({onsets:onsetTimes,lowOnsets,highOnsets,sections,curves,duration,beats:beatPrimary.beat_times_sec});
 
+    const stemAnalysis={};
+    const selectedStems=Object.entries(stemFiles).filter(([,f])=>f);
+    if(selectedStems.length){
+      let stemIndex=0;
+      for(const [role,file] of selectedStems){
+        stemIndex++;
+        setProgress(86+Math.min(7,stemIndex*1.5),`${role} Stemを解析中…`);
+        stemAnalysis[role]=await analyzeStemFile(file,role,duration);
+      }
+    }
+
+
     const warnings=[];
     if(duration>600)warnings.push('10分を超える音源はスマホで処理時間・メモリ使用量が増える可能性があります。');
     if(audioBeat===null)warnings.push('@audio/beatを読み込めなかったため、一部解析はEssentia.jsのみで実行しました。');
     if(agree!==null&&agree<.45)warnings.push('BPM推定器同士の結果差が大きいです。ハーフ/ダブルテンポを含め、実音で確認してください。');
-    warnings.push('v0.3は全曲同期候補・強度・無音ゲート・拍診断を追加しました。Verse/Chorusや歌詞外ボーカル種別は、根拠なしに自動確定しません。');
-    warnings.push('Stem-aware設計ですが、このGitHub Pages版には高品質Stem分離モデルを同梱していません。原曲解析は単独で完走し、Stemが必要な分類は未確定として出力します。');
+    warnings.push('v0.4は外部分離Stem入力を追加しました。Stemが無い場合はv0.3相当の原曲解析として完走します。');
+    warnings.push('このGitHub Pages版はStemを自動分離しません。外部で分離したVocals/Drums/Bass/Otherを任意入力してください。');
     warnings.push('低/中/高域カーブはMV設計向け近似であり、マスタリング測定値ではありません。');
 
     analysisResult={
-      schema:'mv_music_analysis.v3',
+      schema:'mv_music_analysis.v4',
       generated_at:new Date().toISOString(),
       engine:{
         frontend:`MV Music Analyzer ${VERSION}`,
@@ -458,16 +534,19 @@ async function analyzeSelectedFile(){
       },
       tonal,
       stems:{
-        mode:'stem_aware',
+        mode:selectedStems.length?'external_stem_detail_analysis':'original_mix_only',
         automatic_separation:'not_embedded_in_browser_build',
-        reason:'GitHub Pages上のスマホPWAで高品質Demucs系モデルを同梱するとモデル容量・メモリ負荷が大きいため、v0.3では虚偽の簡易分離を行わない。',
-        accepted_future_inputs:['vocals','drums','bass','other'],
-        fallback:'original_mix_analysis'
+        accepted_inputs:['vocals','drums','bass','other'],
+        supplied_roles:selectedStems.map(([role])=>role),
+        alignment_tolerance_sec:.25,
+        analysis:stemAnalysis,
+        note:'Originalを基準タイムラインとし、ユーザーが外部分離したStemを同一時刻軸で解析する。'
       },
       semantic_audio_events:{
-        status:'not_classified_automatically',
+        status:stemAnalysis.vocals?'vocal_timing_candidates_available':'not_classified_automatically',
         supported_labels:['vocal_percussion_candidate','shout_candidate','adlib_candidate','laugh_candidate','breath_candidate','whistle_candidate','unknown_vocal_event'],
-        note:'歌詞外ボーカル分類はVocal stemまたは専用分類器がある場合に実行する。現版は推測で確定しない。'
+        candidates:stemAnalysis.vocals?.event_candidates||[],
+        note:stemAnalysis.vocals?'Vocal stem上の時刻候補を抽出済み。ただしスキャット/ボイパ/笑い/掛け声等の意味分類は専用分類器または歌詞照合なしに確定しない。':'Vocal stem未入力のため歌詞外ボーカル時刻は未確定。'
       },
       onset:{
         selected_method:audioBeat?'@audio/beat spectral-flux':'Essentia SuperFlux/OnsetRate',
@@ -481,7 +560,7 @@ async function analyzeSelectedFile(){
         window_sec:.5,hop_sec:.25,curves
       },
       section_change_candidates:{method:'heuristic_feature_change',candidates:sections},
-      mv_sync_candidates:{method:'full_song_strength_ranked_time_features',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates},
+      mv_sync_candidates:{method:'original_plus_optional_stems',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates,merged_timeline_candidates:mergeStemMvCandidates(mvSync.candidates,stemAnalysis)},
       mv_mapping_hint:{
         low_band_accent:'重量・慣性・回転・低い周期運動・キック・筐体振動への写像候補',
         high_band_accent:'ヒール・指・金属・細かな身体アクセント・インサートへの写像候補',
@@ -555,12 +634,12 @@ function renderCurves(curves){
 }
 
 function jsonBlob(){return new Blob([JSON.stringify(analysisResult,null,2)],{type:'application/json'});}
-function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v2.json`;}
+function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v4.json`;}
 function downloadJSON(){if(!analysisResult)return;const a=document.createElement('a');a.href=URL.createObjectURL(jsonBlob());a.download=outputName();a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 async function shareJSON(){
   if(!analysisResult)return;
   const file=new File([jsonBlob()],outputName(),{type:'application/json'});
-  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v2',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
+  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v4',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
   catch(e){if(e.name!=='AbortError')downloadJSON();}
 }
 async function copySummary(){

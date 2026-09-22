@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MV Music Analyzer v0.4 output",
+  "type": "object",
+  "required": [
+    "schema",
+    "engine",
+    "source",
+    "rhythm",
+    "onset",
+    "stems",
+    "semantic_audio_events",
+    "mv_sync_candidates"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mv_music_analysis.v4"
+    },
+    "stems": {
+      "description": "Original基準。外部分離Stemは任意。analysis配下にrolesごとの時刻解析。"
+    },
+    "semantic_audio_events": {
+      "description": "Vocals Stemがあればunknown_vocal_event時刻候補を出す。意味種別は未確定。"
+    },
+    "mv_sync_candidates": {
+      "description": "原曲候補に任意Stem候補を統合したmerged_timeline_candidatesを含む。"
+    }
+  }
+}

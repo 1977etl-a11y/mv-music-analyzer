@@ -112,3 +112,11 @@ code { color:#fff0a1; }
   font-size:.65rem;
   color:#aaaab3;
 }
+
+.stem-panel{margin-top:18px;padding-top:18px;border-top:1px solid #2b2b31}
+.stem-panel h2{margin:.25rem 0 .35rem;font-size:1.05rem}
+.stem-help,.stem-info{font-size:.86rem;color:#a9a9b2}
+.stem-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.stem-grid label{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #303038;border-radius:10px;background:#141419;font-size:.85rem}
+.stem-grid input{max-width:100%;font-size:.78rem}
+@media(max-width:620px){.stem-grid{grid-template-columns:1fr}}
