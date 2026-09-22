@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MV Music Analysis v3",
+  "type": "object",
+  "required": [
+    "schema",
+    "source",
+    "rhythm",
+    "onset",
+    "dynamics_and_bands",
+    "mv_sync_candidates"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mv_music_analysis.v3"
+    },
+    "rhythm": {
+      "type": "object"
+    },
+    "stems": {
+      "type": "object"
+    },
+    "semantic_audio_events": {
+      "type": "object"
+    },
+    "onset": {
+      "type": "object"
+    },
+    "mv_sync_candidates": {
+      "type": "object"
+    }
+  }
+}

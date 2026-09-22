@@ -236,25 +236,89 @@ function sustainedLowCandidates(curves){
   }
   return out.slice(0,8);
 }
-function buildMvSyncCandidates({onsets,lowOnsets,highOnsets,sections,curves,duration}){
-  const out=[];
-  densityPeaks(onsets,duration).forEach(d=>out.push({time_sec:round(d.time_sec,3),type:'transient_cluster',confidence:'medium',reason:`約4秒内のオンセット密度が高い (${d.count})`,mv_use:'細かな身体フレーズ／カット密度上昇候補'}));
-  const lowRatioThr=percentile(curves.map(x=>x.low_ratio),.82);
-  lowOnsets.forEach(t=>{
+
+function eventStrength(curves,t,band='full'){
+  const c=nearestCurve(curves,t);
+  if(!c)return 0;
+  const loud=clamp((c.loudness_db+72)/60,0,1);
+  const ratio=band==='low'?c.low_ratio:band==='high'?c.high_ratio:Math.max(c.low_ratio,c.mid_ratio,c.high_ratio);
+  return clamp(.58*loud+.42*ratio,0,1);
+}
+function isAudibleAt(curves,t,thresholdDb=-60){
+  const c=nearestCurve(curves,t);
+  return !!c && Number.isFinite(c.loudness_db) && c.loudness_db>=thresholdDb;
+}
+function nearestBeatDistance(beats,t){
+  if(!beats||!beats.length)return null;
+  let best=Infinity;
+  for(const b of beats){const d=Math.abs(b-t);if(d<best)best=d;if(b>t&&d>best)break;}
+  return Number.isFinite(best)?best:null;
+}
+function distributedTop(events,duration,maxCount=48,minGap=.18){
+  if(!events.length)return[];
+  const bucketCount=Math.max(1,Math.ceil(duration/15));
+  const perBucket=Math.max(2,Math.ceil(maxCount/bucketCount));
+  const picked=[];
+  for(let bi=0;bi<bucketCount;bi++){
+    const a=bi*duration/bucketCount,b=(bi+1)*duration/bucketCount;
+    const rows=events.filter(e=>e.time_sec>=a&&e.time_sec<b).sort((x,y)=>(y.normalized_strength||0)-(x.normalized_strength||0));
+    for(const e of rows){
+      if(picked.filter(x=>x.time_sec>=a&&x.time_sec<b).length>=perBucket)break;
+      if(picked.every(x=>Math.abs(x.time_sec-e.time_sec)>=minGap))picked.push(e);
+    }
+  }
+  if(picked.length<maxCount){
+    const rest=events.slice().sort((x,y)=>(y.normalized_strength||0)-(x.normalized_strength||0));
+    for(const e of rest){
+      if(picked.length>=maxCount)break;
+      if(picked.every(x=>Math.abs(x.time_sec-e.time_sec)>=minGap))picked.push(e);
+    }
+  }
+  return picked.sort((a,b)=>a.time_sec-b.time_sec).slice(0,maxCount);
+}
+function buildMvSyncCandidates({onsets,lowOnsets,highOnsets,sections,curves,duration,beats=[]}){
+  const silenceThresholdDb=-60;
+  const raw=[];
+  const add=(t,type,band,reason,mv_use)=>{
+    if(!Number.isFinite(t)||t<0||t>duration||!isAudibleAt(curves,t,silenceThresholdDb))return;
     const c=nearestCurve(curves,t);
-    if(c&&c.low_ratio>=lowRatioThr)out.push({time_sec:round(t,3),type:'low_band_accent',confidence:'medium',reason:'低域オンセット + 低域比率が高い',mv_use:'重量運動／回転／キック／筐体振動候補'});
-  });
-  highOnsets.slice(0,60).forEach(t=>{
-    const c=nearestCurve(curves,t);
-    if(c&&c.high_ratio>=percentile(curves.map(x=>x.high_ratio),.78))out.push({time_sec:round(t,3),type:'high_band_accent',confidence:'medium',reason:'高域オンセット + 高域比率が高い',mv_use:'ヒール／指／金属接触／短いインサート候補'});
-  });
-  sections.forEach(s=>out.push({time_sec:s.time_sec,type:'structural_change',confidence:'medium',reason:'音量・帯域構成の変化が大きい',mv_use:'意味段階／マルチショットブロック境界候補'}));
-  sustainedLowCandidates(curves).forEach(x=>out.push({time_sec:x.start_sec,end_sec:x.end_sec,type:'sustained_low_energy',confidence:'medium',reason:'低域優勢が一定時間継続',mv_use:'慣性回転／世界側だけ動き続ける対位候補'}));
+    const s=eventStrength(curves,t,band);
+    raw.push({
+      time_sec:round(t,3),type,band,
+      strength:round(s,4),normalized_strength:round(s,4),
+      confidence:s>=.72?'high':s>=.45?'medium':'low',
+      local_loudness_db:round(c?.loudness_db??null,3),
+      beat_distance_sec:round(nearestBeatDistance(beats,t),4),
+      source_detector:type==='low_band_accent'||type==='high_band_accent'?'band_onset':'spectral_flux',
+      eligible_for_mv_sync:s>=.34,
+      reason,mv_use
+    });
+  };
+
+  onsets.forEach(t=>add(t,'transient_accent','full','可聴域のトランジェント','身体・小道具・編集アクセント候補'));
+  lowOnsets.forEach(t=>add(t,'low_band_accent','low','低域オンセット','重量運動／回転／キック／筐体振動候補'));
+  highOnsets.forEach(t=>add(t,'high_band_accent','high','高域オンセット','ヒール／指／金属接触／短いインサート候補'));
+
+  const eligible=raw.filter(x=>x.eligible_for_mv_sync);
+  const chosen=distributedTop(eligible,duration,48,.16);
+
+  densityPeaks(onsets.filter(t=>isAudibleAt(curves,t,silenceThresholdDb)),duration,4,2,8)
+    .forEach(d=>chosen.push({time_sec:round(d.time_sec,3),type:'transient_cluster',confidence:'medium',strength:null,normalized_strength:null,band:'full',local_loudness_db:round(nearestCurve(curves,d.time_sec)?.loudness_db??null,3),beat_distance_sec:round(nearestBeatDistance(beats,d.time_sec),4),source_detector:'density',eligible_for_mv_sync:true,reason:`約4秒内のオンセット密度が高い (${d.count})`,mv_use:'細かな身体フレーズ／カット密度上昇候補'}));
+
+  sections.forEach(s=>chosen.push({time_sec:s.time_sec,type:'structural_change',confidence:'medium',strength:round(s.score,4),normalized_strength:null,band:'mixed',local_loudness_db:round(nearestCurve(curves,s.time_sec)?.loudness_db??null,3),beat_distance_sec:round(nearestBeatDistance(beats,s.time_sec),4),source_detector:'feature_change',eligible_for_mv_sync:true,reason:'音量・帯域構成の変化が大きい',mv_use:'意味段階／マルチショットブロック境界候補'}));
+
+  sustainedLowCandidates(curves).forEach(x=>chosen.push({time_sec:x.start_sec,end_sec:x.end_sec,type:'sustained_low_energy',confidence:'medium',strength:round(x.peak_low_ratio,4),normalized_strength:round(x.peak_low_ratio,4),band:'low',local_loudness_db:round(nearestCurve(curves,x.start_sec)?.loudness_db??null,3),beat_distance_sec:round(nearestBeatDistance(beats,x.start_sec),4),source_detector:'band_curve',eligible_for_mv_sync:true,reason:'低域優勢が一定時間継続',mv_use:'慣性回転／世界側だけ動き続ける対位候補'}));
+
   const uniq=[];
-  out.sort((a,b)=>a.time_sec-b.time_sec).forEach(h=>{
-    if(uniq.every(u=>u.type!==h.type||Math.abs(u.time_sec-h.time_sec)>.25))uniq.push(h);
+  chosen.sort((a,b)=>a.time_sec-b.time_sec).forEach(h=>{
+    if(uniq.every(u=>u.type!==h.type||Math.abs(u.time_sec-h.time_sec)>.12))uniq.push(h);
   });
-  return uniq.slice(0,24);
+  return {
+    silence_gate_db:silenceThresholdDb,
+    raw_event_count:raw.length,
+    rejected_below_gate:raw.filter(x=>!x.eligible_for_mv_sync).length,
+    candidates:uniq
+  };
 }
 
 function essentiaRhythm(mono){
@@ -348,17 +412,18 @@ async function analyzeSelectedFile(){
     const sections=detectSections(curves);
 
     setProgress(86,'MV同期候補を生成中…');
-    const mvSync=buildMvSyncCandidates({onsets:onsetTimes,lowOnsets,highOnsets,sections,curves,duration});
+    const mvSync=buildMvSyncCandidates({onsets:onsetTimes,lowOnsets,highOnsets,sections,curves,duration,beats:beatPrimary.beat_times_sec});
 
     const warnings=[];
     if(duration>600)warnings.push('10分を超える音源はスマホで処理時間・メモリ使用量が増える可能性があります。');
     if(audioBeat===null)warnings.push('@audio/beatを読み込めなかったため、一部解析はEssentia.jsのみで実行しました。');
     if(agree!==null&&agree<.45)warnings.push('BPM推定器同士の結果差が大きいです。ハーフ/ダブルテンポを含め、実音で確認してください。');
-    warnings.push('Verse/Chorus、特定楽器、スキャット等はこの版では自動確定しません。時刻付き信号特徴をMV設計へ渡すための解析です。');
+    warnings.push('v0.3は全曲同期候補・強度・無音ゲート・拍診断を追加しました。Verse/Chorusや歌詞外ボーカル種別は、根拠なしに自動確定しません。');
+    warnings.push('Stem-aware設計ですが、このGitHub Pages版には高品質Stem分離モデルを同梱していません。原曲解析は単独で完走し、Stemが必要な分類は未確定として出力します。');
     warnings.push('低/中/高域カーブはMV設計向け近似であり、マスタリング測定値ではありません。');
 
     analysisResult={
-      schema:'mv_music_analysis.v2',
+      schema:'mv_music_analysis.v3',
       generated_at:new Date().toISOString(),
       engine:{
         frontend:`MV Music Analyzer ${VERSION}`,
@@ -376,6 +441,13 @@ async function analyzeSelectedFile(){
         bpm:beatPrimary.bpm,
         confidence:beatPrimary.confidence,
         beat_times_sec:beatPrimary.beat_times_sec,
+        beat_tracking_diagnostics:{
+          method:beatPrimary.engine,
+          first_detected_beat_sec:beatPrimary.beat_times_sec.length?beatPrimary.beat_times_sec[0]:null,
+          timeline_zero_injected:false,
+          median_interval_sec:beatPrimary.beat_times_sec.length>2?round(percentile(beatPrimary.beat_times_sec.slice(1).map((x,i)=>x-beatPrimary.beat_times_sec[i]),.5),5):null,
+          note:'beat_times_sec は検出器が返した時刻のみ。0秒を人工的に追加しない。'
+        },
         estimator_crosscheck:{
           selected_bpm:beatPrimary.bpm,
           essentia_bpm:er.bpm,
@@ -385,6 +457,18 @@ async function analyzeSelectedFile(){
         }
       },
       tonal,
+      stems:{
+        mode:'stem_aware',
+        automatic_separation:'not_embedded_in_browser_build',
+        reason:'GitHub Pages上のスマホPWAで高品質Demucs系モデルを同梱するとモデル容量・メモリ負荷が大きいため、v0.3では虚偽の簡易分離を行わない。',
+        accepted_future_inputs:['vocals','drums','bass','other'],
+        fallback:'original_mix_analysis'
+      },
+      semantic_audio_events:{
+        status:'not_classified_automatically',
+        supported_labels:['vocal_percussion_candidate','shout_candidate','adlib_candidate','laugh_candidate','breath_candidate','whistle_candidate','unknown_vocal_event'],
+        note:'歌詞外ボーカル分類はVocal stemまたは専用分類器がある場合に実行する。現版は推測で確定しない。'
+      },
       onset:{
         selected_method:audioBeat?'@audio/beat spectral-flux':'Essentia SuperFlux/OnsetRate',
         rate_per_sec:round(onsetTimes.length/Math.max(duration,1e-9),5),
@@ -397,7 +481,7 @@ async function analyzeSelectedFile(){
         window_sec:.5,hop_sec:.25,curves
       },
       section_change_candidates:{method:'heuristic_feature_change',candidates:sections},
-      mv_sync_candidates:{method:'time_features_to_mv_sync_hints',candidates:mvSync},
+      mv_sync_candidates:{method:'full_song_strength_ranked_time_features',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates},
       mv_mapping_hint:{
         low_band_accent:'重量・慣性・回転・低い周期運動・キック・筐体振動への写像候補',
         high_band_accent:'ヒール・指・金属・細かな身体アクセント・インサートへの写像候補',
