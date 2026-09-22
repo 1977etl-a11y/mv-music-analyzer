@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
@@ -419,6 +419,127 @@ function mergeStemMvCandidates(originalCandidates,stemAnalysis){
   return all.sort((a,b)=>(a.time_sec??0)-(b.time_sec??0));
 }
 
+
+// v0.5: 音響特徴を、具体的な演出より一段手前の「運動プリミティブ」へ圧縮する。
+// ここでは物体名や人物動作を決めず、根拠 feature / detector と confidence を保持する。
+function avg(a){const v=a.filter(Number.isFinite);return v.length?v.reduce((x,y)=>x+y,0)/v.length:0;}
+function std(a){const m=avg(a);return Math.sqrt(avg(a.map(x=>(x-m)**2)));}
+function trend(a){
+  const v=a.filter(Number.isFinite);if(v.length<2)return 0;
+  const n=v.length,mx=(n-1)/2,my=avg(v);let num=0,den=0;
+  for(let i=0;i<n;i++){num+=(i-mx)*(v[i]-my);den+=(i-mx)**2;}
+  return den?num/den:0;
+}
+function confidenceLabel(v){return v>=.72?'high':v>=.45?'medium':'low';}
+function timesIn(times,a,b){return (times||[]).filter(t=>t>=a&&t<b);}
+function stemEventsIn(stemAnalysis,role,a,b){return (stemAnalysis?.[role]?.event_candidates||[]).filter(e=>e.time_sec>=a&&e.time_sec<b);}
+function stemCurveWindow(stemAnalysis,role,a,b){return (stemAnalysis?.[role]?.dynamics_and_bands?.curves||[]).filter(x=>x.t>=a&&x.t<b);}
+function makePrimitive(type,strength,evidence,extra={}){
+  const s=round(clamp(strength,0,1),4);
+  return {type,strength:s,confidence:confidenceLabel(s),evidence, ...extra};
+}
+function buildMotionPrimitiveLayer({duration,bpm,beats,onsets,lowOnsets,highOnsets,curves,sections,stemAnalysis}){
+  // 4 beatsを基本フレーズ窓にする。BPMが不確かな場合は4秒。
+  const phraseSec=Number.isFinite(bpm)&&bpm>0?clamp(240/bpm,2,8):4;
+  const windows=[];
+  const globalLoud=curves.map(x=>x.loudness_db), loudLo=percentile(globalLoud,.1), loudHi=percentile(globalLoud,.9);
+  const globalOnsetRate=(onsets?.length||0)/Math.max(duration,1);
+  const sectionTimes=(sections||[]).map(x=>x.time_sec);
+
+  for(let start=0;start<duration;start+=phraseSec){
+    const end=Math.min(duration,start+phraseSec), span=Math.max(.001,end-start);
+    const cs=curves.filter(x=>x.t>=start&&x.t<end);if(!cs.length)continue;
+    const ons=timesIn(onsets,start,end), lows=timesIn(lowOnsets,start,end), highs=timesIn(highOnsets,start,end);
+    const loud=cs.map(x=>x.loudness_db), low=cs.map(x=>x.low_ratio), mid=cs.map(x=>x.mid_ratio), high=cs.map(x=>x.high_ratio);
+    const loudNorm=clamp((avg(loud)-loudLo)/Math.max(1,loudHi-loudLo),0,1);
+    const onsetRate=ons.length/span;
+    const densityNorm=clamp(onsetRate/Math.max(globalOnsetRate*2.2,.8),0,1);
+    const lowMean=avg(low), highMean=avg(high);
+
+    const drumCount=stemEventsIn(stemAnalysis,'drums',start,end).length;
+    const bassCount=stemEventsIn(stemAnalysis,'bass',start,end).length;
+    const vocalCount=stemEventsIn(stemAnalysis,'vocals',start,end).length;
+    const otherCount=stemEventsIn(stemAnalysis,'other',start,end).length;
+    const activeStems=[drumCount,bassCount,vocalCount,otherCount].filter(x=>x>0).length;
+    const drumDensity=clamp((drumCount/span)/Math.max(globalOnsetRate*1.5,.7),0,1);
+    const bassCurve=stemCurveWindow(stemAnalysis,'bass',start,end);
+    const bassLow=bassCurve.length?avg(bassCurve.map(x=>x.low_ratio)):lowMean;
+
+    const accent=clamp(.50*densityNorm+.22*drumDensity+.14*clamp(lows.length/Math.max(1,ons.length),0,1)+.14*clamp(highs.length/Math.max(1,ons.length),0,1),0,1);
+    const force=clamp(.48*lowMean+.27*bassLow+.25*loudNorm,0,1);
+
+    // 周期性は窓内オンセット間隔の安定性を近似根拠とする。
+    const intervals=ons.slice(1).map((t,i)=>t-ons[i]).filter(x=>x>.04);
+    const intervalMean=avg(intervals), cv=intervalMean?std(intervals)/intervalMean:1;
+    const periodicity=intervals.length>=2?clamp(1-cv,0,1):0;
+
+    // 蓄積: 音量・密度・低域・active stemの増加を複合する。
+    const half=start+span/2;
+    const first=curves.filter(x=>x.t>=start&&x.t<half), second=curves.filter(x=>x.t>=half&&x.t<end);
+    const loudRise=clamp((avg(second.map(x=>x.loudness_db))-avg(first.map(x=>x.loudness_db))+3)/12,0,1);
+    const firstOns=timesIn(onsets,start,half).length, secondOns=timesIn(onsets,half,end).length;
+    const densityRise=clamp((secondOns-firstOns+1)/Math.max(2,firstOns+1),0,1);
+    const lowRise=clamp((avg(second.map(x=>x.low_ratio))-avg(first.map(x=>x.low_ratio))+.08)/.28,0,1);
+    const accumulation=clamp(.32*loudRise+.32*densityRise+.18*lowRise+.18*(activeStems/4),0,1);
+
+    const transitionDist=sectionTimes.length?Math.min(...sectionTimes.map(t=>Math.abs(t-(start+span/2)))):999;
+    const transition=clamp(1-transitionDist/Math.max(1.5,phraseSec),0,1);
+
+    // RELEASEは「転換」単独ではなく、直前窓の蓄積と現在の密度/音量低下または構造転換を要求する。
+    const prev=windows[windows.length-1];
+    const prevAcc=prev?.primitives?.ACCUMULATION?.strength||0;
+    const prevDensity=prev?.metrics?.onset_density_norm||0;
+    const drop=prev?clamp(((prev.metrics.loudness_norm-loudNorm)+(prevDensity-densityNorm)+.2)/1.2,0,1):0;
+    const release=clamp(prevAcc*(.55*transition+.45*drop),0,1);
+
+    // SUSTAIN: 小さな音量変動 + オンセット低密度 + 可聴持続を continuous_force として扱う。
+    const loudStability=clamp(1-std(loud)/10,0,1);
+    const sustain=clamp(.48*loudStability+.32*(1-densityNorm)+.20*loudNorm,0,1);
+
+    // TRAJECTORY: 現版では pitch contour 未実装のため、帯域重心の時間傾向を弱い代理値としてのみ使用。
+    const spectralProxy=cs.map(x=>x.mid_ratio+2*x.high_ratio);
+    const tr=trend(spectralProxy);
+    const trajectoryStrength=clamp(Math.abs(tr)*12,0,1)*.65;
+    const direction=tr>.004?'up':tr<-.004?'down':'stable';
+
+    // TEXTUREは材質名を決めず、low/mid/high dominance と変動性だけを出す。
+    const ratios={low:lowMean,mid:avg(mid),high:highMean};
+    const dominantBand=Object.entries(ratios).sort((a,b)=>b[1]-a[1])[0][0];
+    const textureStrength=clamp(Math.max(...Object.values(ratios))*(.65+.35*clamp(std(spectralProxy),0,1)),0,1);
+
+    const primitives={
+      ACCENT:makePrimitive('ACCENT',accent,['onset_density','drums_stem_onsets','band_specific_onsets']),
+      SUSTAIN:makePrimitive('SUSTAIN',sustain,['loudness_stability','onset_sparsity','audible_energy'],{physical_hint:'continuous_force'}),
+      TRAJECTORY:makePrimitive('TRAJECTORY',trajectoryStrength,['band_centroid_proxy_trend'],{direction,limitation:'pitch contour未実装のため帯域比率の時間傾向による弱い代理推定'}),
+      PERIODICITY:makePrimitive('PERIODICITY',periodicity,['onset_interval_regularity'],{interval_cv:round(cv,4)}),
+      ACCUMULATION:makePrimitive('ACCUMULATION',accumulation,['loudness_trend','onset_density_trend','low_band_trend','active_stems']),
+      TRANSITION:makePrimitive('TRANSITION',transition,['section_change_candidate']),
+      RELEASE:makePrimitive('RELEASE',release,['previous_accumulation','transition','energy_or_density_drop']),
+      TEXTURE:makePrimitive('TEXTURE',textureStrength,['band_energy_ratios','spectral_variation_proxy'],{dominant_band:dominantBand,band_ratios:{low:round(lowMean,4),mid:round(avg(mid),4),high:round(highMean,4)}}),
+      FORCE:makePrimitive('FORCE',force,['low_band_energy','bass_stem_low_ratio','loudness'],{physical_hint:'weight_or_pressure'})
+    };
+    windows.push({
+      start_sec:round(start,3),end_sec:round(end,3),window_basis:'4_beats_or_4sec_fallback',
+      metrics:{loudness_norm:round(loudNorm,4),onset_density_norm:round(densityNorm,4),onset_count:ons.length,active_stems:activeStems,stem_event_counts:{vocals:vocalCount,drums:drumCount,bass:bassCount,other:otherCount}},
+      primitives
+    });
+  }
+
+  // コンテ側へ渡すため、各窓の上位プリミティブだけを抽出した軽量タイムラインも作る。
+  const compact=windows.map(w=>{
+    const ranked=Object.values(w.primitives).filter(p=>p.strength>=.35).sort((a,b)=>b.strength-a.strength).slice(0,4);
+    return {start_sec:w.start_sec,end_sec:w.end_sec,dominant_primitives:ranked.map(p=>({type:p.type,strength:p.strength,confidence:p.confidence,...(p.direction?{direction:p.direction}:{}),...(p.dominant_band?{dominant_band:p.dominant_band}:{})}))};
+  });
+  return {
+    version:'0.1',status:'heuristic_candidate_layer',
+    design_rule:'音側の事実→運動プリミティブ→映像物理候補。具体的なBODY/OBJECT/CAMERA/LIGHT/SPACE/EDITへの割当は後段で決定する。',
+    primitive_types:['ACCENT','SUSTAIN','TRAJECTORY','PERIODICITY','ACCUMULATION','TRANSITION','RELEASE','TEXTURE','FORCE'],
+    phrase_window_sec:round(phraseSec,4),
+    limitations:['TRAJECTORYはpitch contour未実装のため帯域比率傾向の代理推定','TEXTUREは材質名を確定しない','RELEASEはkey change単独では判定しない','confidenceは現段階ではヒューリスティック強度に基づく'],
+    windows,compact_timeline:compact
+  };
+}
+
 async function analyzeSelectedFile(){
   if(!selectedFile)return;
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');ui.results.classList.add('hidden');
@@ -490,16 +611,19 @@ async function analyzeSelectedFile(){
     }
 
 
+    setProgress(94,'運動プリミティブへ圧縮中…');
+    const motionPrimitives=buildMotionPrimitiveLayer({duration,bpm:beatPrimary.bpm,beats:beatPrimary.beat_times_sec,onsets:onsetTimes,lowOnsets,highOnsets,curves,sections,stemAnalysis});
+
     const warnings=[];
     if(duration>600)warnings.push('10分を超える音源はスマホで処理時間・メモリ使用量が増える可能性があります。');
     if(audioBeat===null)warnings.push('@audio/beatを読み込めなかったため、一部解析はEssentia.jsのみで実行しました。');
     if(agree!==null&&agree<.45)warnings.push('BPM推定器同士の結果差が大きいです。ハーフ/ダブルテンポを含め、実音で確認してください。');
-    warnings.push('v0.4は外部分離Stem入力を追加しました。Stemが無い場合はv0.3相当の原曲解析として完走します。');
+    warnings.push('v0.5はv0.4のStem解析を保持し、その上に映像物理マッピング用の運動プリミティブ層を追加します。Stem無しでもプリミティブ候補を生成します。');
     warnings.push('このGitHub Pages版はStemを自動分離しません。外部で分離したVocals/Drums/Bass/Otherを任意入力してください。');
     warnings.push('低/中/高域カーブはMV設計向け近似であり、マスタリング測定値ではありません。');
 
     analysisResult={
-      schema:'mv_music_analysis.v4',
+      schema:'mv_music_analysis.v5',
       generated_at:new Date().toISOString(),
       engine:{
         frontend:`MV Music Analyzer ${VERSION}`,
@@ -561,6 +685,7 @@ async function analyzeSelectedFile(){
       },
       section_change_candidates:{method:'heuristic_feature_change',candidates:sections},
       mv_sync_candidates:{method:'original_plus_optional_stems',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates,merged_timeline_candidates:mergeStemMvCandidates(mvSync.candidates,stemAnalysis)},
+      motion_primitives:motionPrimitives,
       mv_mapping_hint:{
         low_band_accent:'重量・慣性・回転・低い周期運動・キック・筐体振動への写像候補',
         high_band_accent:'ヒール・指・金属・細かな身体アクセント・インサートへの写像候補',
@@ -634,12 +759,12 @@ function renderCurves(curves){
 }
 
 function jsonBlob(){return new Blob([JSON.stringify(analysisResult,null,2)],{type:'application/json'});}
-function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v4.json`;}
+function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v5.json`;}
 function downloadJSON(){if(!analysisResult)return;const a=document.createElement('a');a.href=URL.createObjectURL(jsonBlob());a.download=outputName();a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 async function shareJSON(){
   if(!analysisResult)return;
   const file=new File([jsonBlob()],outputName(),{type:'application/json'});
-  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v4',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
+  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v5',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
   catch(e){if(e.name!=='AbortError')downloadJSON();}
 }
 async function copySummary(){
@@ -656,7 +781,8 @@ async function copySummary(){
     `Low-band onsets: ${d.onset.low_band_onset_times_sec.length}`,
     `High-band onsets: ${d.onset.high_band_onset_times_sec.length}`,
     `構造変化候補: ${d.section_change_candidates.candidates.map(x=>fmtTime(x.time_sec)).join(', ')}`,
-    `MV同期候補: ${d.mv_sync_candidates.candidates.slice(0,12).map(x=>`${fmtTime(x.time_sec)} ${x.type}`).join(', ')}`
+    `MV同期候補: ${d.mv_sync_candidates.candidates.slice(0,12).map(x=>`${fmtTime(x.time_sec)} ${x.type}`).join(', ')}`,
+    `運動プリミティブ窓: ${d.motion_primitives?.windows?.length||0} / ${d.motion_primitives?.primitive_types?.join(', ')||'—'}`
   ].join('\n');
   try{await navigator.clipboard.writeText(text);ui.copy.textContent='コピー済み';setTimeout(()=>ui.copy.textContent='要約コピー',1200);}
   catch(_){alert(text);}

@@ -1,5 +1,5 @@
-const CACHE = 'mv-music-analyzer-v0.4';
-const APP_SHELL = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icon.svg'];
+const CACHE = 'mv-music-analyzer-v0.5';
+const APP_SHELL = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icon.svg','./music_analysis_schema_v5.json','./README_v0.5変更点.txt'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(APP_SHELL)));

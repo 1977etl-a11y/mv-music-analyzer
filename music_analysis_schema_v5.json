@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MV Music Analyzer v0.5 output",
+  "type": "object",
+  "required": ["schema","engine","source","rhythm","onset","stems","semantic_audio_events","mv_sync_candidates","motion_primitives"],
+  "properties": {
+    "schema": {"const": "mv_music_analysis.v5"},
+    "motion_primitives": {
+      "description": "音響特徴を具体演出へ固定せず、ACCENT/SUSTAIN/TRAJECTORY/PERIODICITY/ACCUMULATION/TRANSITION/RELEASE/TEXTURE/FORCEへ圧縮した接続層。"
+    }
+  }
+}
