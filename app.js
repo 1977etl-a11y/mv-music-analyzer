@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.6.0';
+const VERSION = '0.6.1';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
@@ -10,7 +10,7 @@ const ANALYSIS_SR = 44100;
 const $ = (id) => document.getElementById(id);
 const ui = {
   input:$('audioInput'), drop:$('dropZone'), fileInfo:$('fileInfo'), analyze:$('analyzeBtn'), reset:$('resetBtn'),
-  vocals:$('vocalsInput'), drums:$('drumsInput'), bass:$('bassInput'), other:$('otherInput'), stemInfo:$('stemInfo'), lyrics:$('lyricsInput'), lyricPanel:$('lyricResultPanel'), lyricEditor:$('lyricTimelineEditor'),
+  vocals:$('vocalsInput'), drums:$('drumsInput'), bass:$('bassInput'), other:$('otherInput'), stemInfo:$('stemInfo'), lyrics:$('lyricsInput'), srt:$('srtInput'), srtInfo:$('srtInfo'), lyricPanel:$('lyricResultPanel'), lyricEditor:$('lyricTimelineEditor'),
   statusPanel:$('statusPanel'), statusText:$('statusText'), statusPercent:$('statusPercent'), progress:$('progressBar'),
   engineStatus:$('engineStatus'), warning:$('warningText'), results:$('results'),
   bpm:$('bpmValue'), bpmSub:$('bpmSub'), key:$('keyValue'), keySub:$('keySub'),
@@ -23,6 +23,7 @@ const ui = {
 let selectedFile = null;
 const stemFiles = {vocals:null,drums:null,bass:null,other:null};
 let analysisResult = null;
+let srtFile = null;
 let essentia = null;
 let audioBeat = null;
 
@@ -76,6 +77,11 @@ for(const role of ['vocals','drums','bass','other']){
   });
 }
 
+if(ui.srt) ui.srt.addEventListener('change',()=>{
+  srtFile=ui.srt.files?.[0]||null;
+  if(ui.srtInfo) ui.srtInfo.textContent=srtFile?`SRT読込：${srtFile.name}`:'SRT未選択';
+});
+
 ui.reset.addEventListener('click',resetAll);
 ui.analyze.addEventListener('click',analyzeSelectedFile);
 ui.download.addEventListener('click',downloadJSON);
@@ -85,7 +91,7 @@ ui.copy.addEventListener('click',copySummary);
 function resetAll(){
   selectedFile=null;analysisResult=null;ui.input.value='';
   for(const role of ['vocals','drums','bass','other']){stemFiles[role]=null;ui[role].value='';} updateStemInfo();
-  ui.fileInfo.classList.add('hidden');ui.results.classList.add('hidden');ui.statusPanel.classList.add('hidden'); if(ui.lyrics)ui.lyrics.value=''; if(ui.lyricPanel)ui.lyricPanel.classList.add('hidden');
+  ui.fileInfo.classList.add('hidden');ui.results.classList.add('hidden');ui.statusPanel.classList.add('hidden'); if(ui.lyrics)ui.lyrics.value=''; srtFile=null; if(ui.srt)ui.srt.value=''; if(ui.srtInfo)ui.srtInfo.textContent='SRT未選択'; if(ui.lyricPanel)ui.lyricPanel.classList.add('hidden');
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');
 }
 
@@ -541,6 +547,63 @@ function buildMotionPrimitiveLayer({duration,bpm,beats,onsets,lowOnsets,highOnse
 }
 
 
+// v0.6.1: 外部ASR SRTを「WHEN」の観測として読み込み、正規歌詞「WHAT」と分離して保持する。
+function srtTimeToSec(s){
+  const m=String(s||'').trim().match(/^(\d+):(\d{2}):(\d{2})[,.](\d{1,3})$/); if(!m)return null;
+  return Number(m[1])*3600+Number(m[2])*60+Number(m[3])+Number(m[4].padEnd(3,'0'))/1000;
+}
+function cleanAsrText(text){
+  let t=String(text||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  const patterns=[/\(?TurboScribe[^)]*\)?/gi,/TurboScribeによって文字起こしされました[^。]*。?/gi,/このメッセージを削除するには[^。]*。?/gi,/transcribed by TurboScribe[^.]*\.?/gi];
+  for(const p of patterns)t=t.replace(p,' ');
+  return t.replace(/\s+/g,' ').trim();
+}
+function parseSrt(text){
+  const blocks=String(text||'').replace(/\r/g,'').split(/\n{2,}/); const entries=[];
+  for(const block of blocks){
+    const lines=block.split('\n').map(x=>x.trim()).filter(Boolean); if(!lines.length)continue;
+    const ti=lines.findIndex(x=>x.includes('-->')); if(ti<0)continue;
+    const mm=lines[ti].match(/(\d+:\d{2}:\d{2}[,.]\d{1,3})\s*-->\s*(\d+:\d{2}:\d{2}[,.]\d{1,3})/); if(!mm)continue;
+    const start=srtTimeToSec(mm[1]),end=srtTimeToSec(mm[2]); if(start==null||end==null)continue;
+    const raw=lines.slice(ti+1).join(' '), cleaned=cleanAsrText(raw); if(!cleaned)continue;
+    entries.push({cue_index:entries.length,start_sec:round(start,3),end_sec:round(end,3),raw_text:raw,text:cleaned});
+  }
+  return entries;
+}
+function normJa(s){return String(s||'').toLowerCase().normalize('NFKC').replace(/[\s\p{P}\p{S}]/gu,'').replace(/[ぁ-ん]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));}
+function bigramSet(s){const n=normJa(s),a=new Set();if(n.length<2){if(n)a.add(n);return a;}for(let i=0;i<n.length-1;i++)a.add(n.slice(i,i+2));return a;}
+function textSimilarity(a,b){const A=bigramSet(a),B=bigramSet(b);if(!A.size||!B.size)return 0;let hit=0;for(const x of A)if(B.has(x))hit++;return 2*hit/(A.size+B.size);}
+function classifyUnmatchedAsr(text){
+  const n=normJa(text); if(!n)return 'UNKNOWN';
+  const scat=/^(ダ|バ|ラ|タ|ナ|パ|ド|ゥ|ア|ハ|ヤ|マ|ワ|ン|オ|ウ|エ|イ){4,}$/.test(n)||/(ダバ|ララ|ダダ|ババ|ナナ|パパ){2,}/.test(n);
+  return scat?'SCAT_CANDIDATE':'UNMATCHED_VOCAL';
+}
+function buildAsrLyricAlignment(lyricText,srtEntries,duration){
+  const lyrics=parseLyrics(lyricText).filter(x=>x.type!=='INSTRUMENTAL');
+  const matches=[]; let minCue=0;
+  for(const line of lyrics){
+    if(!line.text)continue; let best=null;
+    for(let i=minCue;i<srtEntries.length;i++){
+      let joined='';
+      for(let span=1;span<=3&&i+span<=srtEntries.length;span++){
+        joined+=(span>1?' ':'')+srtEntries[i+span-1].text;
+        const sim=textSimilarity(line.text,joined);
+        if(!best||sim>best.similarity)best={i,span,similarity:sim,text:joined};
+      }
+      if(i>minCue+12&&best&&best.similarity>=.45)break;
+    }
+    if(best&&best.similarity>=.18){
+      const cues=srtEntries.slice(best.i,best.i+best.span), start=cues[0].start_sec,end=cues[cues.length-1].end_sec;
+      matches.push({line_index:line.line_index,type:line.type,canonical_text:line.text,start_sec:start,end_sec:end,asr_text:best.text,similarity:round(best.similarity,4),confidence:best.similarity>=.62?'high':best.similarity>=.38?'medium':'low',source:'canonical_lyrics_x_srt'});
+      minCue=Math.max(minCue,best.i);
+    }
+  }
+  const used=new Set();
+  for(const m of matches)for(let i=0;i<srtEntries.length;i++){const c=srtEntries[i];if(c.start_sec<m.end_sec&&c.end_sec>m.start_sec&&textSimilarity(m.asr_text,c.text)>.05)used.add(i);}
+  const unmatched=srtEntries.filter((_,i)=>!used.has(i)).map(c=>({...c,event_type:classifyUnmatchedAsr(c.text),confidence:'candidate',note:'正規歌詞との一致が弱い/無いASR区間。スキャット等の候補だが意味分類は確定しない。'}));
+  return {version:'0.1',status:srtEntries.length?'srt_alignment_available':'not_supplied',role_split:{canonical_lyrics:'WHAT / 正規テキスト',srt_asr:'WHEN / 実発声時刻の観測'},matching:'monotonic_candidate_match_1_to_3_srt_cues',matches,unmatched_vocal_events:unmatched,limitations:['ASR誤認識を正規歌詞へ上書きしない','SCAT_CANDIDATEは候補分類で確定ではない','単語forced alignmentではない']};
+}
+
 // v0.6: 歌詞は音響プリミティブと独立した水脈として保持し、同一時刻軸にだけ接続する。
 // 音声認識/forced alignmentは行わない。Vocal Stemの発声候補から行単位の仮同期を作り、ユーザー補正を正本にできる。
 function parseTimecode(raw){
@@ -680,19 +743,26 @@ async function analyzeSelectedFile(){
 
     setProgress(94,'運動プリミティブへ圧縮中…');
     const motionPrimitives=buildMotionPrimitiveLayer({duration,bpm:beatPrimary.bpm,beats:beatPrimary.beat_times_sec,onsets:onsetTimes,lowOnsets,highOnsets,curves,sections,stemAnalysis});
-    const lyricTimeline=buildLyricTimeline({text:ui.lyrics?.value||'',vocalEvents:stemAnalysis.vocals?.event_candidates||[],duration,motionPrimitives});
+    let srtEntries=[]; if(srtFile){setProgress(93,'SRTと正規歌詞を照合中…');srtEntries=parseSrt(await srtFile.text());}
+    const asrLyricAlignment=buildAsrLyricAlignment(ui.lyrics?.value||'',srtEntries,duration);
+    let lyricTimeline=buildLyricTimeline({text:ui.lyrics?.value||'',vocalEvents:stemAnalysis.vocals?.event_candidates||[],duration,motionPrimitives});
+    if(asrLyricAlignment.matches.length){
+      const byLine=new Map(asrLyricAlignment.matches.map(x=>[x.line_index,x]));
+      lyricTimeline.entries=lyricTimeline.entries.map(e=>{const m=byLine.get(e.line_index);return m?{...e,start_sec:m.start_sec,end_sec:m.end_sec,confidence:m.confidence,alignment_method:'external_srt_match',asr_text:m.asr_text,asr_similarity:m.similarity}:e;});
+      lyricTimeline.status='external_srt_alignment_available'; lyricTimeline.alignment_method='canonical_lyrics_x_external_srt';
+    }
 
     const warnings=[];
     if(duration>600)warnings.push('10分を超える音源はスマホで処理時間・メモリ使用量が増える可能性があります。');
     if(audioBeat===null)warnings.push('@audio/beatを読み込めなかったため、一部解析はEssentia.jsのみで実行しました。');
     if(agree!==null&&agree<.45)warnings.push('BPM推定器同士の結果差が大きいです。ハーフ/ダブルテンポを含め、実音で確認してください。');
-    warnings.push('v0.6はv0.5の音響・Stem・運動プリミティブ解析を保持し、歌詞行を独立水脈として同一時間軸へ接続します。');
-    if(lyricTimeline.entries.length)warnings.push('歌詞自動同期はVocal Stem発声候補によるヒューリスティックです。音声認識/単語forced alignmentではないため、重要箇所は画面で補正してください。');
+    warnings.push('v0.6.1はv0.5の音響・Stem・運動プリミティブ解析を保持し、歌詞行を独立水脈として同一時間軸へ接続します。');
+    if(srtEntries.length)warnings.push('v0.6.1は外部SRTを実発声時刻の観測として使用し、正規歌詞を文字の正本として保持します。ASR誤認識で正規歌詞を上書きしません。'); else if(lyricTimeline.entries.length)warnings.push('SRT未入力時の歌詞自動同期はVocal Stem発声候補によるヒューリスティックです。重要箇所は画面で補正してください。');
     warnings.push('このGitHub Pages版はStemを自動分離しません。外部で分離したVocals/Drums/Bass/Otherを任意入力してください。');
     warnings.push('低/中/高域カーブはMV設計向け近似であり、マスタリング測定値ではありません。');
 
     analysisResult={
-      schema:'mv_music_analysis.v6',
+      schema:'mv_music_analysis.v6.1',
       generated_at:new Date().toISOString(),
       engine:{
         frontend:`MV Music Analyzer ${VERSION}`,
@@ -756,6 +826,8 @@ async function analyzeSelectedFile(){
       mv_sync_candidates:{method:'original_plus_optional_stems',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates,merged_timeline_candidates:mergeStemMvCandidates(mvSync.candidates,stemAnalysis)},
       motion_primitives:motionPrimitives,
       lyric_timeline:lyricTimeline,
+      vocal_asr_timeline:{source_file:srtFile?.name||null,format:srtFile?'SRT':null,entries:srtEntries,cleaner:'provider_banner_and_markup_filter'},
+      lyric_asr_alignment:asrLyricAlignment,
       unified_timeline:{rule:'歌詞水脈と音響物理水脈は意味を混合せず、共通time_secで参照する。歌詞と映像の一致/無視/反転/遅延は後段MV設計が決める。',lyric_entry_count:lyricTimeline.entries.length,motion_window_count:motionPrimitives.windows.length},
       mv_mapping_hint:{
         low_band_accent:'重量・慣性・回転・低い周期運動・キック・筐体振動への写像候補',
@@ -831,12 +903,12 @@ function renderCurves(curves){
 }
 
 function jsonBlob(){return new Blob([JSON.stringify(analysisResult,null,2)],{type:'application/json'});}
-function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v6.json`;}
+function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v6_1.json`;}
 function downloadJSON(){if(!analysisResult)return;const a=document.createElement('a');a.href=URL.createObjectURL(jsonBlob());a.download=outputName();a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 async function shareJSON(){
   if(!analysisResult)return;
   const file=new File([jsonBlob()],outputName(),{type:'application/json'});
-  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v6',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
+  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v6.1',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
   catch(e){if(e.name!=='AbortError')downloadJSON();}
 }
 async function copySummary(){

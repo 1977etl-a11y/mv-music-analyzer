@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MV Music Analysis v0.6.1 extension",
+  "type": "object",
+  "required": [
+    "schema",
+    "motion_primitives",
+    "lyric_timeline",
+    "vocal_asr_timeline",
+    "lyric_asr_alignment"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mv_music_analysis.v6.1"
+    },
+    "vocal_asr_timeline": {
+      "type": "object"
+    },
+    "lyric_asr_alignment": {
+      "type": "object"
+    },
+    "lyric_timeline": {
+      "type": "object"
+    },
+    "motion_primitives": {
+      "type": "object"
+    }
+  }
+}

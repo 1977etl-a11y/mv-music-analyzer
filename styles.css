@@ -130,3 +130,5 @@ code { color:#fff0a1; }
 .lyric-row .lyric-text{overflow-wrap:anywhere;font-size:.88rem}
 .lyric-row small{color:#85858e}
 @media(max-width:620px){.lyric-row{grid-template-columns:1fr 1fr}.lyric-row .lyric-text{grid-column:1/-1}.lyric-row select{grid-column:1/-1}}
+
+.srt-import{margin-top:12px;padding:12px;border:1px solid #2b2b31;border-radius:12px;background:#101014}.srt-import label{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.srt-import input{max-width:100%}
