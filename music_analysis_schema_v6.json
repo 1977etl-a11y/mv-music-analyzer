@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MV Music Analyzer v0.6 output",
+  "type": "object",
+  "required": ["schema","engine","source","rhythm","onset","stems","semantic_audio_events","mv_sync_candidates","motion_primitives","lyric_timeline","unified_timeline"],
+  "properties": {
+    "schema": {"const": "mv_music_analysis.v6"},
+    "motion_primitives": {"description": "v0.5互換の9運動プリミティブ層。"},
+    "lyric_timeline": {"description": "入力歌詞をVocal Stem発声候補へ行単位で仮同期し、手動補正可能にした独立水脈。"},
+    "unified_timeline": {"description": "歌詞水脈と音響物理水脈を意味混合せず共通time_secで参照するための接続情報。"}
+  }
+}

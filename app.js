@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.5.0';
+const VERSION = '0.6.0';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
@@ -10,7 +10,7 @@ const ANALYSIS_SR = 44100;
 const $ = (id) => document.getElementById(id);
 const ui = {
   input:$('audioInput'), drop:$('dropZone'), fileInfo:$('fileInfo'), analyze:$('analyzeBtn'), reset:$('resetBtn'),
-  vocals:$('vocalsInput'), drums:$('drumsInput'), bass:$('bassInput'), other:$('otherInput'), stemInfo:$('stemInfo'),
+  vocals:$('vocalsInput'), drums:$('drumsInput'), bass:$('bassInput'), other:$('otherInput'), stemInfo:$('stemInfo'), lyrics:$('lyricsInput'), lyricPanel:$('lyricResultPanel'), lyricEditor:$('lyricTimelineEditor'),
   statusPanel:$('statusPanel'), statusText:$('statusText'), statusPercent:$('statusPercent'), progress:$('progressBar'),
   engineStatus:$('engineStatus'), warning:$('warningText'), results:$('results'),
   bpm:$('bpmValue'), bpmSub:$('bpmSub'), key:$('keyValue'), keySub:$('keySub'),
@@ -85,7 +85,7 @@ ui.copy.addEventListener('click',copySummary);
 function resetAll(){
   selectedFile=null;analysisResult=null;ui.input.value='';
   for(const role of ['vocals','drums','bass','other']){stemFiles[role]=null;ui[role].value='';} updateStemInfo();
-  ui.fileInfo.classList.add('hidden');ui.results.classList.add('hidden');ui.statusPanel.classList.add('hidden');
+  ui.fileInfo.classList.add('hidden');ui.results.classList.add('hidden');ui.statusPanel.classList.add('hidden'); if(ui.lyrics)ui.lyrics.value=''; if(ui.lyricPanel)ui.lyricPanel.classList.add('hidden');
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');
 }
 
@@ -540,6 +540,73 @@ function buildMotionPrimitiveLayer({duration,bpm,beats,onsets,lowOnsets,highOnse
   };
 }
 
+
+// v0.6: 歌詞は音響プリミティブと独立した水脈として保持し、同一時刻軸にだけ接続する。
+// 音声認識/forced alignmentは行わない。Vocal Stemの発声候補から行単位の仮同期を作り、ユーザー補正を正本にできる。
+function parseTimecode(raw){
+  if(!raw)return null; const m=raw.match(/^(\d+):([0-5]?\d(?:\.\d+)?)$/); if(!m)return null;
+  return Number(m[1])*60+Number(m[2]);
+}
+function parseLyrics(text){
+  return String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map((raw,index)=>{
+    let rest=raw, anchor=null, type='LYRIC', explicitType=false;
+    const tm=rest.match(/^\[(\d+:[0-5]?\d(?:\.\d+)?)\]\s*/); if(tm){anchor=parseTimecode(tm[1]);rest=rest.slice(tm[0].length).trim();}
+    const ty=rest.match(/^\[(SCAT|BREATH|VOCAL|VOCALIZATION|INST|INSTRUMENTAL|LYRIC)\]\s*/i);
+    if(ty){const t=ty[1].toUpperCase();type=t==='VOCAL'?'VOCALIZATION':t==='INST'?'INSTRUMENTAL':t;rest=rest.slice(ty[0].length).trim();explicitType=true;}
+    return {line_index:index,text:rest||null,type,anchor_start_sec:anchor,explicit_type:explicitType};
+  });
+}
+function clusterVocalEvents(events,duration){
+  const ts=(events||[]).map(e=>e.time_sec).filter(Number.isFinite).sort((a,b)=>a-b); if(!ts.length)return [];
+  const gaps=ts.slice(1).map((t,i)=>t-ts[i]).filter(x=>x>.05); const med=percentile(gaps,.5)||.35;
+  const splitGap=clamp(med*3.2,.65,1.8); const groups=[]; let g=[ts[0]];
+  for(let i=1;i<ts.length;i++){if(ts[i]-ts[i-1]>splitGap){groups.push(g);g=[];}g.push(ts[i]);} groups.push(g);
+  return groups.map(a=>({start_sec:clamp(a[0]-.08,0,duration),end_sec:clamp(a[a.length-1]+Math.max(.28,med*.8),0,duration),event_count:a.length}));
+}
+function quantileTime(events,q,duration){
+  const ts=(events||[]).map(e=>e.time_sec).filter(Number.isFinite).sort((a,b)=>a-b); if(!ts.length)return duration*q;
+  return percentile(ts,clamp(q,0,1));
+}
+function buildLyricTimeline({text,vocalEvents,duration,motionPrimitives}){
+  const lines=parseLyrics(text); if(!lines.length)return {version:'0.1',status:'not_supplied',alignment_method:'none',entries:[],note:'歌詞未入力'};
+  const clusters=clusterVocalEvents(vocalEvents,duration), hasVocal=(vocalEvents||[]).length>0;
+  const entries=lines.map((line,i)=>{
+    let start=line.anchor_start_sec;
+    let method=line.anchor_start_sec!==null?'user_timecode':'heuristic_vocal_activity';
+    if(start===null){
+      if(clusters.length===lines.length)start=clusters[i].start_sec;
+      else start=quantileTime(vocalEvents,(i+.15)/Math.max(lines.length,1),duration);
+    }
+    let end=null;
+    const nextAnchor=lines.slice(i+1).find(x=>x.anchor_start_sec!==null)?.anchor_start_sec;
+    if(clusters.length===lines.length && line.anchor_start_sec===null)end=clusters[i].end_sec;
+    else if(nextAnchor!==undefined&&nextAnchor!==null)end=Math.max(start+.1,nextAnchor-.05);
+    else if(i<lines.length-1){const q=quantileTime(vocalEvents,(i+.92)/lines.length,duration);end=Math.max(start+.1,q);}
+    else end=Math.min(duration,Math.max(start+.35,hasVocal?(vocalEvents[vocalEvents.length-1]?.time_sec||duration)+.35:duration));
+    start=clamp(start,0,duration); end=clamp(end,start,duration);
+    const confidence=line.anchor_start_sec!==null?'user_fixed':hasVocal?(clusters.length===lines.length?'medium':'low'):'low';
+    return {line_index:i,start_sec:round(start,3),end_sec:round(end,3),type:line.type,text:line.text,confidence,alignment_method:method,manual_corrected:false};
+  });
+  const windows=motionPrimitives?.windows||[];
+  for(const e of entries){
+    const mid=(e.start_sec+e.end_sec)/2, w=windows.find(x=>mid>=x.start_sec&&mid<x.end_sec);
+    e.audio_context=w?Object.values(w.primitives).filter(p=>p.strength>=.35).sort((a,b)=>b.strength-a.strength).slice(0,4).map(p=>({type:p.type,strength:p.strength,confidence:p.confidence})):[];
+  }
+  return {version:'0.1',status:hasVocal?'candidate_alignment_available':'timing_fallback_without_vocal_stem',alignment_method:hasVocal?'vocal_event_quantile_or_cluster':'duration_distribution',unit:'lyric_line',source_text_preserved:true,classification_rule:'LYRICを既定値とし、SCAT/BREATH/VOCALIZATION/INSTRUMENTALは入力タグで明示する。音響だけから意味分類を確定しない。',limitations:['音声認識/forced alignment未実装','単語単位同期未実装','自動同期は候補値。重要箇所は手動補正を推奨'],entries};
+}
+function renderLyricEditor(){
+  if(!ui.lyricPanel||!ui.lyricEditor||!analysisResult?.lyric_timeline?.entries?.length){ui.lyricPanel?.classList.add('hidden');return;}
+  ui.lyricPanel.classList.remove('hidden'); ui.lyricEditor.innerHTML='';
+  for(const e of analysisResult.lyric_timeline.entries){
+    const row=document.createElement('div');row.className='lyric-row';
+    row.innerHTML=`<input type="number" step="0.01" min="0" value="${e.start_sec}" aria-label="開始秒"><input type="number" step="0.01" min="0" value="${e.end_sec}" aria-label="終了秒"><select aria-label="種別">${['LYRIC','SCAT','BREATH','VOCALIZATION','INSTRUMENTAL'].map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('')}</select><div class="lyric-text">${escapeHtml(e.text||'（テキストなし）')}<br><small>${escapeHtml(e.confidence)} / ${escapeHtml(e.alignment_method)}</small></div>`;
+    const [a,b,sel]=row.querySelectorAll('input,select');
+    const update=()=>{e.start_sec=round(clamp(Number(a.value)||0,0,analysisResult.source.duration_sec),3);e.end_sec=round(clamp(Number(b.value)||e.start_sec,e.start_sec,analysisResult.source.duration_sec),3);e.type=sel.value;e.manual_corrected=true;e.confidence='user_corrected';e.alignment_method='manual';renderJsonPreviewOnly();};
+    a.addEventListener('change',update);b.addEventListener('change',update);sel.addEventListener('change',update);ui.lyricEditor.appendChild(row);
+  }
+}
+function renderJsonPreviewOnly(){if(!analysisResult)return;const data=analysisResult;const preview={...data,dynamics_and_bands:{...data.dynamics_and_bands,curves:`[${data.dynamics_and_bands.curves.length} frames — JSON保存時は全データ]`}};ui.json.textContent=JSON.stringify(preview,null,2);}
+
 async function analyzeSelectedFile(){
   if(!selectedFile)return;
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');ui.results.classList.add('hidden');
@@ -613,17 +680,19 @@ async function analyzeSelectedFile(){
 
     setProgress(94,'運動プリミティブへ圧縮中…');
     const motionPrimitives=buildMotionPrimitiveLayer({duration,bpm:beatPrimary.bpm,beats:beatPrimary.beat_times_sec,onsets:onsetTimes,lowOnsets,highOnsets,curves,sections,stemAnalysis});
+    const lyricTimeline=buildLyricTimeline({text:ui.lyrics?.value||'',vocalEvents:stemAnalysis.vocals?.event_candidates||[],duration,motionPrimitives});
 
     const warnings=[];
     if(duration>600)warnings.push('10分を超える音源はスマホで処理時間・メモリ使用量が増える可能性があります。');
     if(audioBeat===null)warnings.push('@audio/beatを読み込めなかったため、一部解析はEssentia.jsのみで実行しました。');
     if(agree!==null&&agree<.45)warnings.push('BPM推定器同士の結果差が大きいです。ハーフ/ダブルテンポを含め、実音で確認してください。');
-    warnings.push('v0.5はv0.4のStem解析を保持し、その上に映像物理マッピング用の運動プリミティブ層を追加します。Stem無しでもプリミティブ候補を生成します。');
+    warnings.push('v0.6はv0.5の音響・Stem・運動プリミティブ解析を保持し、歌詞行を独立水脈として同一時間軸へ接続します。');
+    if(lyricTimeline.entries.length)warnings.push('歌詞自動同期はVocal Stem発声候補によるヒューリスティックです。音声認識/単語forced alignmentではないため、重要箇所は画面で補正してください。');
     warnings.push('このGitHub Pages版はStemを自動分離しません。外部で分離したVocals/Drums/Bass/Otherを任意入力してください。');
     warnings.push('低/中/高域カーブはMV設計向け近似であり、マスタリング測定値ではありません。');
 
     analysisResult={
-      schema:'mv_music_analysis.v5',
+      schema:'mv_music_analysis.v6',
       generated_at:new Date().toISOString(),
       engine:{
         frontend:`MV Music Analyzer ${VERSION}`,
@@ -686,6 +755,8 @@ async function analyzeSelectedFile(){
       section_change_candidates:{method:'heuristic_feature_change',candidates:sections},
       mv_sync_candidates:{method:'original_plus_optional_stems',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates,merged_timeline_candidates:mergeStemMvCandidates(mvSync.candidates,stemAnalysis)},
       motion_primitives:motionPrimitives,
+      lyric_timeline:lyricTimeline,
+      unified_timeline:{rule:'歌詞水脈と音響物理水脈は意味を混合せず、共通time_secで参照する。歌詞と映像の一致/無視/反転/遅延は後段MV設計が決める。',lyric_entry_count:lyricTimeline.entries.length,motion_window_count:motionPrimitives.windows.length},
       mv_mapping_hint:{
         low_band_accent:'重量・慣性・回転・低い周期運動・キック・筐体振動への写像候補',
         high_band_accent:'ヒール・指・金属・細かな身体アクセント・インサートへの写像候補',
@@ -698,6 +769,7 @@ async function analyzeSelectedFile(){
 
     setProgress(95,'画面を描画中…');
     renderResults(analysisResult);
+    renderLyricEditor();
     setProgress(100,'解析完了');
     ui.results.classList.remove('hidden');
     setTimeout(()=>ui.results.scrollIntoView({behavior:'smooth',block:'start'}),80);
@@ -759,12 +831,12 @@ function renderCurves(curves){
 }
 
 function jsonBlob(){return new Blob([JSON.stringify(analysisResult,null,2)],{type:'application/json'});}
-function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v5.json`;}
+function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v6.json`;}
 function downloadJSON(){if(!analysisResult)return;const a=document.createElement('a');a.href=URL.createObjectURL(jsonBlob());a.download=outputName();a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 async function shareJSON(){
   if(!analysisResult)return;
   const file=new File([jsonBlob()],outputName(),{type:'application/json'});
-  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v5',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
+  try{if(navigator.canShare?.({files:[file]}))await navigator.share({title:'MV Music Analysis v6',text:'意味変質型MV用の時刻付き音楽解析JSON',files:[file]});else downloadJSON();}
   catch(e){if(e.name!=='AbortError')downloadJSON();}
 }
 async function copySummary(){
