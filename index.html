@@ -54,8 +54,10 @@
 [SCAT] La la la...
 [BREATH]"></textarea>
         <div class="srt-import">
-          <label><strong>外部ASR SRT（任意）</strong><input id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain"></label>
-          <div id="srtInfo" class="stem-info">SRT未選択</div>
+          <div class="srt-title"><strong>外部ASR SRT（任意）</strong></div>
+          <input id="srtInput" class="visually-hidden-file" type="file" accept=".srt,text/plain,application/x-subrip,application/octet-stream">
+          <button id="srtChooseBtn" class="secondary srt-choose" type="button">SRTファイルを選択</button>
+          <div id="srtInfo" class="stem-info" aria-live="polite">SRT未選択</div>
         </div>
         <div class="stem-info">SRTがある場合：正規歌詞＝WHAT、SRT＝WHENとして照合します。SRTの誤認識は正規歌詞へ上書きせず、正規歌詞にない発声区間は未一致Vocalイベントとして残します。SRTが無い場合は従来のVocal Stemヒューリスティック同期へフォールバックします。</div>
       </div>
@@ -152,7 +154,7 @@
     </section>
 
     <footer>
-      <p>MV Music Analyzer v0.6.1 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
+      <p>MV Music Analyzer v0.6.1-fix1 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
       <p>Stemは外部分離データを任意入力します。v0.6.1は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
     </footer>
   </main>

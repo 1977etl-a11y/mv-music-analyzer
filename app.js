@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.6.1';
+const VERSION = '0.6.1-fix1';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
@@ -10,7 +10,7 @@ const ANALYSIS_SR = 44100;
 const $ = (id) => document.getElementById(id);
 const ui = {
   input:$('audioInput'), drop:$('dropZone'), fileInfo:$('fileInfo'), analyze:$('analyzeBtn'), reset:$('resetBtn'),
-  vocals:$('vocalsInput'), drums:$('drumsInput'), bass:$('bassInput'), other:$('otherInput'), stemInfo:$('stemInfo'), lyrics:$('lyricsInput'), srt:$('srtInput'), srtInfo:$('srtInfo'), lyricPanel:$('lyricResultPanel'), lyricEditor:$('lyricTimelineEditor'),
+  vocals:$('vocalsInput'), drums:$('drumsInput'), bass:$('bassInput'), other:$('otherInput'), stemInfo:$('stemInfo'), lyrics:$('lyricsInput'), srt:$('srtInput'), srtChoose:$('srtChooseBtn'), srtInfo:$('srtInfo'), lyricPanel:$('lyricResultPanel'), lyricEditor:$('lyricTimelineEditor'),
   statusPanel:$('statusPanel'), statusText:$('statusText'), statusPercent:$('statusPercent'), progress:$('progressBar'),
   engineStatus:$('engineStatus'), warning:$('warningText'), results:$('results'),
   bpm:$('bpmValue'), bpmSub:$('bpmSub'), key:$('keyValue'), keySub:$('keySub'),
@@ -76,6 +76,11 @@ for(const role of ['vocals','drums','bass','other']){
     updateStemInfo();
   });
 }
+
+if(ui.srtChoose && ui.srt) ui.srtChoose.addEventListener('click',()=>{
+  // Android/installed PWAでもネイティブのファイルピッカーを明示的に開く。
+  ui.srt.click();
+});
 
 if(ui.srt) ui.srt.addEventListener('change',()=>{
   srtFile=ui.srt.files?.[0]||null;
