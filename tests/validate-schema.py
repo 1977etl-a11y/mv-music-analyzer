@@ -10,3 +10,8 @@ for name in ["music_analysis_schema_v6_1.json", "music_analysis_schema_v7.json"]
     Draft202012Validator.check_schema(schema)
     Draft202012Validator(schema).validate(data)
     print(f"PASS: {name}")
+
+board_schema = json.loads((root / 'storyboard_schema_v0_7_1.json').read_text(encoding='utf-8'))
+Draft202012Validator.check_schema(board_schema)
+Draft202012Validator(board_schema).validate(json.loads((root / 'sample_storyboard_v0_7_1.synthetic.json').read_text(encoding='utf-8')))
+print('PASS: storyboard_schema_v0_7_1.json')

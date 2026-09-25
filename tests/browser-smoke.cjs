@@ -43,6 +43,16 @@ const root=path.join(__dirname,'..');
     const exported=JSON.parse(text);assert.equal(exported.reference_schema,'mv_music_analysis.references.v0.7.0');
     assert.equal(exported.lyric_timeline.entries[0].edit_history.length,2);assert.equal(exported.lyric_timeline.entries[0].id,id);
     assert.match(download.suggestedFilename(),/_music_analysis_v6_1\.json$/);
+    await page.locator('#storyboardAnalysisFile').setInputFiles({name:'analysis.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(require('../sample_music_analysis_v7.synthetic.json')))});
+    await page.locator('#storyboardFile').setInputFiles({name:'board.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(require('../sample_storyboard_v0_7_1.synthetic.json')))});
+    await page.waitForFunction(()=>document.getElementById('storyboardStatus').textContent.includes('2 CUT'));
+    await page.locator('#storyboardValidate').click();
+    assert.match(await page.locator('#storyboardOutput').innerText(),/cut_demo_a/);
+    const exporting=page.waitForEvent('download');await page.locator('#storyboardExport').click();
+    const boardDownload=await exporting,boardStream=await boardDownload.createReadStream();let boardText='';for await(const chunk of boardStream)boardText+=chunk;
+    assert.deepEqual(JSON.parse(boardText),require('../sample_storyboard_v0_7_1.synthetic.json'));
+    await page.locator('#storyboardFile').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{')});
+    await page.waitForFunction(()=>document.getElementById('storyboardStatus').textContent.includes('読込失敗'));
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({browser:browser.version(),viewport:'390x844',synthetic_ui:'passed',download:'passed',service_worker:'offline_reload_passed',synthetic_decode:decoded,page_errors:errors}));
   }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

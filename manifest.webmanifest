@@ -1,5 +1,5 @@
 {
-  "name": "MV Music Analyzer v0.7.0",
+  "name": "MV Music Analyzer v0.7.1",
   "short_name": "MV Analyzer",
   "description": "Essentia.js + @audio/beatで音源を解析し、意味変質型MV用music_analysis.jsonを生成",
   "start_url": "./",

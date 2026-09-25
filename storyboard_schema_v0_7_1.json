@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Independent MV storyboard v0.7.1",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "mv_storyboard.v0.7.1"
+    },
+    "id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "analysis": {
+      "type": "object"
+    },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "analysis": {
+          "type": "object"
+        },
+        "references": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "analysis",
+        "references"
+      ]
+    },
+    "cuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "cut_number": {
+            "type": "string"
+          },
+          "start_sec": {
+            "type": "number"
+          },
+          "end_sec": {
+            "type": "number"
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": []
+            }
+          },
+          "shot": {
+            "type": "object",
+            "properties": {
+              "size": {
+                "type": "string"
+              },
+              "composition": {
+                "type": "string"
+              },
+              "camera_direction": {
+                "type": "string"
+              }
+            },
+            "required": []
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "subject_id": {
+                  "type": "string"
+                },
+                "initial_state": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "final_state": {
+                  "type": "string"
+                }
+              },
+              "required": []
+            }
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "enum": [
+                    "audio_event",
+                    "motion_window",
+                    "lyric_line",
+                    "srt_cue",
+                    "section"
+                  ]
+                },
+                "source_range": {
+                  "type": "object",
+                  "required": [
+                    "start_sec",
+                    "end_sec"
+                  ],
+                  "properties": {
+                    "start_sec": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "end_sec": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "usage_status": {
+                  "enum": [
+                    "candidate",
+                    "confirmed"
+                  ]
+                },
+                "cut_time_sec": {
+                  "type": "number"
+                },
+                "timing": {
+                  "type": "object",
+                  "properties": {
+                    "offset_sec": {
+                      "type": "number"
+                    },
+                    "intentional": {
+                      "type": "boolean"
+                    },
+                    "explanation": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "offset_sec",
+                    "intentional",
+                    "explanation"
+                  ]
+                }
+              },
+              "required": [
+                "target_id",
+                "kind",
+                "purpose"
+              ]
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "relation": {
+                  "enum": [
+                    null,
+                    "一致",
+                    "無視",
+                    "反転",
+                    "遅延"
+                  ]
+                },
+                "targets": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "analysis",
+                          "cut",
+                          "motif"
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ]
+                  }
+                },
+                "explanation": {
+                  "type": "string"
+                },
+                "decision_by": {
+                  "type": "string"
+                },
+                "delay_sec": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "relation",
+                "targets",
+                "explanation",
+                "decision_by"
+              ]
+            }
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "analysis_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "concept": {
+                  "type": "string"
+                },
+                "visual_action": {
+                  "type": "string"
+                },
+                "diegetic_source": {
+                  "type": "string"
+                },
+                "acoustic_relationship": {
+                  "type": "string"
+                },
+                "decision_by": {
+                  "type": "string"
+                },
+                "explanation": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "analysis_ids",
+                "decision_by",
+                "explanation"
+              ]
+            }
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "required": []
+            }
+          },
+          "review_status": {
+            "enum": [
+              "pending",
+              "reviewed"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "cut_number",
+          "start_sec",
+          "end_sec",
+          "references"
+        ]
+      }
+    },
+    "motifs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cut_id": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "meaning": {
+                  "type": "string"
+                },
+                "previous_cut_id": {
+                  "type": "string"
+                },
+                "next_cut_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "cut_id",
+                "state",
+                "action",
+                "meaning"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "occurrences"
+        ]
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from_cut_id": {
+            "type": "string"
+          },
+          "to_cut_id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "gap",
+              "overlap"
+            ]
+          },
+          "intentional": {
+            "type": "boolean"
+          },
+          "explanation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_cut_id",
+          "to_cut_id",
+          "type",
+          "intentional",
+          "explanation"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "title",
+    "version",
+    "analysis",
+    "cuts"
+  ]
+}

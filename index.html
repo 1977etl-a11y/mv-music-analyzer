@@ -9,13 +9,13 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="stylesheet" href="styles.css" />
-  <title>MV Music Analyzer v0.7.0</title>
+  <title>MV Music Analyzer v0.7.1</title>
 </head>
 <body>
   <main class="app-shell">
     <header class="hero">
       <div class="eyebrow">意味変質型MV / AUDIO FRONTEND</div>
-      <h1>MV Music Analyzer <span class="version-badge">v0.7.0</span></h1>
+      <h1>MV Music Analyzer <span class="version-badge">v0.7.1</span></h1>
       <p>原曲と任意Stemを解析し、9つの運動プリミティブに加えて、正規歌詞と外部ASRのSRTを照合し、歌詞にない発声も保持した共通タイムラインの <code>music_analysis.json</code> を生成します。</p>
     </header>
 
@@ -160,13 +160,23 @@
       </section>
     </section>
 
-    <footer>
-      <p>MV Music Analyzer v0.7.0 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
-      <p>Stemは外部分離データを任意入力します。v0.7.0は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
+    <section class="panel" id="storyboardPanel">
+<h2>コンテ参照・検証</h2>
+<p>解析と演出は独立しています。検証は演出や比較基準を変更しません。指摘があるコンテも修正せず書き出します。</p>
+<label>解析JSON <input id="storyboardAnalysisFile" type="file" accept=".json,application/json"></label>
+<label>コンテJSON <input id="storyboardFile" type="file" accept=".json,application/json"></label>
+<div class="actions"><button id="storyboardCurrent">現在の解析を使用</button><button id="storyboardValidate">検証</button><button id="storyboardBaseline">初回の比較基準を保存</button><button id="storyboardReport">検証結果JSON</button><button id="storyboardExport">コンテJSONを書き出す</button></div>
+<p id="storyboardStatus" aria-live="polite">コンテJSONを読み込んでください。</p><div id="storyboardOutput"></div>
+</section>
+<footer>
+      <p>MV Music Analyzer v0.7.1 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
+      <p>Stemは外部分離データを任意入力します。v0.7.1は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
     </footer>
   </main>
 
   <script src="references.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="storyboard.js" defer></script>
+  <script src="storyboard-ui.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,312 @@
+{
+  "schema": "mv_storyboard.v0.7.1",
+  "example_only": true,
+  "analysis_file": "sample_music_analysis_v7.synthetic.json",
+  "reference_schema": "mv_music_analysis.references.v0.7.0",
+  "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+  "cuts": [
+    {
+      "cut_number": "CUT001",
+      "start_sec": 1,
+      "end_sec": 2,
+      "audio_event_ids": [
+        "audio_0d234fa69fb4181c07b82cd634176948"
+      ],
+      "lyric_line_ids": [
+        "lyric_3bb556204739613aa7480a5002913226"
+      ],
+      "section_ids": [
+        "text_654dee4ab0abe420a33b3b5a302c7274"
+      ],
+      "relations": [
+        {
+          "relation": "無視",
+          "targets": [
+            {
+              "type": "analysis",
+              "id": "lyric_3bb556204739613aa7480a5002913226"
+            }
+          ],
+          "decision_by": "example_author",
+          "explanation": "Independent visual action"
+        },
+        {
+          "relation": "一致",
+          "targets": [
+            {
+              "type": "analysis",
+              "id": "audio_0d234fa69fb4181c07b82cd634176948"
+            }
+          ],
+          "decision_by": "example_author",
+          "explanation": "Author chooses action timing"
+        }
+      ],
+      "manual_review_ids": [
+        "review_f7e6b6bda04eaeffe7863ded13bc7693"
+      ],
+      "id": "cut_demo_a",
+      "subjects": [
+        {
+          "id": "object_a",
+          "description": "Generic object"
+        }
+      ],
+      "shot": {
+        "size": "medium",
+        "composition": "center",
+        "camera_direction": "front"
+      },
+      "actions": [
+        {
+          "subject_id": "object_a",
+          "initial_state": "still",
+          "action": "lift",
+          "final_state": "raised"
+        }
+      ],
+      "mappings": [
+        {
+          "analysis_ids": [
+            "audio_0d234fa69fb4181c07b82cd634176948"
+          ],
+          "concept": "weight",
+          "visual_action": "slow lift",
+          "diegetic_source": "object_a",
+          "acoustic_relationship": "author-selected synchronization",
+          "decision_by": "example_author",
+          "explanation": "Interpretation, not an acoustic fact"
+        }
+      ],
+      "uncertainties": [],
+      "review_status": "pending",
+      "references": [
+        {
+          "target_id": "audio_0d234fa69fb4181c07b82cd634176948",
+          "kind": "audio_event",
+          "purpose": "action_start",
+          "usage_status": "candidate",
+          "source_range": {
+            "start_sec": 1.1,
+            "end_sec": 1.1
+          },
+          "timing": {
+            "offset_sec": -0.10000000000000009,
+            "intentional": true,
+            "explanation": "Author-selected timing for synthetic demonstration"
+          }
+        },
+        {
+          "target_id": "lyric_3bb556204739613aa7480a5002913226",
+          "kind": "lyric_line",
+          "purpose": "action_start",
+          "usage_status": "candidate",
+          "source_range": {
+            "start_sec": 1,
+            "end_sec": 2
+          },
+          "timing": {
+            "offset_sec": 0,
+            "intentional": true,
+            "explanation": "Author-selected timing for synthetic demonstration"
+          }
+        },
+        {
+          "target_id": "text_654dee4ab0abe420a33b3b5a302c7274",
+          "kind": "section",
+          "purpose": "action_start",
+          "usage_status": "candidate",
+          "source_range": {
+            "start_sec": 1,
+            "end_sec": 2
+          },
+          "timing": {
+            "offset_sec": 0,
+            "intentional": true,
+            "explanation": "Author-selected timing for synthetic demonstration"
+          }
+        }
+      ]
+    },
+    {
+      "cut_number": "CUT002",
+      "start_sec": 2,
+      "end_sec": 3,
+      "audio_event_ids": [
+        "audio_0d234fa69fb4181c07b82cd634176948"
+      ],
+      "lyric_line_ids": [
+        "lyric_3bb556204739613aa7480a5002913226"
+      ],
+      "section_ids": [
+        "text_654dee4ab0abe420a33b3b5a302c7274"
+      ],
+      "relations": [
+        {
+          "relation": "反転",
+          "targets": [
+            {
+              "type": "cut",
+              "id": "cut_demo_a"
+            }
+          ],
+          "decision_by": "example_author",
+          "explanation": "Change from raising to lowering"
+        }
+      ],
+      "manual_review_ids": [
+        "review_f7e6b6bda04eaeffe7863ded13bc7693"
+      ],
+      "id": "cut_demo_b",
+      "subjects": [
+        {
+          "id": "object_a",
+          "description": "Generic object"
+        }
+      ],
+      "shot": {
+        "size": "medium",
+        "composition": "center",
+        "camera_direction": "front"
+      },
+      "actions": [
+        {
+          "subject_id": "object_a",
+          "initial_state": "still",
+          "action": "lower",
+          "final_state": "raised"
+        }
+      ],
+      "mappings": [],
+      "uncertainties": [],
+      "review_status": "pending",
+      "references": []
+    }
+  ],
+  "legacy_schema": "mv_storyboard_references.v0.1",
+  "id": "storyboard_synthetic_demo",
+  "title": "Synthetic reference demonstration",
+  "version": "1",
+  "analysis": {
+    "file": "sample_music_analysis_v7.synthetic.json",
+    "reference_schema": "mv_music_analysis.references.v0.7.0",
+    "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+    "schema": "mv_music_analysis.v6.1",
+    "duration_sec": 12,
+    "conditions": {
+      "essentia_js": "0.1.3",
+      "audio_beat": "2.1.3",
+      "analysis_sample_rate_hz": 44100
+    },
+    "reference_identity": {
+      "algorithm": "fnv1a32x4-utf16-canonical-json-v1",
+      "scope": "source content SHA-256 when available, otherwise metadata; detector versions, semantic type and original coordinates",
+      "source_fingerprint": "metadata_fallback",
+      "limitations": "IDs are reproducible for identical inputs and conditions. Audio differences below metadata visibility are not distinguished in fallback mode. Text IDs include physical source line. Identical duplicate SRT cues use an occurrence suffix. Not a cryptographic identity guarantee."
+    }
+  },
+  "motifs": [
+    {
+      "id": "motif_a",
+      "label": "Object gesture",
+      "occurrences": [
+        {
+          "cut_id": "cut_demo_a",
+          "state": "still",
+          "action": "lift",
+          "meaning": "Author-described anticipation",
+          "next_cut_id": "cut_demo_b"
+        },
+        {
+          "cut_id": "cut_demo_b",
+          "state": "raised",
+          "action": "lower",
+          "meaning": "Author-described retreat",
+          "previous_cut_id": "cut_demo_a"
+        }
+      ]
+    }
+  ],
+  "transitions": [],
+  "migration_notes": [
+    "旧フィールドを保持。初回に割り当てたCUT IDは保存後に再生成しない。未指定の演出は空欄。"
+  ],
+  "baseline": {
+    "analysis": {
+      "schema": "mv_music_analysis.v6.1",
+      "reference_schema": "mv_music_analysis.references.v0.7.0",
+      "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+      "duration_sec": 12,
+      "conditions": {
+        "essentia_js": "0.1.3",
+        "audio_beat": "2.1.3",
+        "analysis_sample_rate_hz": 44100
+      },
+      "reference_identity": {
+        "algorithm": "fnv1a32x4-utf16-canonical-json-v1",
+        "scope": "source content SHA-256 when available, otherwise metadata; detector versions, semantic type and original coordinates",
+        "source_fingerprint": "metadata_fallback",
+        "limitations": "IDs are reproducible for identical inputs and conditions. Audio differences below metadata visibility are not distinguished in fallback mode. Text IDs include physical source line. Identical duplicate SRT cues use an occurrence suffix. Not a cryptographic identity guarantee."
+      }
+    },
+    "references": {
+      "audio_0d234fa69fb4181c07b82cd634176948": {
+        "kind": "audio_event",
+        "start_sec": 1.1,
+        "end_sec": 1.1,
+        "provenance": "estimated",
+        "confidence": null,
+        "detail": {
+          "type": "onset",
+          "numbers": {},
+          "method": "synthetic_detector",
+          "source": "Master",
+          "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36"
+        }
+      },
+      "lyric_3bb556204739613aa7480a5002913226": {
+        "kind": "lyric_line",
+        "start_sec": 1,
+        "end_sec": 2,
+        "provenance": "external_estimate",
+        "confidence": "high",
+        "detail": {
+          "type": "LYRIC",
+          "text": "Daba-daba…",
+          "raw_text": "Daba-daba…",
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": [
+              {
+                "type": "SCAT",
+                "confidence": "medium",
+                "evidence": [
+                  "repeated_syllable_pattern"
+                ]
+              }
+            ]
+          },
+          "alignment_method": "external_srt_match",
+          "timing_status": "srt_candidate",
+          "manual_corrected": false
+        }
+      },
+      "text_654dee4ab0abe420a33b3b5a302c7274": {
+        "kind": "section",
+        "start_sec": 1,
+        "end_sec": 2,
+        "provenance": "estimated",
+        "confidence": null,
+        "detail": {
+          "text": "【Bridge】",
+          "raw_text": "【Bridge】",
+          "kind": "SECTION"
+        }
+      }
+    }
+  }
+}
