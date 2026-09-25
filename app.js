@@ -602,9 +602,8 @@ function normJa(s){return String(s||'').toLowerCase().normalize('NFKC').replace(
 function bigramSet(s){const n=normJa(s),a=new Set();if(n.length<2){if(n)a.add(n);return a;}for(let i=0;i<n.length-1;i++)a.add(n.slice(i,i+2));return a;}
 function textSimilarity(a,b){const A=bigramSet(a),B=bigramSet(b);if(!A.size||!B.size)return 0;let hit=0;for(const x of A)if(B.has(x))hit++;return 2*hit/(A.size+B.size);}
 function classifyUnmatchedAsr(text){
-  const n=normJa(text); if(!n)return 'UNKNOWN';
-  const scat=/^(ダ|バ|ラ|タ|ナ|パ|ド|ゥ|ア|ハ|ヤ|マ|ワ|ン|オ|ウ|エ|イ){4,}$/.test(n)||/(ダバ|ララ|ダダ|ババ|ナナ|パパ){2,}/.test(n);
-  return scat?'SCAT_CANDIDATE':'UNMATCHED_VOCAL';
+  if(!normJa(text))return 'UNKNOWN';
+  return vocalClassification(text).candidates.some(x=>x.type==='SCAT')?'SCAT_CANDIDATE':'UNMATCHED_VOCAL';
 }
 function buildAsrLyricAlignment(lyricText,srtEntries,duration){
   const lyrics=parseLyrics(lyricText).filter(x=>x.type!=='INSTRUMENTAL');
@@ -622,13 +621,13 @@ function buildAsrLyricAlignment(lyricText,srtEntries,duration){
     }
     if(best&&best.similarity>=.18){
       const cues=srtEntries.slice(best.i,best.i+best.span), start=cues[0].start_sec,end=cues[cues.length-1].end_sec;
-      matches.push({line_index:line.line_index,type:line.type,canonical_text:line.text,start_sec:start,end_sec:end,asr_text:best.text,similarity:round(best.similarity,4),confidence:best.similarity>=.62?'high':best.similarity>=.38?'medium':'low',source:'canonical_lyrics_x_srt'});
+      matches.push({line_index:line.line_index,source_line_number:line.source_line_number,section_id:line.section_id,type:line.type,canonical_text:line.text,start_sec:start,end_sec:end,asr_text:best.text,similarity:round(best.similarity,4),confidence:best.similarity>=.62?'high':best.similarity>=.38?'medium':'low',source:'canonical_lyrics_x_srt'});
       minCue=best.i+best.span;
     }
   }
   const used=new Set();
   for(const m of matches)for(let i=0;i<srtEntries.length;i++){const c=srtEntries[i];if(c.start_sec<m.end_sec&&c.end_sec>m.start_sec&&textSimilarity(m.asr_text,c.text)>.05)used.add(i);}
-  const unmatched=srtEntries.filter((_,i)=>!used.has(i)).map(c=>({...c,event_type:classifyUnmatchedAsr(c.text),confidence:'candidate',note:'正規歌詞との一致が弱い/無いASR区間。スキャット等の候補だが意味分類は確定しない。'}));
+  const unmatched=srtEntries.filter((_,i)=>!used.has(i)).map(c=>({...c,event_type:classifyUnmatchedAsr(c.text),classification:vocalClassification(c.text),confidence:'candidate',note:'正規歌詞との一致が弱い/無いASR区間。スキャット等の候補だが意味分類は確定しない。'}));
   return {version:'0.1',status:srtEntries.length?'srt_alignment_available':'not_supplied',role_split:{canonical_lyrics:'WHAT / 正規テキスト',srt_asr:'WHEN / 実発声時刻の観測'},matching:'monotonic_candidate_match_1_to_3_srt_cues',matches,unmatched_vocal_events:unmatched,limitations:['ASR誤認識を正規歌詞へ上書きしない','SCAT_CANDIDATEは候補分類で確定ではない','単語forced alignmentではない']};
 }
 
@@ -638,15 +637,64 @@ function parseTimecode(raw){
   if(!raw)return null; const m=raw.match(/^(\d+):([0-5]?\d(?:\.\d+)?)$/); if(!m)return null;
   return Number(m[1])*60+Number(m[2]);
 }
-function parseLyrics(text){
-  return String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map((raw,index)=>{
-    let rest=raw, anchor=null, type='LYRIC', explicitType=false;
-    const tm=rest.match(/^\[(\d+:[0-5]?\d(?:\.\d+)?)\]\s*/); if(tm){anchor=parseTimecode(tm[1]);rest=rest.slice(tm[0].length).trim();}
-    const ty=rest.match(/^\[(SCAT|BREATH|VOCAL|VOCALIZATION|INST|INSTRUMENTAL|LYRIC)\]\s*/i);
-    if(ty){const t=ty[1].toUpperCase();type=t==='VOCAL'?'VOCALIZATION':t==='INST'?'INSTRUMENTAL':t;rest=rest.slice(ty[0].length).trim();explicitType=true;}
-    return {line_index:index,text:rest||null,type,anchor_start_sec:anchor,explicit_type:explicitType};
-  });
+function vocalClassification(text,explicitType=null,context=''){
+  if(explicitType)return {status:'explicit',confidence:'user_fixed',evidence:['explicit_vocal_tag'],candidates:[{type:explicitType,confidence:'user_fixed',evidence:['explicit_vocal_tag']}]};
+  const candidates=[],n=normJa(text);
+  const syllables=n.match(/(?:doo|da|ba|la|na|pa|ra|ドゥ|ダ|バ|ラ|ナ|パ)/gu)||[];
+  const coverage=syllables.join('').length/Math.max(1,n.length);
+  if(syllables.length>=3&&coverage>=.8)candidates.push({type:'SCAT',confidence:'medium',evidence:['repeated_syllable_pattern']});
+  if(/^(?:uh|ah|oh|hey|yeah|wow|ho|ha|woo|ooh|ああ|アア|おお|オオ|うう|ウウ|イェーイ|ヘイ)+$/iu.test(n))candidates.push({type:'VOCALIZATION',confidence:'low',evidence:['interjection_shape']});
+  if(/\bscat\b|スキャット/i.test(context))candidates.push({type:'SCAT',confidence:'low',evidence:['section_or_directive_annotation']});
+  if(/\b(?:ad[ -]?lib|shout|chant)\b|掛け声/i.test(context))candidates.push({type:'VOCALIZATION',confidence:'low',evidence:['section_or_directive_annotation']});
+  return {status:'candidate',confidence:'low',evidence:['text_only_not_audio_classification'],candidates};
 }
+function parseLyricStructure(text){
+  const sourceText=String(text||''),sourceLines=sourceText.split(/\r?\n/),rows=[];
+  let section=null,context='',vocalIndex=0;
+  const pairs={'[':']','【':'】','〈':'〉','《':'》','(' :')','（':'）','「':'」','『':'』','<':'>'};
+  for(let i=0;i<sourceLines.length;i++){
+    const raw=sourceLines[i];let rest=raw.trim();if(!rest)continue;
+    let anchor=null,type='LYRIC',explicitType=false,kind=null,evidence=[],confidence='low';
+    const tm=rest.match(/^\[(\d+:[0-5]?\d(?:\.\d+)?)\]\s*/);
+    if(tm){anchor=parseTimecode(tm[1]);rest=rest.slice(tm[0].length).trim();}
+    const tag=rest.match(/^\[(SECTION|DIRECTIVE|AMBIGUOUS|SCAT|BREATH|VOCAL|VOCALIZATION|INST|INSTRUMENTAL|LYRIC)\]\s*/i);
+    if(tag){
+      const t=tag[1].toUpperCase();rest=rest.slice(tag[0].length).trim();
+      if(['SECTION','DIRECTIVE','AMBIGUOUS'].includes(t))kind=t;
+      else if(t==='INST'||t==='INSTRUMENTAL'){kind='DIRECTIVE';type='INSTRUMENTAL';}
+      else{kind='VOCAL_LINE';type=t==='VOCAL'?'VOCALIZATION':t;explicitType=true;}
+      evidence=['explicit_input_tag'];confidence='user_fixed';
+    }
+    const wrapped=!!pairs[rest[0]]&&rest.endsWith(pairs[rest[0]]);
+    const inner=wrapped?rest.slice(1,-1).trim():rest;
+    const markdown=/^#{1,6}\s+\S/.test(rest);
+    const title=inner.split(/\s+[-–—:]\s*/)[0].trim();
+    const sectionWord=/^(?:intro|outro|verse|chorus|bridge|refrain|pre[ -]?chorus|post[ -]?chorus|interlude|instrumental|間奏|前奏|後奏|サビ|[ABＣＡＢC]メロ)(?:\s*\d+)?$/i.test(title);
+    const sectionCode=/^(?:[A-Z](?:['’′]|\d{1,2})?|\d{1,2}|[IVX]{1,5})$/.test(title);
+    const numberedTitle=/^[\p{L}][\p{L}\p{M} _-]{1,35}\s+\d{1,2}$/u.test(title);
+    const directive=/^(?:(?:sing|play|repeat|whisper|whispered|spoken|shout|fade|pause|solo|ad[ -]?lib|scat)\b|.*(?:囁く|ささやく|歌う|演奏する|繰り返す|フェードアウト|無音にする)$)/i.test(inner);
+    const isolated=(i===0||!sourceLines[i-1].trim())&&i+1<sourceLines.length&&!!sourceLines[i+1].trim();
+    const vocalHints=vocalClassification(inner);
+    const sentence=/[!?！？。]/.test(inner)||/\b(?:i|you|we|my|your)\b/i.test(inner)||/[がをにはでと].+[ぁ-ん]/.test(inner);
+    if(!kind){
+      if(markdown){kind='SECTION';confidence='high';evidence=['markdown_heading_shape'];}
+      else if(wrapped&&(sectionWord||sectionCode||numberedTitle)&&!/[!?！？。]/.test(inner)){
+        kind='SECTION';confidence=sectionWord?'high':'medium';evidence=['whole_line_wrapper',sectionWord?'section_description':sectionCode?'section_label_shape':'numbered_title_shape'];
+        if(isolated)evidence.push('isolated_before_content');
+      }else if(wrapped&&directive&&!sentence){kind='DIRECTIVE';confidence='medium';evidence=['whole_line_wrapper','instruction_phrase'];}
+      else if(wrapped&&!sentence&&!vocalHints.candidates.length){kind='AMBIGUOUS';evidence=['whole_line_wrapper','insufficient_structure_or_vocal_evidence'];}
+      else {kind='VOCAL_LINE';confidence=wrapped?'medium':'low';evidence=[anchor!==null?'explicit_timecode':wrapped?'vocal_text_inside_wrapper':'unmarked_content_line'];}
+    }
+    if(kind==='SECTION'){section=`section_${i+1}`;context=inner;}
+    if(kind==='DIRECTIVE')context+=` ${inner}`;
+    const row={source_line_number:i+1,raw_text:raw,text:rest||null,kind,section_id:section,structure_confidence:confidence,structure_evidence:evidence,anchor_start_sec:anchor};
+    if(kind==='SECTION')row.section_label=markdown?rest.replace(/^#{1,6}\s+/,''):inner;
+    if(kind==='VOCAL_LINE')Object.assign(row,{line_index:vocalIndex++,type,explicit_type:explicitType,classification:vocalClassification(inner,explicitType?type:null,context)});
+    rows.push(row);
+  }
+  return {version:'0.1',source_text:sourceText,lines:rows,policy:'Only VOCAL_LINE is aligned. AMBIGUOUS is retained without timing; use explicit tags to resolve. Text classification is heuristic.'};
+}
+function parseLyrics(text){return parseLyricStructure(text).lines.filter(x=>x.kind==='VOCAL_LINE');}
 function clusterVocalEvents(events,duration){
   const ts=(events||[]).map(e=>e.time_sec).filter(Number.isFinite).sort((a,b)=>a-b); if(!ts.length)return [];
   const gaps=ts.slice(1).map((t,i)=>t-ts[i]).filter(x=>x>.05); const med=percentile(gaps,.5)||.35;
@@ -659,11 +707,12 @@ function quantileTime(events,q,duration){
   return percentile(ts,clamp(q,0,1));
 }
 function buildLyricTimeline({text,vocalEvents,duration,motionPrimitives}){
-  const lines=parseLyrics(text); if(!lines.length)return {version:'0.1',status:'not_supplied',alignment_method:'none',entries:[],note:'歌詞未入力'};
+  const inputStructure=parseLyricStructure(text),lines=inputStructure.lines.filter(x=>x.kind==='VOCAL_LINE');
+  if(!lines.length)return {version:'0.1',status:inputStructure.lines.length?'no_vocal_lines':'not_supplied',alignment_method:'none',entries:[],input_structure:inputStructure,note:'発声行なし。曖昧な行は明示タグで確認してください。'};
   const clusters=clusterVocalEvents(vocalEvents,duration), hasVocal=(vocalEvents||[]).length>0;
   const entries=lines.map((line,i)=>{
     let start=line.anchor_start_sec;
-    let method=line.anchor_start_sec!==null?'user_timecode':'heuristic_vocal_activity';
+    let method=line.anchor_start_sec!==null?'user_timecode':hasVocal?'heuristic_vocal_activity':'duration_distribution';
     if(start===null){
       if(clusters.length===lines.length)start=clusters[i].start_sec;
       else start=quantileTime(vocalEvents,(i+.15)/Math.max(lines.length,1),duration);
@@ -676,10 +725,10 @@ function buildLyricTimeline({text,vocalEvents,duration,motionPrimitives}){
     else end=Math.min(duration,Math.max(start+.35,hasVocal?(vocalEvents[vocalEvents.length-1]?.time_sec||duration)+.35:duration));
     start=clamp(start,0,duration); end=clamp(end,start,duration);
     const confidence=line.anchor_start_sec!==null?'user_fixed':hasVocal?(clusters.length===lines.length?'medium':'low'):'low';
-    return {line_index:i,start_sec:round(start,3),end_sec:round(end,3),type:line.type,text:line.text,confidence,alignment_method:method,manual_corrected:false};
+    return {line_index:i,source_line_number:line.source_line_number,section_id:line.section_id,raw_text:line.raw_text,classification:line.classification,timing_status:line.anchor_start_sec!==null?'user_start_estimated_end':'estimated',start_sec:round(start,3),end_sec:round(end,3),type:line.type,text:line.text,confidence,alignment_method:method,manual_corrected:false};
   });
   refreshLyricAudioContext({entries},motionPrimitives);
-  return {version:'0.1',status:hasVocal?'candidate_alignment_available':'timing_fallback_without_vocal_stem',alignment_method:hasVocal?'vocal_event_quantile_or_cluster':'duration_distribution',unit:'lyric_line',source_text_preserved:true,classification_rule:'LYRICを既定値とし、SCAT/BREATH/VOCALIZATION/INSTRUMENTALは入力タグで明示する。音響だけから意味分類を確定しない。',limitations:['音声認識/forced alignment未実装','単語単位同期未実装','自動同期は候補値。重要箇所は手動補正を推奨'],entries};
+  return {version:'0.1',status:hasVocal?'candidate_alignment_available':'timing_fallback_without_vocal_stem',alignment_method:hasVocal?'vocal_event_quantile_or_cluster':'duration_distribution',unit:'lyric_line',input_structure:inputStructure,source_text_preserved:true,classification_rule:'LYRICを既定値とし、SCAT/BREATH/VOCALIZATION/INSTRUMENTALは入力タグで明示する。音響だけから意味分類を確定しない。',limitations:['音声認識/forced alignment未実装','単語単位同期未実装','自動同期は候補値。重要箇所は手動補正を推奨'],entries};
 }
 function refreshLyricAudioContext(timeline,motionPrimitives){
   for(const e of timeline.entries){
@@ -694,20 +743,27 @@ function applySrtAlignment(timeline,alignment,text,motionPrimitives){
   let applied=false;
   timeline.entries=timeline.entries.map(e=>{
     const m=byLine.get(e.line_index);if(!m||anchors.has(e.line_index))return e;
-    applied=true;return {...e,start_sec:m.start_sec,end_sec:m.end_sec,confidence:m.confidence,alignment_method:'external_srt_match',asr_text:m.asr_text,asr_similarity:m.similarity};
+    applied=true;return {...e,timing_status:'srt_candidate',start_sec:m.start_sec,end_sec:m.end_sec,confidence:m.confidence,alignment_method:'external_srt_match',asr_text:m.asr_text,asr_similarity:m.similarity};
   });
   if(applied){timeline.status='external_srt_alignment_available';timeline.alignment_method='canonical_lyrics_x_external_srt';}
   refreshLyricAudioContext(timeline,motionPrimitives);
 }
 function renderLyricEditor(){
-  if(!ui.lyricPanel||!ui.lyricEditor||!analysisResult?.lyric_timeline?.entries?.length){ui.lyricPanel?.classList.add('hidden');return;}
+  const structuralRows=analysisResult?.lyric_timeline?.input_structure?.lines.filter(x=>x.kind!=='VOCAL_LINE')||[];
+  if(!ui.lyricPanel||!ui.lyricEditor||(!analysisResult?.lyric_timeline?.entries?.length&&!structuralRows.length)){ui.lyricPanel?.classList.add('hidden');return;}
   ui.lyricPanel.classList.remove('hidden'); ui.lyricEditor.innerHTML='';
+  const structureInfo=$('lyricStructureInfo');
+  if(structureInfo)structureInfo.innerHTML=structuralRows.length?'<p>以下は時刻照合の対象外です。発声する行なら入力欄で先頭に [LYRIC] / [SCAT] / [VOCAL] を付け、再解析してください。構造の指定は [SECTION] / [DIRECTIVE] で修正できます。</p>'+structuralRows.map(x=>`<div class="event-item"><b>入力${x.source_line_number}行目 / ${escapeHtml(x.kind)}</b><div>${escapeHtml(x.raw_text)}</div><small>${escapeHtml(x.structure_confidence)} / ${escapeHtml(x.structure_evidence.join(', '))}</small></div>`).join(''):'';
   for(const e of analysisResult.lyric_timeline.entries){
     const row=document.createElement('div');row.className='lyric-row';
-    row.innerHTML=`<input type="number" step="0.01" min="0" value="${e.start_sec}" aria-label="開始秒"><input type="number" step="0.01" min="0" value="${e.end_sec}" aria-label="終了秒"><select aria-label="種別">${['LYRIC','SCAT','BREATH','VOCALIZATION','INSTRUMENTAL'].map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('')}</select><div class="lyric-text">${escapeHtml(e.text||'（テキストなし）')}<br><small>${escapeHtml(e.confidence)} / ${escapeHtml(e.alignment_method)}</small></div>`;
+    row.innerHTML=`<input type="number" step="0.01" min="0" value="${e.start_sec}" aria-label="開始秒"><input type="number" step="0.01" min="0" value="${e.end_sec}" aria-label="終了秒"><select aria-label="種別">${['LYRIC','SCAT','BREATH','VOCALIZATION','INSTRUMENTAL'].map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('')}</select><div class="lyric-text">${escapeHtml(e.text||'（テキストなし）')}<br><small>${escapeHtml(e.confidence)} / ${escapeHtml(e.alignment_method)} / ${escapeHtml(e.timing_status||'candidate')}<br>発声分類候補: ${escapeHtml((e.classification?.candidates||[]).map(c=>`${c.type} (${c.confidence})`).join(', ')||'未確定')}</small></div>`;
     const [a,b,sel]=row.querySelectorAll('input,select');
-    const update=()=>{e.start_sec=round(clamp(Number(a.value)||0,0,analysisResult.source.duration_sec),3);e.end_sec=round(clamp(Number(b.value)||e.start_sec,e.start_sec,analysisResult.source.duration_sec),3);e.type=sel.value;e.manual_corrected=true;e.confidence='user_corrected';e.alignment_method='manual';a.value=e.start_sec;b.value=e.end_sec;refreshLyricAudioContext(analysisResult.lyric_timeline,analysisResult.motion_primitives);renderJsonPreviewOnly();};
-    a.addEventListener('change',update);b.addEventListener('change',update);sel.addEventListener('change',update);ui.lyricEditor.appendChild(row);
+    const update=(timing)=>{
+      if(timing){e.start_sec=round(clamp(Number(a.value)||0,0,analysisResult.source.duration_sec),3);e.end_sec=round(clamp(Number(b.value)||e.start_sec,e.start_sec,analysisResult.source.duration_sec),3);e.confidence='user_corrected';e.alignment_method='manual';e.timing_status='manual';a.value=e.start_sec;b.value=e.end_sec;}
+      else{e.type=sel.value;e.classification={status:'manual',confidence:'user_corrected',evidence:['manual_type_selection'],candidates:[{type:e.type,confidence:'user_corrected',evidence:['manual_type_selection']}]};}
+      e.manual_corrected=true;refreshLyricAudioContext(analysisResult.lyric_timeline,analysisResult.motion_primitives);renderJsonPreviewOnly();renderLyricEditor();
+    };
+    a.addEventListener('change',()=>update(true));b.addEventListener('change',()=>update(true));sel.addEventListener('change',()=>update(false));ui.lyricEditor.appendChild(row);
   }
 }
 function renderJsonPreviewOnly(){if(!analysisResult)return;const data=analysisResult;const preview={...data,dynamics_and_bands:{...data.dynamics_and_bands,curves:`[${data.dynamics_and_bands.curves.length} frames — JSON保存時は全データ]`}};ui.json.textContent=JSON.stringify(preview,null,2);}

@@ -48,6 +48,7 @@
         <div class="eyebrow">LYRIC ALIGNMENT / OPTIONAL</div>
         <h2>歌詞を入力</h2>
         <p class="stem-help">1行＝1フレーズとして入力します。Vocals Stemがある場合は発声候補へ自動仮同期します。必要な行だけ <code>[01:23.45]</code> を先頭に付けると開始時刻を固定できます。<code>[SCAT]</code> / <code>[BREATH]</code> / <code>[VOCAL]</code> / <code>[INST]</code> も指定できます。</p>
+        <p class="stem-help">見出し・指示・曖昧な行は歌唱時刻の対象外として原文を保持します。誤判定は行頭の [SECTION] / [DIRECTIVE] / [LYRIC] / [SCAT] / [VOCAL] で指定し直せます。タグのない発声分類は候補です。</p>
         <textarea id="lyricsInput" class="lyrics-input" rows="9" placeholder="例：
 笑って蹴るわ
 [00:18.20] あなたが残したシャツを
@@ -134,6 +135,7 @@
         <div class="eyebrow">LYRIC TIMELINE</div>
         <h2>歌詞同期候補 / 手動補正</h2>
         <p class="stem-help">開始・終了秒は編集できます。変更はその場でJSONへ反映されます。</p>
+        <div id="lyricStructureInfo" class="event-list"></div>
         <div id="lyricTimelineEditor" class="lyric-editor"></div>
       </section>
 

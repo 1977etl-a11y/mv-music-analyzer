@@ -163,3 +163,105 @@ test('analysis failure releases input controls for retry',async()=>{
   const h=harness();mockAnalysis(h);h.run(`ensureLibraries=async()=>{throw Error('offline');}`);
   await h.run('analyzeSelectedFile()');assert.equal(h.run('analyzing'),false);assert.equal(h.elements.get('audioInput').disabled,false);
 });
+
+test('section typography and generic labels are separated from vocal lines',()=>{
+  const h=harness();
+  for(const label of ['【Intro – Ad-lib Scat】','[Verse 1]','【A’】','〈間奏〉','[Verse 2 - whispered]','[Nebula Chamber 7 - whispered]','# 未知の構成名']){
+    h.context.lyrics=label+'\n歌を届けよう';
+    const structure=h.run('parseLyricStructure(lyrics)');
+    assert.equal(structure.lines[0].kind,'SECTION',label);
+    assert.equal(h.run('parseLyrics(lyrics).length'),1,label);
+    assert.equal(structure.lines[1].section_id,structure.lines[0].section_id);
+    assert.ok(structure.lines[0].structure_evidence.length);
+    assert.equal(structure.lines[0].start_sec,undefined);
+  }
+});
+
+test('directives, raw text, physical line numbers and section membership survive',()=>{
+  const h=harness();h.context.lyrics='【A’】\n\n  [whispered]  \n[LYRIC] （君が好き）\n[INST]\n[DIRECTIVE] 照明を落とす';
+  const result=h.run('parseLyricStructure(lyrics)');
+  assert.equal(result.source_text,h.context.lyrics);
+  assert.deepEqual(plain(result.lines.map(x=>x.kind)),['SECTION','DIRECTIVE','VOCAL_LINE','DIRECTIVE','DIRECTIVE']);
+  assert.equal(result.lines[1].raw_text,'  [whispered]  ');
+  assert.equal(result.lines[2].source_line_number,4);
+  assert.equal(result.lines[2].section_id,'section_1');
+  assert.equal(result.lines[2].classification.status,'explicit');
+});
+
+test('bracketed calls and sung sentences remain vocal; uncertainty remains recoverable',()=>{
+  const h=harness();
+  for(const text of ['(Hey!)','【ラララ…】','[I love you]','（君が好き）','[VOCAL] [A]']){
+    h.context.lyrics=text;assert.equal(h.run('parseLyrics(lyrics).length'),1,text);
+  }
+  h.context.lyrics='【春の影】\n[不明な注記]';
+  const t=h.run('buildLyricTimeline({text:lyrics,vocalEvents:[],duration:10,motionPrimitives:{windows:[]}})');
+  assert.equal(t.entries.length,0);
+  assert.equal(t.input_structure.lines.length,2);
+  assert.ok(t.input_structure.lines.every(x=>x.kind==='AMBIGUOUS'&&x.structure_confidence==='low'&&x.start_sec===undefined));
+  h.context.lyrics='[LYRIC] 【春の影】';
+  assert.equal(h.run('parseLyrics(lyrics)[0].text'),'【春の影】');
+});
+
+test('English Japanese and mixed scat are candidates, while explicit tags take priority',()=>{
+  const h=harness();
+  for(const text of ['Daba-daba…','ラララ…','Daba ララ…']){
+    h.context.lyrics=text;const line=h.run('parseLyrics(lyrics)[0]');
+    assert.equal(line.type,'LYRIC');assert.equal(line.classification.status,'candidate');
+    assert.ok(line.classification.candidates.some(x=>x.type==='SCAT'),text);
+  }
+  assert.equal(h.run(`parseLyrics('uh…')[0].classification.candidates[0].type`),'VOCALIZATION');
+  assert.equal(h.run(`parseLyrics('[LYRIC] Daba-daba…')[0].classification.candidates[0].type`),'LYRIC');
+  assert.equal(h.run(`parseLyrics('[SCAT] Daba-daba…')[0].type`),'SCAT');
+  assert.equal(h.run(`parseLyrics('[BREATH]')[0].type`),'BREATH');
+});
+
+test('section annotations supply weak candidates without making headings vocal',()=>{
+  const h=harness();
+  const lines=h.run(`parseLyrics('[Intro - Ad-lib Scat]\\nDaba-daba…\\n[Verse 2 - whispered]\\n君が好き')`);
+  assert.equal(lines.length,2);
+  assert.ok(lines[0].classification.candidates.some(x=>x.evidence.includes('section_or_directive_annotation')));
+  assert.equal(lines[1].classification.candidates.length,0);
+});
+
+test('ordinary lyrics preserve line indexes, source lines and timing estimates',()=>{
+  const h=harness();
+  const t=h.run(`buildLyricTimeline({text:'笑って蹴るわ\\n\\nあなたが残したシャツを',vocalEvents:[],duration:10,motionPrimitives:{windows:[]}})`);
+  assert.deepEqual(plain(t.entries.map(x=>[x.line_index,x.source_line_number,x.type])),[[0,1,'LYRIC'],[1,3,'LYRIC']]);
+  assert.ok(t.entries.every(x=>x.timing_status==='estimated'&&x.confidence==='low'&&x.alignment_method==='duration_distribution'&&!x.manual_corrected));
+});
+
+test('headings and directives do not consume SRT cues; unmatched vocals remain estimated',()=>{
+  const h=harness();prepareTimeline(h);
+  h.context.lyrics='【Intro – Ad-lib Scat】\n[whispered]\nDaba-daba…\n【A’】\n笑って蹴るわ\n未照合の歌';
+  const result=h.run(`(()=>{
+    const cues=[{start_sec:1,end_sec:2,text:'Daba-daba…'},{start_sec:6,end_sec:7,text:'笑って蹴るわ'}];
+    const alignment=buildAsrLyricAlignment(lyrics,cues,10);
+    const t=buildLyricTimeline({text:lyrics,vocalEvents:[],duration:10,motionPrimitives:motion});
+    applySrtAlignment(t,alignment,lyrics,motion);return {alignment,t};
+  })()`);
+  assert.deepEqual(plain(result.alignment.matches.map(x=>x.start_sec)),[1,6]);
+  assert.equal(result.t.entries.length,3);
+  assert.equal(result.t.entries[1].audio_context[0].type,'FORCE');
+  assert.equal(result.t.entries[1].timing_status,'srt_candidate');
+  assert.equal(result.t.entries[2].timing_status,'estimated');
+  assert.equal(result.t.entries[2].confidence,'low');
+  assert.equal(result.t.entries[0].source_line_number,3);
+});
+
+test('explicit timecodes survive structure filtering and SRT alignment',()=>{
+  const h=harness();
+  const t=h.run(`(()=>{const text='[Verse 1]\\n[00:04.00] hello';const t=buildLyricTimeline({text,vocalEvents:[],duration:10,motionPrimitives:{windows:[]}});applySrtAlignment(t,buildAsrLyricAlignment(text,[{start_sec:1,end_sec:2,text:'hello'}],10),text,{windows:[]});return t;})()`);
+  assert.equal(t.entries[0].start_sec,4);assert.equal(t.entries[0].alignment_method,'user_timecode');
+  assert.equal(t.entries[0].timing_status,'user_start_estimated_end');
+});
+
+test('manual classification does not turn estimated timing into manual timing',()=>{
+  const h=harness();prepareTimeline(h);const rows=[];
+  h.elements.get('lyricTimelineEditor').appendChild=row=>rows.push(row);
+  h.run(`timeline.entries[0].timing_status='estimated';timeline.entries[0].alignment_method='duration_distribution';analysisResult={source:{duration_sec:10},lyric_timeline:timeline,motion_primitives:motion,dynamics_and_bands:{curves:[]}};renderLyricEditor()`);
+  rows[0].fields[2].value='SCAT';rows[0].fields[2].listeners.change();
+  assert.equal(h.run('timeline.entries[0].type'),'SCAT');
+  assert.equal(h.run('timeline.entries[0].classification.status'),'manual');
+  assert.equal(h.run('timeline.entries[0].timing_status'),'estimated');
+  assert.equal(h.run('timeline.entries[0].alignment_method'),'duration_distribution');
+});
