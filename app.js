@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.6.1-fix1';
+const VERSION = '0.6.2';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
@@ -26,6 +26,8 @@ let analysisResult = null;
 let srtFile = null;
 let essentia = null;
 let audioBeat = null;
+let analyzing = false;
+let audioBeatLoadAttempts = 0;
 
 function setProgress(pct,text){
   const p=Math.max(0,Math.min(100,pct));
@@ -49,6 +51,7 @@ function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':
 function asArray(x){return x?Array.from(x):[];}
 
 function pickFile(file){
+  if(analyzing)return;
   if(!file)return;
   if(!(file.type.startsWith('audio/')||/\.(wav|mp3|m4a|aac|flac|ogg)$/i.test(file.name))){
     showWarning('音声ファイルを選択してください。');return;
@@ -94,20 +97,29 @@ ui.share.addEventListener('click',shareJSON);
 ui.copy.addEventListener('click',copySummary);
 
 function resetAll(){
+  if(analyzing)return;
   selectedFile=null;analysisResult=null;ui.input.value='';
   for(const role of ['vocals','drums','bass','other']){stemFiles[role]=null;ui[role].value='';} updateStemInfo();
   ui.fileInfo.classList.add('hidden');ui.results.classList.add('hidden');ui.statusPanel.classList.add('hidden'); if(ui.lyrics)ui.lyrics.value=''; srtFile=null; if(ui.srt)ui.srt.value=''; if(ui.srtInfo)ui.srtInfo.textContent='SRT未選択'; if(ui.lyricPanel)ui.lyricPanel.classList.add('hidden');
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');
 }
 
+const scriptLoads = new Map();
 function loadScript(src){
-  return new Promise((resolve,reject)=>{
+  if(scriptLoads.has(src))return scriptLoads.get(src);
+  const promise=new Promise((resolve,reject)=>{
     const existing=[...document.scripts].find(s=>s.src===src);
-    if(existing){if(existing.dataset.loaded==='1')resolve();else existing.addEventListener('load',resolve,{once:true});return;}
+    if(existing?.dataset.loaded==='1'){resolve();return;}
+    if(existing)existing.remove();
     const s=document.createElement('script');s.src=src;s.async=true;
-    s.onload=()=>{s.dataset.loaded='1';resolve();};s.onerror=()=>reject(new Error(`ライブラリ読み込み失敗: ${src}`));
+    const timer=setTimeout(()=>fail(),30000);
+    const fail=()=>{clearTimeout(timer);s.remove();reject(new Error(`ライブラリ読み込み失敗: ${src}`));};
+    s.onload=()=>{clearTimeout(timer);s.dataset.loaded='1';resolve();};s.onerror=fail;
     document.head.appendChild(s);
   });
+  scriptLoads.set(src,promise);
+  promise.catch(()=>scriptLoads.delete(src));
+  return promise;
 }
 async function ensureLibraries(){
   const state=[];
@@ -124,7 +136,8 @@ async function ensureLibraries(){
   if(!audioBeat){
     setProgress(9,'@audio/beatを読み込み中…');
     try{
-      audioBeat=await import(AUDIO_BEAT_URL);
+      const attempt=audioBeatLoadAttempts++;
+      audioBeat=await import(attempt?`${AUDIO_BEAT_URL}&retry=${attempt}`:AUDIO_BEAT_URL);
       state.push({label:`@audio/beat ${AUDIO_BEAT_VERSION}`,ok:true});
     }catch(err){
       console.warn('@audio/beat load failed; fallback to Essentia only',err);
@@ -218,7 +231,7 @@ function detectSections(curves,maxCount=10){
       Math.abs(b.low_ratio-a.low_ratio)+Math.abs(b.mid_ratio-a.mid_ratio)+Math.abs(b.high_ratio-a.high_ratio);
     changes.push({time_sec:b.t,score});
   }
-  const threshold=percentile(changes.map(x=>x.score),.82),sorted=changes.filter(x=>x.score>=threshold).sort((a,b)=>b.score-a.score),chosen=[];
+  const threshold=percentile(changes.map(x=>x.score),.82),sorted=changes.filter(x=>x.score>0&&x.score>=threshold).sort((a,b)=>b.score-a.score),chosen=[];
   for(const c of sorted){if(chosen.every(x=>Math.abs(x.time_sec-c.time_sec)>=4))chosen.push(c);if(chosen.length>=maxCount)break;}
   return chosen.sort((a,b)=>a.time_sec-b.time_sec).map(x=>({time_sec:round(x.time_sec,3),score:round(x.score,4),label:'feature_change_candidate'}));
 }
@@ -242,7 +255,7 @@ function dedupeTimes(arr,minGap=.04){
 }
 function densityPeaks(times,duration,windowSec=4,stepSec=2,count=3){
   const rows=[];
-  for(let start=0;start<duration;start+=stepSec)rows.push({time_sec:start+windowSec/2,count:times.filter(t=>t>=start&&t<start+windowSec).length});
+  for(let start=0;start<duration;start+=stepSec)rows.push({time_sec:(start+Math.min(duration,start+windowSec))/2,count:times.filter(t=>t>=start&&t<Math.min(duration,start+windowSec)).length});
   rows.sort((a,b)=>b.count-a.count);const out=[];
   for(const r of rows){if(r.count>0&&out.every(x=>Math.abs(x.time_sec-r.time_sec)>=6)){out.push(r);if(out.length>=count)break;}}
   return out.sort((a,b)=>a.time_sec-b.time_sec);
@@ -338,7 +351,7 @@ function buildMvSyncCandidates({onsets,lowOnsets,highOnsets,sections,curves,dura
   sustainedLowCandidates(curves).forEach(x=>chosen.push({time_sec:x.start_sec,end_sec:x.end_sec,type:'sustained_low_energy',confidence:'medium',strength:round(x.peak_low_ratio,4),normalized_strength:round(x.peak_low_ratio,4),band:'low',local_loudness_db:round(nearestCurve(curves,x.start_sec)?.loudness_db??null,3),beat_distance_sec:round(nearestBeatDistance(beats,x.start_sec),4),source_detector:'band_curve',eligible_for_mv_sync:true,reason:'低域優勢が一定時間継続',mv_use:'慣性回転／世界側だけ動き続ける対位候補'}));
 
   const uniq=[];
-  chosen.sort((a,b)=>a.time_sec-b.time_sec).forEach(h=>{
+  chosen.filter(h=>Number.isFinite(h.time_sec)&&h.time_sec>=0&&h.time_sec<=duration).map(h=>h.end_sec==null?h:{...h,end_sec:clamp(h.end_sec,h.time_sec,duration)}).sort((a,b)=>a.time_sec-b.time_sec).forEach(h=>{
     if(uniq.every(u=>u.type!==h.type||Math.abs(u.time_sec-h.time_sec)>.12))uniq.push(h);
   });
   return {
@@ -374,12 +387,12 @@ function essentiaOnsets(mono){
   let vec=null;
   try{
     vec=essentia.arrayToVector(mono);
-    let r;
+    let r,method='Essentia SuperFlux';
     try{r=essentia.SuperFluxExtractor(vec,20,2048,256,16,ANALYSIS_SR,.05);}
-    catch(_){r=essentia.OnsetRate(vec);}
+    catch(_){r=essentia.OnsetRate(vec);method='Essentia OnsetRate';}
     const onsetVec=r.onsets||null;
     const times=onsetVec&&typeof onsetVec!=='number'?safeVectorToArray(onsetVec):[];
-    return{times:times.map(x=>round(x,4)),rate:round(r.onsetRate??(times.length/(mono.length/ANALYSIS_SR)),5)};
+    return{times:times.map(x=>round(x,4)),rate:round(r.onsetRate??(times.length/(mono.length/ANALYSIS_SR)),5),method};
   }finally{try{if(vec)vec.delete();}catch(_){}}
 }
 
@@ -420,14 +433,14 @@ async function analyzeStemFile(file,role,originalDuration){
     dynamics_and_bands:{window_sec:.5,hop_sec:.25,curves:compactStemCurves(curves)}
   };
 }
-function mergeStemMvCandidates(originalCandidates,stemAnalysis){
+function mergeStemMvCandidates(originalCandidates,stemAnalysis,duration=Infinity){
   const all=[...(originalCandidates||[])];
   for(const [role,s] of Object.entries(stemAnalysis||{})){
     for(const e of (s?.event_candidates||[])){
       all.push({...e,mv_use:role==='vocals'?'歌詞/スキャット/ボイパ等の時刻照合候補':'Stem由来の動作同期候補'});
     }
   }
-  return all.sort((a,b)=>(a.time_sec??0)-(b.time_sec??0));
+  return all.filter(e=>Number.isFinite(e.time_sec)&&e.time_sec>=0&&e.time_sec<=duration).sort((a,b)=>a.time_sec-b.time_sec);
 }
 
 
@@ -529,6 +542,11 @@ function buildMotionPrimitiveLayer({duration,bpm,beats,onsets,lowOnsets,highOnse
       TEXTURE:makePrimitive('TEXTURE',textureStrength,['band_energy_ratios','spectral_variation_proxy'],{dominant_band:dominantBand,band_ratios:{low:round(lowMean,4),mid:round(avg(mid),4),high:round(highMean,4)}}),
       FORCE:makePrimitive('FORCE',force,['low_band_energy','bass_stem_low_ratio','loudness'],{physical_hint:'weight_or_pressure'})
     };
+    // Existing -60 dB audibility gate; fade confidence in over the next 12 dB.
+    const energyGate=clamp((avg(loud)+60)/12,0,1);
+    for(const p of Object.values(primitives)){
+      p.strength=round(p.strength*energyGate,4);p.confidence=confidenceLabel(p.strength);
+    }
     windows.push({
       start_sec:round(start,3),end_sec:round(end,3),window_basis:'4_beats_or_4sec_fallback',
       metrics:{loudness_norm:round(loudNorm,4),onset_density_norm:round(densityNorm,4),onset_count:ons.length,active_stems:activeStems,stem_event_counts:{vocals:vocalCount,drums:drumCount,bass:bassCount,other:otherCount}},
@@ -554,7 +572,7 @@ function buildMotionPrimitiveLayer({duration,bpm,beats,onsets,lowOnsets,highOnse
 
 // v0.6.1: 外部ASR SRTを「WHEN」の観測として読み込み、正規歌詞「WHAT」と分離して保持する。
 function srtTimeToSec(s){
-  const m=String(s||'').trim().match(/^(\d+):(\d{2}):(\d{2})[,.](\d{1,3})$/); if(!m)return null;
+  const m=String(s||'').trim().match(/^(\d+):(\d{2}):(\d{2})[,.](\d{1,3})$/); if(!m||Number(m[2])>=60||Number(m[3])>=60)return null;
   return Number(m[1])*3600+Number(m[2])*60+Number(m[3])+Number(m[4].padEnd(3,'0'))/1000;
 }
 function cleanAsrText(text){
@@ -563,17 +581,22 @@ function cleanAsrText(text){
   for(const p of patterns)t=t.replace(p,' ');
   return t.replace(/\s+/g,' ').trim();
 }
-function parseSrt(text){
+function parseSrt(text,duration=Infinity,warnings=[]){
   const blocks=String(text||'').replace(/\r/g,'').split(/\n{2,}/); const entries=[];
   for(const block of blocks){
     const lines=block.split('\n').map(x=>x.trim()).filter(Boolean); if(!lines.length)continue;
     const ti=lines.findIndex(x=>x.includes('-->')); if(ti<0)continue;
-    const mm=lines[ti].match(/(\d+:\d{2}:\d{2}[,.]\d{1,3})\s*-->\s*(\d+:\d{2}:\d{2}[,.]\d{1,3})/); if(!mm)continue;
-    const start=srtTimeToSec(mm[1]),end=srtTimeToSec(mm[2]); if(start==null||end==null)continue;
+    const mm=lines[ti].match(/^(-?\d+:\d{2}:\d{2}[,.]\d{1,3})\s*-->\s*(-?\d+:\d{2}:\d{2}[,.]\d{1,3})(?:\s.*)?$/);
+    if(!mm||mm[1].startsWith('-')||mm[2].startsWith('-')){warnings.push(`SRTの不正な時刻を除外しました: ${lines[ti]}`);continue;}
+    let start=srtTimeToSec(mm[1]),end=srtTimeToSec(mm[2]);
+    if(start==null||end==null||end<=start){warnings.push(`SRTの不正な区間を除外しました: ${lines[ti]}`);continue;}
+    if(start>=duration){warnings.push(`曲尺外のSRT区間を除外しました: ${lines[ti]}`);continue;}
+    if(end>duration){end=Math.floor(duration*1000)/1000;warnings.push(`SRTの終了時刻を曲尺へ補正しました: ${lines[ti]}`);}
+    if(end<=start){warnings.push(`補正後に長さがないSRT区間を除外しました: ${lines[ti]}`);continue;}
     const raw=lines.slice(ti+1).join(' '), cleaned=cleanAsrText(raw); if(!cleaned)continue;
     entries.push({cue_index:entries.length,start_sec:round(start,3),end_sec:round(end,3),raw_text:raw,text:cleaned});
   }
-  return entries;
+  return entries.sort((a,b)=>a.start_sec-b.start_sec||a.cue_index-b.cue_index);
 }
 function normJa(s){return String(s||'').toLowerCase().normalize('NFKC').replace(/[\s\p{P}\p{S}]/gu,'').replace(/[ぁ-ん]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));}
 function bigramSet(s){const n=normJa(s),a=new Set();if(n.length<2){if(n)a.add(n);return a;}for(let i=0;i<n.length-1;i++)a.add(n.slice(i,i+2));return a;}
@@ -600,7 +623,7 @@ function buildAsrLyricAlignment(lyricText,srtEntries,duration){
     if(best&&best.similarity>=.18){
       const cues=srtEntries.slice(best.i,best.i+best.span), start=cues[0].start_sec,end=cues[cues.length-1].end_sec;
       matches.push({line_index:line.line_index,type:line.type,canonical_text:line.text,start_sec:start,end_sec:end,asr_text:best.text,similarity:round(best.similarity,4),confidence:best.similarity>=.62?'high':best.similarity>=.38?'medium':'low',source:'canonical_lyrics_x_srt'});
-      minCue=Math.max(minCue,best.i);
+      minCue=best.i+best.span;
     }
   }
   const used=new Set();
@@ -655,12 +678,26 @@ function buildLyricTimeline({text,vocalEvents,duration,motionPrimitives}){
     const confidence=line.anchor_start_sec!==null?'user_fixed':hasVocal?(clusters.length===lines.length?'medium':'low'):'low';
     return {line_index:i,start_sec:round(start,3),end_sec:round(end,3),type:line.type,text:line.text,confidence,alignment_method:method,manual_corrected:false};
   });
-  const windows=motionPrimitives?.windows||[];
-  for(const e of entries){
-    const mid=(e.start_sec+e.end_sec)/2, w=windows.find(x=>mid>=x.start_sec&&mid<x.end_sec);
+  refreshLyricAudioContext({entries},motionPrimitives);
+  return {version:'0.1',status:hasVocal?'candidate_alignment_available':'timing_fallback_without_vocal_stem',alignment_method:hasVocal?'vocal_event_quantile_or_cluster':'duration_distribution',unit:'lyric_line',source_text_preserved:true,classification_rule:'LYRICを既定値とし、SCAT/BREATH/VOCALIZATION/INSTRUMENTALは入力タグで明示する。音響だけから意味分類を確定しない。',limitations:['音声認識/forced alignment未実装','単語単位同期未実装','自動同期は候補値。重要箇所は手動補正を推奨'],entries};
+}
+function refreshLyricAudioContext(timeline,motionPrimitives){
+  for(const e of timeline.entries){
+    const mid=(e.start_sec+e.end_sec)/2;
+    const w=(motionPrimitives?.windows||[]).find(x=>mid>=x.start_sec&&mid<x.end_sec);
     e.audio_context=w?Object.values(w.primitives).filter(p=>p.strength>=.35).sort((a,b)=>b.strength-a.strength).slice(0,4).map(p=>({type:p.type,strength:p.strength,confidence:p.confidence})):[];
   }
-  return {version:'0.1',status:hasVocal?'candidate_alignment_available':'timing_fallback_without_vocal_stem',alignment_method:hasVocal?'vocal_event_quantile_or_cluster':'duration_distribution',unit:'lyric_line',source_text_preserved:true,classification_rule:'LYRICを既定値とし、SCAT/BREATH/VOCALIZATION/INSTRUMENTALは入力タグで明示する。音響だけから意味分類を確定しない。',limitations:['音声認識/forced alignment未実装','単語単位同期未実装','自動同期は候補値。重要箇所は手動補正を推奨'],entries};
+}
+function applySrtAlignment(timeline,alignment,text,motionPrimitives){
+  const anchors=new Set(parseLyrics(text).filter(x=>x.anchor_start_sec!==null).map(x=>x.line_index));
+  const byLine=new Map(alignment.matches.map(x=>[x.line_index,x]));
+  let applied=false;
+  timeline.entries=timeline.entries.map(e=>{
+    const m=byLine.get(e.line_index);if(!m||anchors.has(e.line_index))return e;
+    applied=true;return {...e,start_sec:m.start_sec,end_sec:m.end_sec,confidence:m.confidence,alignment_method:'external_srt_match',asr_text:m.asr_text,asr_similarity:m.similarity};
+  });
+  if(applied){timeline.status='external_srt_alignment_available';timeline.alignment_method='canonical_lyrics_x_external_srt';}
+  refreshLyricAudioContext(timeline,motionPrimitives);
 }
 function renderLyricEditor(){
   if(!ui.lyricPanel||!ui.lyricEditor||!analysisResult?.lyric_timeline?.entries?.length){ui.lyricPanel?.classList.add('hidden');return;}
@@ -669,19 +706,24 @@ function renderLyricEditor(){
     const row=document.createElement('div');row.className='lyric-row';
     row.innerHTML=`<input type="number" step="0.01" min="0" value="${e.start_sec}" aria-label="開始秒"><input type="number" step="0.01" min="0" value="${e.end_sec}" aria-label="終了秒"><select aria-label="種別">${['LYRIC','SCAT','BREATH','VOCALIZATION','INSTRUMENTAL'].map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('')}</select><div class="lyric-text">${escapeHtml(e.text||'（テキストなし）')}<br><small>${escapeHtml(e.confidence)} / ${escapeHtml(e.alignment_method)}</small></div>`;
     const [a,b,sel]=row.querySelectorAll('input,select');
-    const update=()=>{e.start_sec=round(clamp(Number(a.value)||0,0,analysisResult.source.duration_sec),3);e.end_sec=round(clamp(Number(b.value)||e.start_sec,e.start_sec,analysisResult.source.duration_sec),3);e.type=sel.value;e.manual_corrected=true;e.confidence='user_corrected';e.alignment_method='manual';renderJsonPreviewOnly();};
+    const update=()=>{e.start_sec=round(clamp(Number(a.value)||0,0,analysisResult.source.duration_sec),3);e.end_sec=round(clamp(Number(b.value)||e.start_sec,e.start_sec,analysisResult.source.duration_sec),3);e.type=sel.value;e.manual_corrected=true;e.confidence='user_corrected';e.alignment_method='manual';a.value=e.start_sec;b.value=e.end_sec;refreshLyricAudioContext(analysisResult.lyric_timeline,analysisResult.motion_primitives);renderJsonPreviewOnly();};
     a.addEventListener('change',update);b.addEventListener('change',update);sel.addEventListener('change',update);ui.lyricEditor.appendChild(row);
   }
 }
 function renderJsonPreviewOnly(){if(!analysisResult)return;const data=analysisResult;const preview={...data,dynamics_and_bands:{...data.dynamics_and_bands,curves:`[${data.dynamics_and_bands.curves.length} frames — JSON保存時は全データ]`}};ui.json.textContent=JSON.stringify(preview,null,2);}
 
 async function analyzeSelectedFile(){
-  if(!selectedFile)return;
+  if(!selectedFile||analyzing)return;
+  const input={file:selectedFile,stems:{...stemFiles},lyrics:ui.lyrics?.value||'',srt:srtFile};
+  analyzing=true;
+  const inputs=[ui.input,ui.vocals,ui.drums,ui.bass,ui.other,ui.lyrics,ui.srt,ui.srtChoose].filter(Boolean);
+  inputs.forEach(el=>el.disabled=true);
+  const warnings=[];
   ui.analyze.disabled=true;ui.reset.disabled=true;showWarning('');ui.results.classList.add('hidden');
   try{
     await ensureLibraries();
     setProgress(14,'音源をデコード中…');
-    const {buffer,sourceRate,sourceChannels}=await decodeAndResample(selectedFile);
+    const {buffer,sourceRate,sourceChannels}=await decodeAndResample(input.file);
     const mono=downmixToMono(buffer),duration=mono.length/ANALYSIS_SR;
 
     setProgress(23,'帯域信号を準備中…');
@@ -705,7 +747,7 @@ async function analyzeSelectedFile(){
     if(!beatPrimary||!Number.isFinite(beatPrimary.bpm)||beatPrimary.beat_times_sec.length<2){
       beatPrimary={engine:'Essentia.js',bpm:er.bpm,confidence:er.confidence,beat_times_sec:er.beat_times_sec,onset_times_sec:[]};
     }
-    const agree=bpmAgreement(beatPrimary.bpm,er.bpm);
+    const agree=beatPrimary.engine==='Essentia.js'?null:bpmAgreement(beatPrimary.bpm,er.bpm);
 
     setProgress(43,'キー / スケールを解析中…');
     const tonal=essentiaKey(mono);
@@ -713,10 +755,12 @@ async function analyzeSelectedFile(){
     setProgress(53,'オンセットを解析中…');
     const eo=essentiaOnsets(mono);
     let onsetTimes=beatPrimary.onset_times_sec.length?beatPrimary.onset_times_sec:eo.times;
+    let onsetMethod=beatPrimary.onset_times_sec.length?'@audio/beat detect':eo.method;
     let lowOnsets=[],highOnsets=[];
     if(audioBeat){
       try{
         onsetTimes=asArray(audioBeat.onsets(mono,{fs:ANALYSIS_SR}));
+        onsetMethod='@audio/beat spectral-flux';
         lowOnsets=asArray(audioBeat.energyOnsets(bands.low,{fs:ANALYSIS_SR}));
         highOnsets=asArray(audioBeat.energyOnsets(bands.high,{fs:ANALYSIS_SR}));
       }catch(err){console.warn('audio beat onset fallback',err);}
@@ -735,7 +779,7 @@ async function analyzeSelectedFile(){
     const mvSync=buildMvSyncCandidates({onsets:onsetTimes,lowOnsets,highOnsets,sections,curves,duration,beats:beatPrimary.beat_times_sec});
 
     const stemAnalysis={};
-    const selectedStems=Object.entries(stemFiles).filter(([,f])=>f);
+    const selectedStems=Object.entries(input.stems).filter(([,f])=>f);
     if(selectedStems.length){
       let stemIndex=0;
       for(const [role,file] of selectedStems){
@@ -748,16 +792,11 @@ async function analyzeSelectedFile(){
 
     setProgress(94,'運動プリミティブへ圧縮中…');
     const motionPrimitives=buildMotionPrimitiveLayer({duration,bpm:beatPrimary.bpm,beats:beatPrimary.beat_times_sec,onsets:onsetTimes,lowOnsets,highOnsets,curves,sections,stemAnalysis});
-    let srtEntries=[]; if(srtFile){setProgress(93,'SRTと正規歌詞を照合中…');srtEntries=parseSrt(await srtFile.text());}
-    const asrLyricAlignment=buildAsrLyricAlignment(ui.lyrics?.value||'',srtEntries,duration);
-    let lyricTimeline=buildLyricTimeline({text:ui.lyrics?.value||'',vocalEvents:stemAnalysis.vocals?.event_candidates||[],duration,motionPrimitives});
-    if(asrLyricAlignment.matches.length){
-      const byLine=new Map(asrLyricAlignment.matches.map(x=>[x.line_index,x]));
-      lyricTimeline.entries=lyricTimeline.entries.map(e=>{const m=byLine.get(e.line_index);return m?{...e,start_sec:m.start_sec,end_sec:m.end_sec,confidence:m.confidence,alignment_method:'external_srt_match',asr_text:m.asr_text,asr_similarity:m.similarity}:e;});
-      lyricTimeline.status='external_srt_alignment_available'; lyricTimeline.alignment_method='canonical_lyrics_x_external_srt';
-    }
+    let srtEntries=[]; if(input.srt){setProgress(94,'SRTと正規歌詞を照合中…');srtEntries=parseSrt(await input.srt.text(),duration,warnings);}
+    const asrLyricAlignment=buildAsrLyricAlignment(input.lyrics,srtEntries,duration);
+    let lyricTimeline=buildLyricTimeline({text:input.lyrics,vocalEvents:stemAnalysis.vocals?.event_candidates||[],duration,motionPrimitives});
+    applySrtAlignment(lyricTimeline,asrLyricAlignment,input.lyrics,motionPrimitives);
 
-    const warnings=[];
     if(duration>600)warnings.push('10分を超える音源はスマホで処理時間・メモリ使用量が増える可能性があります。');
     if(audioBeat===null)warnings.push('@audio/beatを読み込めなかったため、一部解析はEssentia.jsのみで実行しました。');
     if(agree!==null&&agree<.45)warnings.push('BPM推定器同士の結果差が大きいです。ハーフ/ダブルテンポを含め、実音で確認してください。');
@@ -777,7 +816,7 @@ async function analyzeSelectedFile(){
         analysis_sample_rate_hz:ANALYSIS_SR
       },
       source:{
-        file_name:selectedFile.name,mime_type:selectedFile.type||null,file_size_bytes:selectedFile.size,
+        file_name:input.file.name,mime_type:input.file.type||null,file_size_bytes:input.file.size,
         duration_sec:round(duration,5),source_sample_rate_hz:sourceRate,source_channels:sourceChannels
       },
       rhythm:{
@@ -817,7 +856,7 @@ async function analyzeSelectedFile(){
         note:stemAnalysis.vocals?'Vocal stem上の時刻候補を抽出済み。ただしスキャット/ボイパ/笑い/掛け声等の意味分類は専用分類器または歌詞照合なしに確定しない。':'Vocal stem未入力のため歌詞外ボーカル時刻は未確定。'
       },
       onset:{
-        selected_method:audioBeat?'@audio/beat spectral-flux':'Essentia SuperFlux/OnsetRate',
+        selected_method:onsetMethod,
         rate_per_sec:round(onsetTimes.length/Math.max(duration,1e-9),5),
         onset_times_sec:onsetTimes,
         low_band_onset_times_sec:lowOnsets,
@@ -828,10 +867,10 @@ async function analyzeSelectedFile(){
         window_sec:.5,hop_sec:.25,curves
       },
       section_change_candidates:{method:'heuristic_feature_change',candidates:sections},
-      mv_sync_candidates:{method:'original_plus_optional_stems',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates,merged_timeline_candidates:mergeStemMvCandidates(mvSync.candidates,stemAnalysis)},
+      mv_sync_candidates:{method:'original_plus_optional_stems',silence_gate_db:mvSync.silence_gate_db,raw_event_count:mvSync.raw_event_count,rejected_below_gate:mvSync.rejected_below_gate,candidates:mvSync.candidates,merged_timeline_candidates:mergeStemMvCandidates(mvSync.candidates,stemAnalysis,duration)},
       motion_primitives:motionPrimitives,
       lyric_timeline:lyricTimeline,
-      vocal_asr_timeline:{source_file:srtFile?.name||null,format:srtFile?'SRT':null,entries:srtEntries,cleaner:'provider_banner_and_markup_filter'},
+      vocal_asr_timeline:{source_file:input.srt?.name||null,format:input.srt?'SRT':null,entries:srtEntries,cleaner:'provider_banner_and_markup_filter'},
       lyric_asr_alignment:asrLyricAlignment,
       unified_timeline:{rule:'歌詞水脈と音響物理水脈は意味を混合せず、共通time_secで参照する。歌詞と映像の一致/無視/反転/遅延は後段MV設計が決める。',lyric_entry_count:lyricTimeline.entries.length,motion_window_count:motionPrimitives.windows.length},
       mv_mapping_hint:{
@@ -847,6 +886,7 @@ async function analyzeSelectedFile(){
     setProgress(95,'画面を描画中…');
     renderResults(analysisResult);
     renderLyricEditor();
+    showWarning(warnings.join('\n'));
     setProgress(100,'解析完了');
     ui.results.classList.remove('hidden');
     setTimeout(()=>ui.results.scrollIntoView({behavior:'smooth',block:'start'}),80);
@@ -854,7 +894,7 @@ async function analyzeSelectedFile(){
     console.error(err);
     showWarning(`解析に失敗しました：${err?.message||err}\n\n初回はネット接続、対応音声形式、端末メモリを確認してください。`);
     setProgress(0,'解析失敗');
-  }finally{ui.analyze.disabled=false;ui.reset.disabled=false;}
+  }finally{analyzing=false;inputs.forEach(el=>el.disabled=false);ui.analyze.disabled=!selectedFile;ui.reset.disabled=!selectedFile;}
 }
 
 function renderResults(data){
@@ -908,7 +948,7 @@ function renderCurves(curves){
 }
 
 function jsonBlob(){return new Blob([JSON.stringify(analysisResult,null,2)],{type:'application/json'});}
-function outputName(){const base=(selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v6_1.json`;}
+function outputName(){const base=(analysisResult?.source.file_name||selectedFile?.name||'music').replace(/\.[^.]+$/,'');return `${base}_music_analysis_v6_1.json`;}
 function downloadJSON(){if(!analysisResult)return;const a=document.createElement('a');a.href=URL.createObjectURL(jsonBlob());a.download=outputName();a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 async function shareJSON(){
   if(!analysisResult)return;

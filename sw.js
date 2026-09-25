@@ -1,5 +1,5 @@
-const CACHE = 'mv-music-analyzer-v0.6.1-fix1';
-const APP_SHELL = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icon.svg','./music_analysis_schema_v6.json','./music_analysis_schema_v6_1.json','./README_v0.6変更点.txt','./README_v0.6.1変更点.txt','./README_v0.6.1_fix1.txt'];
+const CACHE = 'mv-music-analyzer-v0.6.2';
+const APP_SHELL = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icon.svg','./music_analysis_schema_v6.json','./music_analysis_schema_v6_1.json'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(APP_SHELL)));
@@ -19,8 +19,10 @@ self.addEventListener('fetch',event=>{
   if(!cacheable)return;
   event.respondWith(
     caches.match(request).then(hit=>hit||fetch(request).then(resp=>{
-      const copy=resp.clone();
-      caches.open(CACHE).then(cache=>cache.put(request,copy)).catch(()=>{});
+      if(resp.ok){
+        const copy=resp.clone();
+        caches.open(CACHE).then(cache=>cache.put(request,copy)).catch(()=>{});
+      }
       return resp;
     }))
   );
