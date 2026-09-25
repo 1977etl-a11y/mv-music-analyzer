@@ -1,0 +1,4124 @@
+{
+  "schema": "mv_music_analysis.v6.1",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "engine": {
+    "frontend": "MV Music Analyzer 0.7.0",
+    "essentia_js": "0.1.3",
+    "audio_beat": "2.1.3",
+    "analysis_sample_rate_hz": 44100
+  },
+  "source": {
+    "file_name": "synthetic.wav",
+    "file_size_bytes": 1234,
+    "duration_sec": 12,
+    "source_sample_rate_hz": 44100,
+    "source_channels": 1,
+    "id": "source_a9b73c0cefa696721b2bb63c3a4fad36"
+  },
+  "rhythm": {
+    "bpm": 120,
+    "selected_engine": "synthetic_detector",
+    "confidence": 0.8,
+    "beat_times_sec": [
+      0.2,
+      0.7,
+      1.2,
+      1.7,
+      2.2,
+      2.7,
+      3.2,
+      3.7,
+      4.2,
+      4.7,
+      5.2,
+      5.7,
+      6.2,
+      6.7,
+      7.2,
+      7.7,
+      8.2,
+      8.7,
+      9.2,
+      9.7,
+      10.2,
+      10.7,
+      11.2,
+      11.7
+    ]
+  },
+  "onset": {
+    "selected_method": "synthetic_detector",
+    "onset_times_sec": [
+      0.1,
+      0.35,
+      0.6,
+      0.85,
+      1.1,
+      1.35,
+      1.6,
+      1.85,
+      2.1,
+      2.35,
+      2.6,
+      2.85,
+      3.1,
+      3.35,
+      3.6,
+      3.85,
+      4.1,
+      4.35,
+      4.6,
+      4.85,
+      5.1,
+      5.35,
+      5.6,
+      5.85,
+      6.1,
+      6.35,
+      6.6,
+      6.85,
+      7.1,
+      7.35,
+      7.6,
+      7.85,
+      8.1,
+      8.35,
+      8.6,
+      8.85,
+      9.1,
+      9.35,
+      9.6,
+      9.85,
+      10.1,
+      10.35,
+      10.6,
+      10.85,
+      11.1,
+      11.35,
+      11.6,
+      11.85
+    ],
+    "low_band_onset_times_sec": [],
+    "high_band_onset_times_sec": []
+  },
+  "dynamics_and_bands": {
+    "curves": [
+      {
+        "t": 0.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 0.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 0.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 0.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 1.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 1.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 1.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 1.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 2.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 2.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 2.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 2.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 3.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 3.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 3.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 3.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 4.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 4.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 4.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 4.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 5.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 5.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 5.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 5.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 6.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 6.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 6.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 6.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 7.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 7.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 7.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 7.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 8.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 8.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 8.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 8.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 9.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 9.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 9.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 9.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 10.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 10.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 10.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 10.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 11.125,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 11.375,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 11.625,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      },
+      {
+        "t": 11.875,
+        "loudness_db": -20,
+        "low_ratio": 0.6,
+        "mid_ratio": 0.3,
+        "high_ratio": 0.1
+      }
+    ]
+  },
+  "stems": {
+    "analysis": {}
+  },
+  "section_change_candidates": {
+    "method": "heuristic_feature_change",
+    "candidates": []
+  },
+  "motion_primitives": {
+    "version": "0.1",
+    "status": "heuristic_candidate_layer",
+    "design_rule": "音側の事実→運動プリミティブ→映像物理候補。具体的なBODY/OBJECT/CAMERA/LIGHT/SPACE/EDITへの割当は後段で決定する。",
+    "primitive_types": [
+      "ACCENT",
+      "SUSTAIN",
+      "TRAJECTORY",
+      "PERIODICITY",
+      "ACCUMULATION",
+      "TRANSITION",
+      "RELEASE",
+      "TEXTURE",
+      "FORCE"
+    ],
+    "phrase_window_sec": 2,
+    "limitations": [
+      "TRAJECTORYはpitch contour未実装のため帯域比率傾向の代理推定",
+      "TEXTUREは材質名を確定しない",
+      "RELEASEはkey change単独では判定しない",
+      "confidenceは現段階ではヒューリスティック強度に基づく"
+    ],
+    "windows": [
+      {
+        "start_sec": 0,
+        "end_sec": 2,
+        "window_basis": "4_beats_or_4sec_fallback",
+        "metrics": {
+          "loudness_norm": 0,
+          "onset_density_norm": 0.4545,
+          "onset_count": 8,
+          "active_stems": 0,
+          "stem_event_counts": {
+            "vocals": 0,
+            "drums": 0,
+            "bass": 0,
+            "other": 0
+          }
+        },
+        "primitives": {
+          "ACCENT": {
+            "type": "ACCENT",
+            "strength": 0.2273,
+            "confidence": "low",
+            "evidence": [
+              "onset_density",
+              "drums_stem_onsets",
+              "band_specific_onsets"
+            ]
+          },
+          "SUSTAIN": {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium",
+            "evidence": [
+              "loudness_stability",
+              "onset_sparsity",
+              "audible_energy"
+            ],
+            "physical_hint": "continuous_force"
+          },
+          "TRAJECTORY": {
+            "type": "TRAJECTORY",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "band_centroid_proxy_trend"
+            ],
+            "direction": "stable",
+            "limitation": "pitch contour未実装のため帯域比率の時間傾向による弱い代理推定"
+          },
+          "PERIODICITY": {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high",
+            "evidence": [
+              "onset_interval_regularity"
+            ],
+            "interval_cv": 0
+          },
+          "ACCUMULATION": {
+            "type": "ACCUMULATION",
+            "strength": 0.1954,
+            "confidence": "low",
+            "evidence": [
+              "loudness_trend",
+              "onset_density_trend",
+              "low_band_trend",
+              "active_stems"
+            ]
+          },
+          "TRANSITION": {
+            "type": "TRANSITION",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "section_change_candidate"
+            ]
+          },
+          "RELEASE": {
+            "type": "RELEASE",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "previous_accumulation",
+              "transition",
+              "energy_or_density_drop"
+            ]
+          },
+          "TEXTURE": {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "evidence": [
+              "band_energy_ratios",
+              "spectral_variation_proxy"
+            ],
+            "dominant_band": "low",
+            "band_ratios": {
+              "low": 0.6,
+              "mid": 0.3,
+              "high": 0.1
+            }
+          },
+          "FORCE": {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium",
+            "evidence": [
+              "low_band_energy",
+              "bass_stem_low_ratio",
+              "loudness"
+            ],
+            "physical_hint": "weight_or_pressure"
+          }
+        },
+        "id": "motion_ea4fa29aaa20dbac888546aaccb19ac0"
+      },
+      {
+        "start_sec": 2,
+        "end_sec": 4,
+        "window_basis": "4_beats_or_4sec_fallback",
+        "metrics": {
+          "loudness_norm": 0,
+          "onset_density_norm": 0.4545,
+          "onset_count": 8,
+          "active_stems": 0,
+          "stem_event_counts": {
+            "vocals": 0,
+            "drums": 0,
+            "bass": 0,
+            "other": 0
+          }
+        },
+        "primitives": {
+          "ACCENT": {
+            "type": "ACCENT",
+            "strength": 0.2273,
+            "confidence": "low",
+            "evidence": [
+              "onset_density",
+              "drums_stem_onsets",
+              "band_specific_onsets"
+            ]
+          },
+          "SUSTAIN": {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium",
+            "evidence": [
+              "loudness_stability",
+              "onset_sparsity",
+              "audible_energy"
+            ],
+            "physical_hint": "continuous_force"
+          },
+          "TRAJECTORY": {
+            "type": "TRAJECTORY",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "band_centroid_proxy_trend"
+            ],
+            "direction": "stable",
+            "limitation": "pitch contour未実装のため帯域比率の時間傾向による弱い代理推定"
+          },
+          "PERIODICITY": {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high",
+            "evidence": [
+              "onset_interval_regularity"
+            ],
+            "interval_cv": 0
+          },
+          "ACCUMULATION": {
+            "type": "ACCUMULATION",
+            "strength": 0.1954,
+            "confidence": "low",
+            "evidence": [
+              "loudness_trend",
+              "onset_density_trend",
+              "low_band_trend",
+              "active_stems"
+            ]
+          },
+          "TRANSITION": {
+            "type": "TRANSITION",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "section_change_candidate"
+            ]
+          },
+          "RELEASE": {
+            "type": "RELEASE",
+            "strength": 0.0147,
+            "confidence": "low",
+            "evidence": [
+              "previous_accumulation",
+              "transition",
+              "energy_or_density_drop"
+            ]
+          },
+          "TEXTURE": {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "evidence": [
+              "band_energy_ratios",
+              "spectral_variation_proxy"
+            ],
+            "dominant_band": "low",
+            "band_ratios": {
+              "low": 0.6,
+              "mid": 0.3,
+              "high": 0.1
+            }
+          },
+          "FORCE": {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium",
+            "evidence": [
+              "low_band_energy",
+              "bass_stem_low_ratio",
+              "loudness"
+            ],
+            "physical_hint": "weight_or_pressure"
+          }
+        },
+        "id": "motion_8dedc97a3a08500cf89dd24a34ca0eb8"
+      },
+      {
+        "start_sec": 4,
+        "end_sec": 6,
+        "window_basis": "4_beats_or_4sec_fallback",
+        "metrics": {
+          "loudness_norm": 0,
+          "onset_density_norm": 0.4545,
+          "onset_count": 8,
+          "active_stems": 0,
+          "stem_event_counts": {
+            "vocals": 0,
+            "drums": 0,
+            "bass": 0,
+            "other": 0
+          }
+        },
+        "primitives": {
+          "ACCENT": {
+            "type": "ACCENT",
+            "strength": 0.2273,
+            "confidence": "low",
+            "evidence": [
+              "onset_density",
+              "drums_stem_onsets",
+              "band_specific_onsets"
+            ]
+          },
+          "SUSTAIN": {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium",
+            "evidence": [
+              "loudness_stability",
+              "onset_sparsity",
+              "audible_energy"
+            ],
+            "physical_hint": "continuous_force"
+          },
+          "TRAJECTORY": {
+            "type": "TRAJECTORY",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "band_centroid_proxy_trend"
+            ],
+            "direction": "stable",
+            "limitation": "pitch contour未実装のため帯域比率の時間傾向による弱い代理推定"
+          },
+          "PERIODICITY": {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high",
+            "evidence": [
+              "onset_interval_regularity"
+            ],
+            "interval_cv": 0
+          },
+          "ACCUMULATION": {
+            "type": "ACCUMULATION",
+            "strength": 0.1954,
+            "confidence": "low",
+            "evidence": [
+              "loudness_trend",
+              "onset_density_trend",
+              "low_band_trend",
+              "active_stems"
+            ]
+          },
+          "TRANSITION": {
+            "type": "TRANSITION",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "section_change_candidate"
+            ]
+          },
+          "RELEASE": {
+            "type": "RELEASE",
+            "strength": 0.0147,
+            "confidence": "low",
+            "evidence": [
+              "previous_accumulation",
+              "transition",
+              "energy_or_density_drop"
+            ]
+          },
+          "TEXTURE": {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "evidence": [
+              "band_energy_ratios",
+              "spectral_variation_proxy"
+            ],
+            "dominant_band": "low",
+            "band_ratios": {
+              "low": 0.6,
+              "mid": 0.3,
+              "high": 0.1
+            }
+          },
+          "FORCE": {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium",
+            "evidence": [
+              "low_band_energy",
+              "bass_stem_low_ratio",
+              "loudness"
+            ],
+            "physical_hint": "weight_or_pressure"
+          }
+        },
+        "id": "motion_df18c0baa64b94b4480cc8ca84a3d478"
+      },
+      {
+        "start_sec": 6,
+        "end_sec": 8,
+        "window_basis": "4_beats_or_4sec_fallback",
+        "metrics": {
+          "loudness_norm": 0,
+          "onset_density_norm": 0.4545,
+          "onset_count": 8,
+          "active_stems": 0,
+          "stem_event_counts": {
+            "vocals": 0,
+            "drums": 0,
+            "bass": 0,
+            "other": 0
+          }
+        },
+        "primitives": {
+          "ACCENT": {
+            "type": "ACCENT",
+            "strength": 0.2273,
+            "confidence": "low",
+            "evidence": [
+              "onset_density",
+              "drums_stem_onsets",
+              "band_specific_onsets"
+            ]
+          },
+          "SUSTAIN": {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium",
+            "evidence": [
+              "loudness_stability",
+              "onset_sparsity",
+              "audible_energy"
+            ],
+            "physical_hint": "continuous_force"
+          },
+          "TRAJECTORY": {
+            "type": "TRAJECTORY",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "band_centroid_proxy_trend"
+            ],
+            "direction": "stable",
+            "limitation": "pitch contour未実装のため帯域比率の時間傾向による弱い代理推定"
+          },
+          "PERIODICITY": {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high",
+            "evidence": [
+              "onset_interval_regularity"
+            ],
+            "interval_cv": 0
+          },
+          "ACCUMULATION": {
+            "type": "ACCUMULATION",
+            "strength": 0.1954,
+            "confidence": "low",
+            "evidence": [
+              "loudness_trend",
+              "onset_density_trend",
+              "low_band_trend",
+              "active_stems"
+            ]
+          },
+          "TRANSITION": {
+            "type": "TRANSITION",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "section_change_candidate"
+            ]
+          },
+          "RELEASE": {
+            "type": "RELEASE",
+            "strength": 0.0147,
+            "confidence": "low",
+            "evidence": [
+              "previous_accumulation",
+              "transition",
+              "energy_or_density_drop"
+            ]
+          },
+          "TEXTURE": {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "evidence": [
+              "band_energy_ratios",
+              "spectral_variation_proxy"
+            ],
+            "dominant_band": "low",
+            "band_ratios": {
+              "low": 0.6,
+              "mid": 0.3,
+              "high": 0.1
+            }
+          },
+          "FORCE": {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium",
+            "evidence": [
+              "low_band_energy",
+              "bass_stem_low_ratio",
+              "loudness"
+            ],
+            "physical_hint": "weight_or_pressure"
+          }
+        },
+        "id": "motion_1dc81b5aa6f629040584e86ad8d54210"
+      },
+      {
+        "start_sec": 8,
+        "end_sec": 10,
+        "window_basis": "4_beats_or_4sec_fallback",
+        "metrics": {
+          "loudness_norm": 0,
+          "onset_density_norm": 0.4545,
+          "onset_count": 8,
+          "active_stems": 0,
+          "stem_event_counts": {
+            "vocals": 0,
+            "drums": 0,
+            "bass": 0,
+            "other": 0
+          }
+        },
+        "primitives": {
+          "ACCENT": {
+            "type": "ACCENT",
+            "strength": 0.2273,
+            "confidence": "low",
+            "evidence": [
+              "onset_density",
+              "drums_stem_onsets",
+              "band_specific_onsets"
+            ]
+          },
+          "SUSTAIN": {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium",
+            "evidence": [
+              "loudness_stability",
+              "onset_sparsity",
+              "audible_energy"
+            ],
+            "physical_hint": "continuous_force"
+          },
+          "TRAJECTORY": {
+            "type": "TRAJECTORY",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "band_centroid_proxy_trend"
+            ],
+            "direction": "stable",
+            "limitation": "pitch contour未実装のため帯域比率の時間傾向による弱い代理推定"
+          },
+          "PERIODICITY": {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high",
+            "evidence": [
+              "onset_interval_regularity"
+            ],
+            "interval_cv": 0
+          },
+          "ACCUMULATION": {
+            "type": "ACCUMULATION",
+            "strength": 0.1954,
+            "confidence": "low",
+            "evidence": [
+              "loudness_trend",
+              "onset_density_trend",
+              "low_band_trend",
+              "active_stems"
+            ]
+          },
+          "TRANSITION": {
+            "type": "TRANSITION",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "section_change_candidate"
+            ]
+          },
+          "RELEASE": {
+            "type": "RELEASE",
+            "strength": 0.0147,
+            "confidence": "low",
+            "evidence": [
+              "previous_accumulation",
+              "transition",
+              "energy_or_density_drop"
+            ]
+          },
+          "TEXTURE": {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "evidence": [
+              "band_energy_ratios",
+              "spectral_variation_proxy"
+            ],
+            "dominant_band": "low",
+            "band_ratios": {
+              "low": 0.6,
+              "mid": 0.3,
+              "high": 0.1
+            }
+          },
+          "FORCE": {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium",
+            "evidence": [
+              "low_band_energy",
+              "bass_stem_low_ratio",
+              "loudness"
+            ],
+            "physical_hint": "weight_or_pressure"
+          }
+        },
+        "id": "motion_0240fa23b38e79953c83487304767b21"
+      },
+      {
+        "start_sec": 10,
+        "end_sec": 12,
+        "window_basis": "4_beats_or_4sec_fallback",
+        "metrics": {
+          "loudness_norm": 0,
+          "onset_density_norm": 0.4545,
+          "onset_count": 8,
+          "active_stems": 0,
+          "stem_event_counts": {
+            "vocals": 0,
+            "drums": 0,
+            "bass": 0,
+            "other": 0
+          }
+        },
+        "primitives": {
+          "ACCENT": {
+            "type": "ACCENT",
+            "strength": 0.2273,
+            "confidence": "low",
+            "evidence": [
+              "onset_density",
+              "drums_stem_onsets",
+              "band_specific_onsets"
+            ]
+          },
+          "SUSTAIN": {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium",
+            "evidence": [
+              "loudness_stability",
+              "onset_sparsity",
+              "audible_energy"
+            ],
+            "physical_hint": "continuous_force"
+          },
+          "TRAJECTORY": {
+            "type": "TRAJECTORY",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "band_centroid_proxy_trend"
+            ],
+            "direction": "stable",
+            "limitation": "pitch contour未実装のため帯域比率の時間傾向による弱い代理推定"
+          },
+          "PERIODICITY": {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high",
+            "evidence": [
+              "onset_interval_regularity"
+            ],
+            "interval_cv": 0
+          },
+          "ACCUMULATION": {
+            "type": "ACCUMULATION",
+            "strength": 0.1954,
+            "confidence": "low",
+            "evidence": [
+              "loudness_trend",
+              "onset_density_trend",
+              "low_band_trend",
+              "active_stems"
+            ]
+          },
+          "TRANSITION": {
+            "type": "TRANSITION",
+            "strength": 0,
+            "confidence": "low",
+            "evidence": [
+              "section_change_candidate"
+            ]
+          },
+          "RELEASE": {
+            "type": "RELEASE",
+            "strength": 0.0147,
+            "confidence": "low",
+            "evidence": [
+              "previous_accumulation",
+              "transition",
+              "energy_or_density_drop"
+            ]
+          },
+          "TEXTURE": {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "evidence": [
+              "band_energy_ratios",
+              "spectral_variation_proxy"
+            ],
+            "dominant_band": "low",
+            "band_ratios": {
+              "low": 0.6,
+              "mid": 0.3,
+              "high": 0.1
+            }
+          },
+          "FORCE": {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium",
+            "evidence": [
+              "low_band_energy",
+              "bass_stem_low_ratio",
+              "loudness"
+            ],
+            "physical_hint": "weight_or_pressure"
+          }
+        },
+        "id": "motion_72ab9f22b7c8ca5c3567e2b200df56f0"
+      }
+    ],
+    "compact_timeline": [
+      {
+        "start_sec": 0,
+        "end_sec": 2,
+        "dominant_primitives": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "dominant_band": "low"
+          }
+        ]
+      },
+      {
+        "start_sec": 2,
+        "end_sec": 4,
+        "dominant_primitives": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "dominant_band": "low"
+          }
+        ]
+      },
+      {
+        "start_sec": 4,
+        "end_sec": 6,
+        "dominant_primitives": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "dominant_band": "low"
+          }
+        ]
+      },
+      {
+        "start_sec": 6,
+        "end_sec": 8,
+        "dominant_primitives": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "dominant_band": "low"
+          }
+        ]
+      },
+      {
+        "start_sec": 8,
+        "end_sec": 10,
+        "dominant_primitives": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "dominant_band": "low"
+          }
+        ]
+      },
+      {
+        "start_sec": 10,
+        "end_sec": 12,
+        "dominant_primitives": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low",
+            "dominant_band": "low"
+          }
+        ]
+      }
+    ]
+  },
+  "lyric_timeline": {
+    "version": "0.1",
+    "status": "external_srt_alignment_available",
+    "alignment_method": "canonical_lyrics_x_external_srt",
+    "unit": "lyric_line",
+    "input_structure": {
+      "version": "0.1",
+      "source_text": "【Bridge】\nDaba-daba…\n【Final】\n笑って蹴るわ\n【Reprise - Soft S（新規追加）】\n[00:08.00] 君が好き\n【春の影】",
+      "lines": [
+        {
+          "source_line_number": 1,
+          "raw_text": "【Bridge】",
+          "text": "【Bridge】",
+          "kind": "SECTION",
+          "section_id": "section_1",
+          "structure_confidence": "high",
+          "structure_evidence": [
+            "whole_line_wrapper",
+            "section_description",
+            "isolated_before_content"
+          ],
+          "anchor_start_sec": null,
+          "section_label": "Bridge",
+          "id": "text_654dee4ab0abe420a33b3b5a302c7274",
+          "section_ref": "text_654dee4ab0abe420a33b3b5a302c7274"
+        },
+        {
+          "source_line_number": 2,
+          "raw_text": "Daba-daba…",
+          "text": "Daba-daba…",
+          "kind": "VOCAL_LINE",
+          "section_id": "section_1",
+          "structure_confidence": "low",
+          "structure_evidence": [
+            "unmarked_content_line"
+          ],
+          "anchor_start_sec": null,
+          "line_index": 0,
+          "type": "LYRIC",
+          "explicit_type": false,
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": [
+              {
+                "type": "SCAT",
+                "confidence": "medium",
+                "evidence": [
+                  "repeated_syllable_pattern"
+                ]
+              }
+            ]
+          },
+          "id": "text_3bb556204739613aa7480a5002913226",
+          "section_ref": "text_654dee4ab0abe420a33b3b5a302c7274"
+        },
+        {
+          "source_line_number": 3,
+          "raw_text": "【Final】",
+          "text": "【Final】",
+          "kind": "SECTION",
+          "section_id": "section_3",
+          "structure_confidence": "medium",
+          "structure_evidence": [
+            "whole_line_wrapper",
+            "title_shape",
+            "following_vocal_content",
+            "matching_heading_context"
+          ],
+          "anchor_start_sec": null,
+          "section_label": "Final",
+          "id": "text_dc5c04b3f658414578172383adedd091",
+          "section_ref": "text_dc5c04b3f658414578172383adedd091"
+        },
+        {
+          "source_line_number": 4,
+          "raw_text": "笑って蹴るわ",
+          "text": "笑って蹴るわ",
+          "kind": "VOCAL_LINE",
+          "section_id": "section_3",
+          "structure_confidence": "low",
+          "structure_evidence": [
+            "unmarked_content_line"
+          ],
+          "anchor_start_sec": null,
+          "line_index": 1,
+          "type": "LYRIC",
+          "explicit_type": false,
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": []
+          },
+          "id": "text_3c2bc1cf0ffc02210a4dcdffce185fdd",
+          "section_ref": "text_dc5c04b3f658414578172383adedd091"
+        },
+        {
+          "source_line_number": 5,
+          "raw_text": "【Reprise - Soft S（新規追加）】",
+          "text": "【Reprise - Soft S（新規追加）】",
+          "kind": "SECTION",
+          "section_id": "section_5",
+          "structure_confidence": "medium",
+          "structure_evidence": [
+            "whole_line_wrapper",
+            "title_shape",
+            "following_vocal_content",
+            "matching_heading_context"
+          ],
+          "anchor_start_sec": null,
+          "section_label": "Reprise - Soft S（新規追加）",
+          "id": "text_809ca13ef1071d381b4e2ece81d7805c",
+          "section_ref": "text_809ca13ef1071d381b4e2ece81d7805c"
+        },
+        {
+          "source_line_number": 6,
+          "raw_text": "[00:08.00] 君が好き",
+          "text": "君が好き",
+          "kind": "VOCAL_LINE",
+          "section_id": "section_5",
+          "structure_confidence": "low",
+          "structure_evidence": [
+            "explicit_timecode"
+          ],
+          "anchor_start_sec": 8,
+          "line_index": 2,
+          "type": "LYRIC",
+          "explicit_type": false,
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": []
+          },
+          "id": "text_8f3be346b0fb3818bc409976606fe9bc",
+          "section_ref": "text_809ca13ef1071d381b4e2ece81d7805c"
+        },
+        {
+          "source_line_number": 7,
+          "raw_text": "【春の影】",
+          "text": "【春の影】",
+          "kind": "AMBIGUOUS",
+          "section_id": "section_5",
+          "structure_confidence": "low",
+          "structure_evidence": [
+            "whole_line_wrapper",
+            "insufficient_structure_or_vocal_evidence"
+          ],
+          "anchor_start_sec": null,
+          "id": "text_5749f06d430ee8e32d09135df915de8f",
+          "section_ref": "text_809ca13ef1071d381b4e2ece81d7805c"
+        }
+      ],
+      "policy": "Only VOCAL_LINE is aligned. AMBIGUOUS is retained without timing; use explicit tags to resolve. Text classification is heuristic."
+    },
+    "source_text_preserved": true,
+    "classification_rule": "LYRICを既定値とし、SCAT/BREATH/VOCALIZATION/INSTRUMENTALは入力タグで明示する。音響だけから意味分類を確定しない。",
+    "limitations": [
+      "音声認識/forced alignment未実装",
+      "単語単位同期未実装",
+      "自動同期は候補値。重要箇所は手動補正を推奨"
+    ],
+    "entries": [
+      {
+        "line_index": 0,
+        "source_line_number": 2,
+        "section_id": "section_1",
+        "raw_text": "Daba-daba…",
+        "classification": {
+          "status": "candidate",
+          "confidence": "low",
+          "evidence": [
+            "text_only_not_audio_classification"
+          ],
+          "candidates": [
+            {
+              "type": "SCAT",
+              "confidence": "medium",
+              "evidence": [
+                "repeated_syllable_pattern"
+              ]
+            }
+          ]
+        },
+        "timing_status": "srt_candidate",
+        "start_sec": 1,
+        "end_sec": 2,
+        "type": "LYRIC",
+        "text": "Daba-daba…",
+        "confidence": "high",
+        "alignment_method": "external_srt_match",
+        "manual_corrected": false,
+        "audio_context": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low"
+          }
+        ],
+        "timing_origin": {
+          "start_sec": 0.6,
+          "end_sec": 7.95,
+          "type": "LYRIC",
+          "confidence": "low",
+          "alignment_method": "duration_distribution",
+          "timing_status": "estimated",
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": [
+              {
+                "type": "SCAT",
+                "confidence": "medium",
+                "evidence": [
+                  "repeated_syllable_pattern"
+                ]
+              }
+            ]
+          }
+        },
+        "asr_text": "Daba-daba…",
+        "asr_similarity": 1,
+        "id": "lyric_3bb556204739613aa7480a5002913226",
+        "section_ref": "text_654dee4ab0abe420a33b3b5a302c7274",
+        "input_line_ref": "text_3bb556204739613aa7480a5002913226",
+        "initial_state": {
+          "start_sec": 1,
+          "end_sec": 2,
+          "type": "LYRIC",
+          "confidence": "high",
+          "alignment_method": "external_srt_match",
+          "timing_status": "srt_candidate",
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": [
+              {
+                "type": "SCAT",
+                "confidence": "medium",
+                "evidence": [
+                  "repeated_syllable_pattern"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "line_index": 1,
+        "source_line_number": 4,
+        "section_id": "section_3",
+        "raw_text": "笑って蹴るわ",
+        "classification": {
+          "status": "candidate",
+          "confidence": "low",
+          "evidence": [
+            "text_only_not_audio_classification"
+          ],
+          "candidates": []
+        },
+        "timing_status": "srt_candidate",
+        "start_sec": 4,
+        "end_sec": 5,
+        "type": "LYRIC",
+        "text": "笑って蹴るわ",
+        "confidence": "high",
+        "alignment_method": "external_srt_match",
+        "manual_corrected": false,
+        "audio_context": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low"
+          }
+        ],
+        "timing_origin": {
+          "start_sec": 4.6,
+          "end_sec": 7.95,
+          "type": "LYRIC",
+          "confidence": "low",
+          "alignment_method": "duration_distribution",
+          "timing_status": "estimated",
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": []
+          }
+        },
+        "asr_text": "笑って蹴るわ",
+        "asr_similarity": 1,
+        "id": "lyric_3c2bc1cf0ffc02210a4dcdffce185fdd",
+        "section_ref": "text_dc5c04b3f658414578172383adedd091",
+        "input_line_ref": "text_3c2bc1cf0ffc02210a4dcdffce185fdd",
+        "initial_state": {
+          "start_sec": 4,
+          "end_sec": 5,
+          "type": "LYRIC",
+          "confidence": "high",
+          "alignment_method": "external_srt_match",
+          "timing_status": "srt_candidate",
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": []
+          }
+        }
+      },
+      {
+        "line_index": 2,
+        "source_line_number": 6,
+        "section_id": "section_5",
+        "raw_text": "[00:08.00] 君が好き",
+        "classification": {
+          "status": "candidate",
+          "confidence": "low",
+          "evidence": [
+            "text_only_not_audio_classification"
+          ],
+          "candidates": []
+        },
+        "timing_status": "user_start_estimated_end",
+        "start_sec": 8,
+        "end_sec": 12,
+        "type": "LYRIC",
+        "text": "君が好き",
+        "confidence": "user_fixed",
+        "alignment_method": "user_timecode",
+        "manual_corrected": false,
+        "audio_context": [
+          {
+            "type": "PERIODICITY",
+            "strength": 1,
+            "confidence": "high"
+          },
+          {
+            "type": "SUSTAIN",
+            "strength": 0.6545,
+            "confidence": "medium"
+          },
+          {
+            "type": "FORCE",
+            "strength": 0.45,
+            "confidence": "medium"
+          },
+          {
+            "type": "TEXTURE",
+            "strength": 0.39,
+            "confidence": "low"
+          }
+        ],
+        "id": "lyric_8f3be346b0fb3818bc409976606fe9bc",
+        "section_ref": "text_809ca13ef1071d381b4e2ece81d7805c",
+        "input_line_ref": "text_8f3be346b0fb3818bc409976606fe9bc",
+        "initial_state": {
+          "start_sec": 8,
+          "end_sec": 12,
+          "type": "LYRIC",
+          "confidence": "user_fixed",
+          "alignment_method": "user_timecode",
+          "timing_status": "user_start_estimated_end",
+          "classification": {
+            "status": "candidate",
+            "confidence": "low",
+            "evidence": [
+              "text_only_not_audio_classification"
+            ],
+            "candidates": []
+          }
+        }
+      }
+    ]
+  },
+  "vocal_asr_timeline": {
+    "entries": [
+      {
+        "cue_index": 0,
+        "start_sec": 1,
+        "end_sec": 2,
+        "raw_text": "Daba-daba…",
+        "text": "Daba-daba…",
+        "id": "srt_1cda61d926249e5f4695faa98a3ee263"
+      },
+      {
+        "cue_index": 1,
+        "start_sec": 4,
+        "end_sec": 5,
+        "raw_text": "笑って蹴るわ",
+        "text": "笑って蹴るわ",
+        "id": "srt_eadc72e04f23080e151d4070a8811afa"
+      },
+      {
+        "cue_index": 2,
+        "start_sec": 9,
+        "end_sec": 10,
+        "raw_text": "未記載の声",
+        "text": "未記載の声",
+        "id": "srt_2a85911e67c2a74c9a05554e734d5328"
+      }
+    ]
+  },
+  "lyric_asr_alignment": {
+    "version": "0.1",
+    "status": "srt_alignment_available",
+    "role_split": {
+      "canonical_lyrics": "WHAT / 正規テキスト",
+      "srt_asr": "WHEN / 実発声時刻の観測"
+    },
+    "matching": "monotonic_candidate_match_1_to_3_srt_cues",
+    "matches": [
+      {
+        "line_index": 0,
+        "source_line_number": 2,
+        "section_id": "section_1",
+        "type": "LYRIC",
+        "canonical_text": "Daba-daba…",
+        "start_sec": 1,
+        "end_sec": 2,
+        "asr_text": "Daba-daba…",
+        "srt_cue_indices": [
+          0
+        ],
+        "similarity": 1,
+        "confidence": "high",
+        "source": "canonical_lyrics_x_srt",
+        "lyric_id": "lyric_3bb556204739613aa7480a5002913226",
+        "srt_ids": [
+          "srt_1cda61d926249e5f4695faa98a3ee263"
+        ]
+      },
+      {
+        "line_index": 1,
+        "source_line_number": 4,
+        "section_id": "section_3",
+        "type": "LYRIC",
+        "canonical_text": "笑って蹴るわ",
+        "start_sec": 4,
+        "end_sec": 5,
+        "asr_text": "笑って蹴るわ",
+        "srt_cue_indices": [
+          1
+        ],
+        "similarity": 1,
+        "confidence": "high",
+        "source": "canonical_lyrics_x_srt",
+        "lyric_id": "lyric_3c2bc1cf0ffc02210a4dcdffce185fdd",
+        "srt_ids": [
+          "srt_eadc72e04f23080e151d4070a8811afa"
+        ]
+      }
+    ],
+    "unmatched_vocal_events": [
+      {
+        "cue_index": 2,
+        "start_sec": 9,
+        "end_sec": 10,
+        "raw_text": "未記載の声",
+        "text": "未記載の声",
+        "event_type": "UNMATCHED_VOCAL",
+        "classification": {
+          "status": "candidate",
+          "confidence": "low",
+          "evidence": [
+            "text_only_not_audio_classification"
+          ],
+          "candidates": []
+        },
+        "confidence": "candidate",
+        "note": "正規歌詞との一致が弱い/無いASR区間。スキャット等の候補だが意味分類は確定しない。",
+        "srt_id": "srt_2a85911e67c2a74c9a05554e734d5328"
+      }
+    ],
+    "limitations": [
+      "ASR誤認識を正規歌詞へ上書きしない",
+      "SCAT_CANDIDATEは候補分類で確定ではない",
+      "単語forced alignmentではない"
+    ]
+  },
+  "unified_timeline": {
+    "rule": "Independent streams on shared time axis",
+    "lyric_entry_count": 3,
+    "motion_window_count": 6,
+    "version": "0.7.0",
+    "time_unit": "seconds",
+    "time_origin": "Master audio start",
+    "relation_policy": "Temporal overlap is not semantic agreement or causation.",
+    "references": {
+      "source_a9b73c0cefa696721b2bb63c3a4fad36": {
+        "kind": "source",
+        "pointer": "/source",
+        "provenance": "observed"
+      },
+      "text_654dee4ab0abe420a33b3b5a302c7274": {
+        "kind": "input_structure",
+        "pointer": "/lyric_timeline/input_structure/lines/0",
+        "provenance": "estimated",
+        "start_sec": 1,
+        "end_sec": 2
+      },
+      "text_3bb556204739613aa7480a5002913226": {
+        "kind": "input_structure",
+        "pointer": "/lyric_timeline/input_structure/lines/1",
+        "provenance": "estimated"
+      },
+      "text_dc5c04b3f658414578172383adedd091": {
+        "kind": "input_structure",
+        "pointer": "/lyric_timeline/input_structure/lines/2",
+        "provenance": "estimated",
+        "start_sec": 4,
+        "end_sec": 5
+      },
+      "text_3c2bc1cf0ffc02210a4dcdffce185fdd": {
+        "kind": "input_structure",
+        "pointer": "/lyric_timeline/input_structure/lines/3",
+        "provenance": "estimated"
+      },
+      "text_809ca13ef1071d381b4e2ece81d7805c": {
+        "kind": "input_structure",
+        "pointer": "/lyric_timeline/input_structure/lines/4",
+        "provenance": "estimated",
+        "start_sec": 8,
+        "end_sec": 12
+      },
+      "text_8f3be346b0fb3818bc409976606fe9bc": {
+        "kind": "input_structure",
+        "pointer": "/lyric_timeline/input_structure/lines/5",
+        "provenance": "estimated"
+      },
+      "text_5749f06d430ee8e32d09135df915de8f": {
+        "kind": "input_structure",
+        "pointer": "/lyric_timeline/input_structure/lines/6",
+        "provenance": "estimated"
+      },
+      "motion_ea4fa29aaa20dbac888546aaccb19ac0": {
+        "kind": "motion_window",
+        "pointer": "/motion_primitives/windows/0",
+        "start_sec": 0,
+        "end_sec": 2,
+        "provenance": "estimated"
+      },
+      "motion_8dedc97a3a08500cf89dd24a34ca0eb8": {
+        "kind": "motion_window",
+        "pointer": "/motion_primitives/windows/1",
+        "start_sec": 2,
+        "end_sec": 4,
+        "provenance": "estimated"
+      },
+      "motion_df18c0baa64b94b4480cc8ca84a3d478": {
+        "kind": "motion_window",
+        "pointer": "/motion_primitives/windows/2",
+        "start_sec": 4,
+        "end_sec": 6,
+        "provenance": "estimated"
+      },
+      "motion_1dc81b5aa6f629040584e86ad8d54210": {
+        "kind": "motion_window",
+        "pointer": "/motion_primitives/windows/3",
+        "start_sec": 6,
+        "end_sec": 8,
+        "provenance": "estimated"
+      },
+      "motion_0240fa23b38e79953c83487304767b21": {
+        "kind": "motion_window",
+        "pointer": "/motion_primitives/windows/4",
+        "start_sec": 8,
+        "end_sec": 10,
+        "provenance": "estimated"
+      },
+      "motion_72ab9f22b7c8ca5c3567e2b200df56f0": {
+        "kind": "motion_window",
+        "pointer": "/motion_primitives/windows/5",
+        "start_sec": 10,
+        "end_sec": 12,
+        "provenance": "estimated"
+      },
+      "srt_1cda61d926249e5f4695faa98a3ee263": {
+        "kind": "srt_cue",
+        "pointer": "/vocal_asr_timeline/entries/0",
+        "start_sec": 1,
+        "end_sec": 2,
+        "provenance": "external_estimate"
+      },
+      "srt_eadc72e04f23080e151d4070a8811afa": {
+        "kind": "srt_cue",
+        "pointer": "/vocal_asr_timeline/entries/1",
+        "start_sec": 4,
+        "end_sec": 5,
+        "provenance": "external_estimate"
+      },
+      "srt_2a85911e67c2a74c9a05554e734d5328": {
+        "kind": "srt_cue",
+        "pointer": "/vocal_asr_timeline/entries/2",
+        "start_sec": 9,
+        "end_sec": 10,
+        "provenance": "external_estimate"
+      },
+      "lyric_3bb556204739613aa7480a5002913226": {
+        "kind": "lyric_line",
+        "pointer": "/lyric_timeline/entries/0",
+        "start_sec": 1,
+        "end_sec": 2,
+        "provenance": "external_estimate"
+      },
+      "lyric_3c2bc1cf0ffc02210a4dcdffce185fdd": {
+        "kind": "lyric_line",
+        "pointer": "/lyric_timeline/entries/1",
+        "start_sec": 4,
+        "end_sec": 5,
+        "provenance": "external_estimate"
+      },
+      "lyric_8f3be346b0fb3818bc409976606fe9bc": {
+        "kind": "lyric_line",
+        "pointer": "/lyric_timeline/entries/2",
+        "start_sec": 8,
+        "end_sec": 12,
+        "provenance": "mixed_user_estimate"
+      },
+      "audio_fecc830485c226da221a62f42f33b7c6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/0",
+        "start_sec": 0.1,
+        "end_sec": 0.1,
+        "provenance": "estimated"
+      },
+      "audio_9dd10f827f6f38480d2658727c77b8e4": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/1",
+        "start_sec": 0.2,
+        "end_sec": 0.2,
+        "provenance": "estimated"
+      },
+      "audio_c2f9c8c0b11e63e658ffd6706acdd7f2": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/2",
+        "start_sec": 0.35,
+        "end_sec": 0.35,
+        "provenance": "estimated"
+      },
+      "audio_62d1a48a8948f930e5b01f7a5cbfa61c": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/3",
+        "start_sec": 0.6,
+        "end_sec": 0.6,
+        "provenance": "estimated"
+      },
+      "audio_c5fd20e477861ee23b34ed149179f19e": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/4",
+        "start_sec": 0.7,
+        "end_sec": 0.7,
+        "provenance": "estimated"
+      },
+      "audio_854e03f42c37502a235781e412f26926": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/5",
+        "start_sec": 0.85,
+        "end_sec": 0.85,
+        "provenance": "estimated"
+      },
+      "audio_0d234fa69fb4181c07b82cd634176948": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/6",
+        "start_sec": 1.1,
+        "end_sec": 1.1,
+        "provenance": "estimated"
+      },
+      "audio_3d9b4fa89c462976244b03b88ee28fea": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/7",
+        "start_sec": 1.125,
+        "end_sec": 1.125,
+        "provenance": "observed"
+      },
+      "audio_c1bb5ddc77d98c8a17995dcc2b6d61f6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/8",
+        "start_sec": 1.2,
+        "end_sec": 1.2,
+        "provenance": "estimated"
+      },
+      "audio_0ee12b24e4e3de8ab7c1af948f161e86": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/9",
+        "start_sec": 1.35,
+        "end_sec": 1.35,
+        "provenance": "estimated"
+      },
+      "audio_67fc8b0ccbaeff62b3cc33fcbd50657e": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/10",
+        "start_sec": 1.6,
+        "end_sec": 1.6,
+        "provenance": "estimated"
+      },
+      "audio_6d87213211dde620db4f34e26f618cbc": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/11",
+        "start_sec": 1.7,
+        "end_sec": 1.7,
+        "provenance": "estimated"
+      },
+      "audio_f94c43f806cc456ed5f13c280583d06a": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/12",
+        "start_sec": 1.85,
+        "end_sec": 1.85,
+        "provenance": "estimated"
+      },
+      "audio_c7e847ac8aaede420265b59c70c34ebe": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/13",
+        "start_sec": 2.1,
+        "end_sec": 2.1,
+        "provenance": "estimated"
+      },
+      "audio_da3091466636bf84484e26b6cf300d20": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/14",
+        "start_sec": 2.2,
+        "end_sec": 2.2,
+        "provenance": "estimated"
+      },
+      "audio_8cb512705f44d7b684511960c5115202": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/15",
+        "start_sec": 2.35,
+        "end_sec": 2.35,
+        "provenance": "estimated"
+      },
+      "audio_3d88f156943bf1f496ecbdc61c1632a0": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/16",
+        "start_sec": 2.6,
+        "end_sec": 2.6,
+        "provenance": "estimated"
+      },
+      "audio_98ed751c41bda27a2dccfa0c0297ef66": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/17",
+        "start_sec": 2.7,
+        "end_sec": 2.7,
+        "provenance": "estimated"
+      },
+      "audio_c937d25445dc405a2197c044a2b955c6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/18",
+        "start_sec": 2.85,
+        "end_sec": 2.85,
+        "provenance": "estimated"
+      },
+      "audio_51712d92eff6bad0d6e753c29c55552c": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/19",
+        "start_sec": 3.1,
+        "end_sec": 3.1,
+        "provenance": "estimated"
+      },
+      "audio_dbb03a78731cfa96b1fd70c817413eda": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/20",
+        "start_sec": 3.125,
+        "end_sec": 3.125,
+        "provenance": "observed"
+      },
+      "audio_211dbf74720e6882586dd1e4ff6f615e": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/21",
+        "start_sec": 3.2,
+        "end_sec": 3.2,
+        "provenance": "estimated"
+      },
+      "audio_fe5e22949f360b8a7f96c4c4d6d230d6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/22",
+        "start_sec": 3.35,
+        "end_sec": 3.35,
+        "provenance": "estimated"
+      },
+      "audio_72aab12444f74cfaad71e714fbb2b1e6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/23",
+        "start_sec": 3.6,
+        "end_sec": 3.6,
+        "provenance": "estimated"
+      },
+      "audio_de6cd6de5d15c54426fad24e37cf5e30": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/24",
+        "start_sec": 3.7,
+        "end_sec": 3.7,
+        "provenance": "estimated"
+      },
+      "audio_f20e5b4800cb9d3eb3039eb85a56ce5a": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/25",
+        "start_sec": 3.85,
+        "end_sec": 3.85,
+        "provenance": "estimated"
+      },
+      "audio_b429144ce2d256625114af7c4b1b5ede": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/26",
+        "start_sec": 4.1,
+        "end_sec": 4.1,
+        "provenance": "estimated"
+      },
+      "audio_14a3215a901a63a88378de0abc2dcb84": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/27",
+        "start_sec": 4.2,
+        "end_sec": 4.2,
+        "provenance": "estimated"
+      },
+      "audio_ed6dae3020f8b2569f1aa2a013b1bac2": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/28",
+        "start_sec": 4.35,
+        "end_sec": 4.35,
+        "provenance": "estimated"
+      },
+      "audio_817688e2c6787b10d2623612feed56fc": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/29",
+        "start_sec": 4.6,
+        "end_sec": 4.6,
+        "provenance": "estimated"
+      },
+      "audio_2b5457dc6e0035ba276ab88c9335c1e6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/30",
+        "start_sec": 4.7,
+        "end_sec": 4.7,
+        "provenance": "estimated"
+      },
+      "audio_52bcc9f4acf353ba363a7fa470df43f6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/31",
+        "start_sec": 4.85,
+        "end_sec": 4.85,
+        "provenance": "estimated"
+      },
+      "audio_8ce50cbe0d274cace1579aee71afa978": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/32",
+        "start_sec": 5.1,
+        "end_sec": 5.1,
+        "provenance": "estimated"
+      },
+      "audio_e252ab609c7a69aed51e8a70415ec2f2": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/33",
+        "start_sec": 5.125,
+        "end_sec": 5.125,
+        "provenance": "observed"
+      },
+      "audio_a7aaef5c88a0a01a2cfe110c7c0bdee6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/34",
+        "start_sec": 5.2,
+        "end_sec": 5.2,
+        "provenance": "estimated"
+      },
+      "audio_94df37acaf85c5322599f0dcd8f5d6de": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/35",
+        "start_sec": 5.35,
+        "end_sec": 5.35,
+        "provenance": "estimated"
+      },
+      "audio_a87f91dc4a65a3a21b5ef98c367986be": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/36",
+        "start_sec": 5.6,
+        "end_sec": 5.6,
+        "provenance": "estimated"
+      },
+      "audio_0ca49832677e6db8f95ae1e24e9ad2c4": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/37",
+        "start_sec": 5.7,
+        "end_sec": 5.7,
+        "provenance": "estimated"
+      },
+      "audio_d59b60e091753d864f6232105dbefd72": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/38",
+        "start_sec": 5.85,
+        "end_sec": 5.85,
+        "provenance": "estimated"
+      },
+      "audio_98afac6452d7c29a830956944ff604a6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/39",
+        "start_sec": 6.1,
+        "end_sec": 6.1,
+        "provenance": "estimated"
+      },
+      "audio_0f4bfde60e49a2ec660a5f561113b518": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/40",
+        "start_sec": 6.2,
+        "end_sec": 6.2,
+        "provenance": "estimated"
+      },
+      "audio_df0e8f005867af2625b502b0a9d84a32": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/41",
+        "start_sec": 6.35,
+        "end_sec": 6.35,
+        "provenance": "estimated"
+      },
+      "audio_eca0f9b66d08831c0bcbd6a6fc18ce78": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/42",
+        "start_sec": 6.6,
+        "end_sec": 6.6,
+        "provenance": "estimated"
+      },
+      "audio_55a326248f546d421bf13b14dcdec31e": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/43",
+        "start_sec": 6.7,
+        "end_sec": 6.7,
+        "provenance": "estimated"
+      },
+      "audio_dfc5c724399ec99a12ec389461543b86": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/44",
+        "start_sec": 6.85,
+        "end_sec": 6.85,
+        "provenance": "estimated"
+      },
+      "audio_53726542c4c667d8cd499b321ed88da4": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/45",
+        "start_sec": 7.1,
+        "end_sec": 7.1,
+        "provenance": "estimated"
+      },
+      "audio_e0b59940a3f47a9e465d10900a457152": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/46",
+        "start_sec": 7.125,
+        "end_sec": 7.125,
+        "provenance": "observed"
+      },
+      "audio_72cdb364efd684023685185434fc0b1e": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/47",
+        "start_sec": 7.2,
+        "end_sec": 7.2,
+        "provenance": "estimated"
+      },
+      "audio_16b0b96c96ae3e42595b79dc69c7535e": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/48",
+        "start_sec": 7.35,
+        "end_sec": 7.35,
+        "provenance": "estimated"
+      },
+      "audio_84056be40dd1e7aaccd25954303e18f6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/49",
+        "start_sec": 7.6,
+        "end_sec": 7.6,
+        "provenance": "estimated"
+      },
+      "audio_ab20f0e6420db864f8de67d6814ec430": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/50",
+        "start_sec": 7.7,
+        "end_sec": 7.7,
+        "provenance": "estimated"
+      },
+      "audio_5f859fd0c9ceeef6c7f1b300d3e78a02": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/51",
+        "start_sec": 7.85,
+        "end_sec": 7.85,
+        "provenance": "estimated"
+      },
+      "audio_176e35e4c5b7f2daa9f7f25464b9c7d6": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/52",
+        "start_sec": 8.1,
+        "end_sec": 8.1,
+        "provenance": "estimated"
+      },
+      "audio_ec512a22cd54f5e806565652142f8244": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/53",
+        "start_sec": 8.2,
+        "end_sec": 8.2,
+        "provenance": "estimated"
+      },
+      "audio_70afd150bbaf79166ff1da80a413d502": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/54",
+        "start_sec": 8.35,
+        "end_sec": 8.35,
+        "provenance": "estimated"
+      },
+      "audio_0099593ac9d86e70564c2e2a44ffc41c": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/55",
+        "start_sec": 8.6,
+        "end_sec": 8.6,
+        "provenance": "estimated"
+      },
+      "audio_bd613fe43257554278ee5314eb5c03ae": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/56",
+        "start_sec": 8.7,
+        "end_sec": 8.7,
+        "provenance": "estimated"
+      },
+      "audio_d00e6424d054fbda1604d25449948256": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/57",
+        "start_sec": 8.85,
+        "end_sec": 8.85,
+        "provenance": "estimated"
+      },
+      "audio_cc537a96c0aa757cd2397406e2820c28": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/58",
+        "start_sec": 9.1,
+        "end_sec": 9.1,
+        "provenance": "estimated"
+      },
+      "audio_019e5da8023f7866f8bb08785b1538ea": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/59",
+        "start_sec": 9.125,
+        "end_sec": 9.125,
+        "provenance": "observed"
+      },
+      "audio_532f506c6aa15b2a0ad9b15cdbc28156": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/60",
+        "start_sec": 9.2,
+        "end_sec": 9.2,
+        "provenance": "estimated"
+      },
+      "audio_0c20f4a418ca13daea415a14a2c70086": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/61",
+        "start_sec": 9.35,
+        "end_sec": 9.35,
+        "provenance": "estimated"
+      },
+      "audio_b446586c64778d32ca47619c961453ae": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/62",
+        "start_sec": 9.6,
+        "end_sec": 9.6,
+        "provenance": "estimated"
+      },
+      "audio_95203f22b476720049e8959256165ecc": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/63",
+        "start_sec": 9.7,
+        "end_sec": 9.7,
+        "provenance": "estimated"
+      },
+      "audio_f27ab8387011761eeb9bfd68b12f41ea": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/64",
+        "start_sec": 9.85,
+        "end_sec": 9.85,
+        "provenance": "estimated"
+      },
+      "audio_2813e994b7c7a822cd280a041b5aa2de": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/65",
+        "start_sec": 10.1,
+        "end_sec": 10.1,
+        "provenance": "estimated"
+      },
+      "audio_2901be78a9cd8c6699763a686b1dec02": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/66",
+        "start_sec": 10.2,
+        "end_sec": 10.2,
+        "provenance": "estimated"
+      },
+      "audio_7b08c264a74d4822e7a855d46beb06de": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/67",
+        "start_sec": 10.35,
+        "end_sec": 10.35,
+        "provenance": "estimated"
+      },
+      "audio_f4697588f0f0a216a32eb238532af302": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/68",
+        "start_sec": 10.6,
+        "end_sec": 10.6,
+        "provenance": "estimated"
+      },
+      "audio_f844db70169261566a7ce7605e82a5b2": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/69",
+        "start_sec": 10.7,
+        "end_sec": 10.7,
+        "provenance": "estimated"
+      },
+      "audio_9f7e8792b04cc4101c76e682d12e6c5c": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/70",
+        "start_sec": 10.85,
+        "end_sec": 10.85,
+        "provenance": "estimated"
+      },
+      "audio_7d99f0749145671244d3636422b1085e": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/71",
+        "start_sec": 11.1,
+        "end_sec": 11.1,
+        "provenance": "estimated"
+      },
+      "audio_f3318fc4353b79caa3ccaf940e8cf4ee": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/72",
+        "start_sec": 11.125,
+        "end_sec": 11.125,
+        "provenance": "observed"
+      },
+      "audio_7a642b50cfaf4f8e1b9b41000d700b1a": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/73",
+        "start_sec": 11.2,
+        "end_sec": 11.2,
+        "provenance": "estimated"
+      },
+      "audio_74668c2a6989f8c802e81a9aeb0d5454": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/74",
+        "start_sec": 11.35,
+        "end_sec": 11.35,
+        "provenance": "estimated"
+      },
+      "audio_38101848b33d4e66157089b86c2fef72": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/75",
+        "start_sec": 11.6,
+        "end_sec": 11.6,
+        "provenance": "estimated"
+      },
+      "audio_7d9deae89f56245e0f8a8a9856f59bfa": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/76",
+        "start_sec": 11.7,
+        "end_sec": 11.7,
+        "provenance": "estimated"
+      },
+      "audio_0c501940a681be06ba386cb0c6fea302": {
+        "kind": "audio_event",
+        "pointer": "/audio_events/events/77",
+        "start_sec": 11.85,
+        "end_sec": 11.85,
+        "provenance": "estimated"
+      }
+    },
+    "time_index": [
+      "motion_ea4fa29aaa20dbac888546aaccb19ac0",
+      "audio_fecc830485c226da221a62f42f33b7c6",
+      "audio_9dd10f827f6f38480d2658727c77b8e4",
+      "audio_c2f9c8c0b11e63e658ffd6706acdd7f2",
+      "audio_62d1a48a8948f930e5b01f7a5cbfa61c",
+      "audio_c5fd20e477861ee23b34ed149179f19e",
+      "audio_854e03f42c37502a235781e412f26926",
+      "lyric_3bb556204739613aa7480a5002913226",
+      "srt_1cda61d926249e5f4695faa98a3ee263",
+      "text_654dee4ab0abe420a33b3b5a302c7274",
+      "audio_0d234fa69fb4181c07b82cd634176948",
+      "audio_3d9b4fa89c462976244b03b88ee28fea",
+      "audio_c1bb5ddc77d98c8a17995dcc2b6d61f6",
+      "audio_0ee12b24e4e3de8ab7c1af948f161e86",
+      "audio_67fc8b0ccbaeff62b3cc33fcbd50657e",
+      "audio_6d87213211dde620db4f34e26f618cbc",
+      "audio_f94c43f806cc456ed5f13c280583d06a",
+      "motion_8dedc97a3a08500cf89dd24a34ca0eb8",
+      "audio_c7e847ac8aaede420265b59c70c34ebe",
+      "audio_da3091466636bf84484e26b6cf300d20",
+      "audio_8cb512705f44d7b684511960c5115202",
+      "audio_3d88f156943bf1f496ecbdc61c1632a0",
+      "audio_98ed751c41bda27a2dccfa0c0297ef66",
+      "audio_c937d25445dc405a2197c044a2b955c6",
+      "audio_51712d92eff6bad0d6e753c29c55552c",
+      "audio_dbb03a78731cfa96b1fd70c817413eda",
+      "audio_211dbf74720e6882586dd1e4ff6f615e",
+      "audio_fe5e22949f360b8a7f96c4c4d6d230d6",
+      "audio_72aab12444f74cfaad71e714fbb2b1e6",
+      "audio_de6cd6de5d15c54426fad24e37cf5e30",
+      "audio_f20e5b4800cb9d3eb3039eb85a56ce5a",
+      "lyric_3c2bc1cf0ffc02210a4dcdffce185fdd",
+      "motion_df18c0baa64b94b4480cc8ca84a3d478",
+      "srt_eadc72e04f23080e151d4070a8811afa",
+      "text_dc5c04b3f658414578172383adedd091",
+      "audio_b429144ce2d256625114af7c4b1b5ede",
+      "audio_14a3215a901a63a88378de0abc2dcb84",
+      "audio_ed6dae3020f8b2569f1aa2a013b1bac2",
+      "audio_817688e2c6787b10d2623612feed56fc",
+      "audio_2b5457dc6e0035ba276ab88c9335c1e6",
+      "audio_52bcc9f4acf353ba363a7fa470df43f6",
+      "audio_8ce50cbe0d274cace1579aee71afa978",
+      "audio_e252ab609c7a69aed51e8a70415ec2f2",
+      "audio_a7aaef5c88a0a01a2cfe110c7c0bdee6",
+      "audio_94df37acaf85c5322599f0dcd8f5d6de",
+      "audio_a87f91dc4a65a3a21b5ef98c367986be",
+      "audio_0ca49832677e6db8f95ae1e24e9ad2c4",
+      "audio_d59b60e091753d864f6232105dbefd72",
+      "motion_1dc81b5aa6f629040584e86ad8d54210",
+      "audio_98afac6452d7c29a830956944ff604a6",
+      "audio_0f4bfde60e49a2ec660a5f561113b518",
+      "audio_df0e8f005867af2625b502b0a9d84a32",
+      "audio_eca0f9b66d08831c0bcbd6a6fc18ce78",
+      "audio_55a326248f546d421bf13b14dcdec31e",
+      "audio_dfc5c724399ec99a12ec389461543b86",
+      "audio_53726542c4c667d8cd499b321ed88da4",
+      "audio_e0b59940a3f47a9e465d10900a457152",
+      "audio_72cdb364efd684023685185434fc0b1e",
+      "audio_16b0b96c96ae3e42595b79dc69c7535e",
+      "audio_84056be40dd1e7aaccd25954303e18f6",
+      "audio_ab20f0e6420db864f8de67d6814ec430",
+      "audio_5f859fd0c9ceeef6c7f1b300d3e78a02",
+      "lyric_8f3be346b0fb3818bc409976606fe9bc",
+      "motion_0240fa23b38e79953c83487304767b21",
+      "text_809ca13ef1071d381b4e2ece81d7805c",
+      "audio_176e35e4c5b7f2daa9f7f25464b9c7d6",
+      "audio_ec512a22cd54f5e806565652142f8244",
+      "audio_70afd150bbaf79166ff1da80a413d502",
+      "audio_0099593ac9d86e70564c2e2a44ffc41c",
+      "audio_bd613fe43257554278ee5314eb5c03ae",
+      "audio_d00e6424d054fbda1604d25449948256",
+      "srt_2a85911e67c2a74c9a05554e734d5328",
+      "audio_cc537a96c0aa757cd2397406e2820c28",
+      "audio_019e5da8023f7866f8bb08785b1538ea",
+      "audio_532f506c6aa15b2a0ad9b15cdbc28156",
+      "audio_0c20f4a418ca13daea415a14a2c70086",
+      "audio_b446586c64778d32ca47619c961453ae",
+      "audio_95203f22b476720049e8959256165ecc",
+      "audio_f27ab8387011761eeb9bfd68b12f41ea",
+      "motion_72ab9f22b7c8ca5c3567e2b200df56f0",
+      "audio_2813e994b7c7a822cd280a041b5aa2de",
+      "audio_2901be78a9cd8c6699763a686b1dec02",
+      "audio_7b08c264a74d4822e7a855d46beb06de",
+      "audio_f4697588f0f0a216a32eb238532af302",
+      "audio_f844db70169261566a7ce7605e82a5b2",
+      "audio_9f7e8792b04cc4101c76e682d12e6c5c",
+      "audio_7d99f0749145671244d3636422b1085e",
+      "audio_f3318fc4353b79caa3ccaf940e8cf4ee",
+      "audio_7a642b50cfaf4f8e1b9b41000d700b1a",
+      "audio_74668c2a6989f8c802e81a9aeb0d5454",
+      "audio_38101848b33d4e66157089b86c2fef72",
+      "audio_7d9deae89f56245e0f8a8a9856f59bfa",
+      "audio_0c501940a681be06ba386cb0c6fea302"
+    ],
+    "sections": [
+      {
+        "section_id": "text_654dee4ab0abe420a33b3b5a302c7274",
+        "legacy_section_id": "section_1",
+        "member_lyric_ids": [
+          "lyric_3bb556204739613aa7480a5002913226"
+        ],
+        "start_sec": 1,
+        "end_sec": 2,
+        "provenance": "estimated",
+        "method": "envelope_of_member_lyric_times",
+        "limitations": "Includes any estimated lyric boundaries; not an acoustic section detection."
+      },
+      {
+        "section_id": "text_dc5c04b3f658414578172383adedd091",
+        "legacy_section_id": "section_3",
+        "member_lyric_ids": [
+          "lyric_3c2bc1cf0ffc02210a4dcdffce185fdd"
+        ],
+        "start_sec": 4,
+        "end_sec": 5,
+        "provenance": "estimated",
+        "method": "envelope_of_member_lyric_times",
+        "limitations": "Includes any estimated lyric boundaries; not an acoustic section detection."
+      },
+      {
+        "section_id": "text_809ca13ef1071d381b4e2ece81d7805c",
+        "legacy_section_id": "section_5",
+        "member_lyric_ids": [
+          "lyric_8f3be346b0fb3818bc409976606fe9bc"
+        ],
+        "start_sec": 8,
+        "end_sec": 12,
+        "provenance": "estimated",
+        "method": "envelope_of_member_lyric_times",
+        "limitations": "Includes any estimated lyric boundaries; not an acoustic section detection."
+      }
+    ]
+  },
+  "warnings": [],
+  "audio_events": {
+    "version": "0.7.0",
+    "events": [
+      {
+        "id": "audio_fecc830485c226da221a62f42f33b7c6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 0.1,
+        "end_sec": 0.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/0"
+        ]
+      },
+      {
+        "id": "audio_9dd10f827f6f38480d2658727c77b8e4",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 0.2,
+        "end_sec": 0.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/0"
+        ]
+      },
+      {
+        "id": "audio_c2f9c8c0b11e63e658ffd6706acdd7f2",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 0.35,
+        "end_sec": 0.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/1"
+        ]
+      },
+      {
+        "id": "audio_62d1a48a8948f930e5b01f7a5cbfa61c",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 0.6,
+        "end_sec": 0.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/2"
+        ]
+      },
+      {
+        "id": "audio_c5fd20e477861ee23b34ed149179f19e",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 0.7,
+        "end_sec": 0.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/1"
+        ]
+      },
+      {
+        "id": "audio_854e03f42c37502a235781e412f26926",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 0.85,
+        "end_sec": 0.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/3"
+        ]
+      },
+      {
+        "id": "audio_0d234fa69fb4181c07b82cd634176948",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 1.1,
+        "end_sec": 1.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/4"
+        ]
+      },
+      {
+        "id": "audio_3d9b4fa89c462976244b03b88ee28fea",
+        "type": "energy_sample",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 1.125,
+        "end_sec": 1.125,
+        "scope": "sampled_measurement",
+        "provenance": "observed",
+        "method": "existing_rms_frame",
+        "confidence": null,
+        "numbers": {
+          "loudness_db": -20,
+          "low_ratio": 0.6,
+          "mid_ratio": 0.3,
+          "high_ratio": 0.1
+        },
+        "source_refs": [
+          "/dynamics_and_bands/curves/4"
+        ]
+      },
+      {
+        "id": "audio_c1bb5ddc77d98c8a17995dcc2b6d61f6",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 1.2,
+        "end_sec": 1.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/2"
+        ]
+      },
+      {
+        "id": "audio_0ee12b24e4e3de8ab7c1af948f161e86",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 1.35,
+        "end_sec": 1.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/5"
+        ]
+      },
+      {
+        "id": "audio_67fc8b0ccbaeff62b3cc33fcbd50657e",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 1.6,
+        "end_sec": 1.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/6"
+        ]
+      },
+      {
+        "id": "audio_6d87213211dde620db4f34e26f618cbc",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 1.7,
+        "end_sec": 1.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/3"
+        ]
+      },
+      {
+        "id": "audio_f94c43f806cc456ed5f13c280583d06a",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 1.85,
+        "end_sec": 1.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/7"
+        ]
+      },
+      {
+        "id": "audio_c7e847ac8aaede420265b59c70c34ebe",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 2.1,
+        "end_sec": 2.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/8"
+        ]
+      },
+      {
+        "id": "audio_da3091466636bf84484e26b6cf300d20",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 2.2,
+        "end_sec": 2.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/4"
+        ]
+      },
+      {
+        "id": "audio_8cb512705f44d7b684511960c5115202",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 2.35,
+        "end_sec": 2.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/9"
+        ]
+      },
+      {
+        "id": "audio_3d88f156943bf1f496ecbdc61c1632a0",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 2.6,
+        "end_sec": 2.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/10"
+        ]
+      },
+      {
+        "id": "audio_98ed751c41bda27a2dccfa0c0297ef66",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 2.7,
+        "end_sec": 2.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/5"
+        ]
+      },
+      {
+        "id": "audio_c937d25445dc405a2197c044a2b955c6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 2.85,
+        "end_sec": 2.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/11"
+        ]
+      },
+      {
+        "id": "audio_51712d92eff6bad0d6e753c29c55552c",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 3.1,
+        "end_sec": 3.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/12"
+        ]
+      },
+      {
+        "id": "audio_dbb03a78731cfa96b1fd70c817413eda",
+        "type": "energy_sample",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 3.125,
+        "end_sec": 3.125,
+        "scope": "sampled_measurement",
+        "provenance": "observed",
+        "method": "existing_rms_frame",
+        "confidence": null,
+        "numbers": {
+          "loudness_db": -20,
+          "low_ratio": 0.6,
+          "mid_ratio": 0.3,
+          "high_ratio": 0.1
+        },
+        "source_refs": [
+          "/dynamics_and_bands/curves/12"
+        ]
+      },
+      {
+        "id": "audio_211dbf74720e6882586dd1e4ff6f615e",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 3.2,
+        "end_sec": 3.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/6"
+        ]
+      },
+      {
+        "id": "audio_fe5e22949f360b8a7f96c4c4d6d230d6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 3.35,
+        "end_sec": 3.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/13"
+        ]
+      },
+      {
+        "id": "audio_72aab12444f74cfaad71e714fbb2b1e6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 3.6,
+        "end_sec": 3.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/14"
+        ]
+      },
+      {
+        "id": "audio_de6cd6de5d15c54426fad24e37cf5e30",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 3.7,
+        "end_sec": 3.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/7"
+        ]
+      },
+      {
+        "id": "audio_f20e5b4800cb9d3eb3039eb85a56ce5a",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 3.85,
+        "end_sec": 3.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/15"
+        ]
+      },
+      {
+        "id": "audio_b429144ce2d256625114af7c4b1b5ede",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 4.1,
+        "end_sec": 4.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/16"
+        ]
+      },
+      {
+        "id": "audio_14a3215a901a63a88378de0abc2dcb84",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 4.2,
+        "end_sec": 4.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/8"
+        ]
+      },
+      {
+        "id": "audio_ed6dae3020f8b2569f1aa2a013b1bac2",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 4.35,
+        "end_sec": 4.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/17"
+        ]
+      },
+      {
+        "id": "audio_817688e2c6787b10d2623612feed56fc",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 4.6,
+        "end_sec": 4.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/18"
+        ]
+      },
+      {
+        "id": "audio_2b5457dc6e0035ba276ab88c9335c1e6",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 4.7,
+        "end_sec": 4.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/9"
+        ]
+      },
+      {
+        "id": "audio_52bcc9f4acf353ba363a7fa470df43f6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 4.85,
+        "end_sec": 4.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/19"
+        ]
+      },
+      {
+        "id": "audio_8ce50cbe0d274cace1579aee71afa978",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 5.1,
+        "end_sec": 5.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/20"
+        ]
+      },
+      {
+        "id": "audio_e252ab609c7a69aed51e8a70415ec2f2",
+        "type": "energy_sample",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 5.125,
+        "end_sec": 5.125,
+        "scope": "sampled_measurement",
+        "provenance": "observed",
+        "method": "existing_rms_frame",
+        "confidence": null,
+        "numbers": {
+          "loudness_db": -20,
+          "low_ratio": 0.6,
+          "mid_ratio": 0.3,
+          "high_ratio": 0.1
+        },
+        "source_refs": [
+          "/dynamics_and_bands/curves/20"
+        ]
+      },
+      {
+        "id": "audio_a7aaef5c88a0a01a2cfe110c7c0bdee6",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 5.2,
+        "end_sec": 5.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/10"
+        ]
+      },
+      {
+        "id": "audio_94df37acaf85c5322599f0dcd8f5d6de",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 5.35,
+        "end_sec": 5.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/21"
+        ]
+      },
+      {
+        "id": "audio_a87f91dc4a65a3a21b5ef98c367986be",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 5.6,
+        "end_sec": 5.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/22"
+        ]
+      },
+      {
+        "id": "audio_0ca49832677e6db8f95ae1e24e9ad2c4",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 5.7,
+        "end_sec": 5.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/11"
+        ]
+      },
+      {
+        "id": "audio_d59b60e091753d864f6232105dbefd72",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 5.85,
+        "end_sec": 5.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/23"
+        ]
+      },
+      {
+        "id": "audio_98afac6452d7c29a830956944ff604a6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 6.1,
+        "end_sec": 6.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/24"
+        ]
+      },
+      {
+        "id": "audio_0f4bfde60e49a2ec660a5f561113b518",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 6.2,
+        "end_sec": 6.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/12"
+        ]
+      },
+      {
+        "id": "audio_df0e8f005867af2625b502b0a9d84a32",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 6.35,
+        "end_sec": 6.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/25"
+        ]
+      },
+      {
+        "id": "audio_eca0f9b66d08831c0bcbd6a6fc18ce78",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 6.6,
+        "end_sec": 6.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/26"
+        ]
+      },
+      {
+        "id": "audio_55a326248f546d421bf13b14dcdec31e",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 6.7,
+        "end_sec": 6.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/13"
+        ]
+      },
+      {
+        "id": "audio_dfc5c724399ec99a12ec389461543b86",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 6.85,
+        "end_sec": 6.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/27"
+        ]
+      },
+      {
+        "id": "audio_53726542c4c667d8cd499b321ed88da4",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 7.1,
+        "end_sec": 7.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/28"
+        ]
+      },
+      {
+        "id": "audio_e0b59940a3f47a9e465d10900a457152",
+        "type": "energy_sample",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 7.125,
+        "end_sec": 7.125,
+        "scope": "sampled_measurement",
+        "provenance": "observed",
+        "method": "existing_rms_frame",
+        "confidence": null,
+        "numbers": {
+          "loudness_db": -20,
+          "low_ratio": 0.6,
+          "mid_ratio": 0.3,
+          "high_ratio": 0.1
+        },
+        "source_refs": [
+          "/dynamics_and_bands/curves/28"
+        ]
+      },
+      {
+        "id": "audio_72cdb364efd684023685185434fc0b1e",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 7.2,
+        "end_sec": 7.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/14"
+        ]
+      },
+      {
+        "id": "audio_16b0b96c96ae3e42595b79dc69c7535e",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 7.35,
+        "end_sec": 7.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/29"
+        ]
+      },
+      {
+        "id": "audio_84056be40dd1e7aaccd25954303e18f6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 7.6,
+        "end_sec": 7.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/30"
+        ]
+      },
+      {
+        "id": "audio_ab20f0e6420db864f8de67d6814ec430",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 7.7,
+        "end_sec": 7.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/15"
+        ]
+      },
+      {
+        "id": "audio_5f859fd0c9ceeef6c7f1b300d3e78a02",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 7.85,
+        "end_sec": 7.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/31"
+        ]
+      },
+      {
+        "id": "audio_176e35e4c5b7f2daa9f7f25464b9c7d6",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 8.1,
+        "end_sec": 8.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/32"
+        ]
+      },
+      {
+        "id": "audio_ec512a22cd54f5e806565652142f8244",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 8.2,
+        "end_sec": 8.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/16"
+        ]
+      },
+      {
+        "id": "audio_70afd150bbaf79166ff1da80a413d502",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 8.35,
+        "end_sec": 8.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/33"
+        ]
+      },
+      {
+        "id": "audio_0099593ac9d86e70564c2e2a44ffc41c",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 8.6,
+        "end_sec": 8.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/34"
+        ]
+      },
+      {
+        "id": "audio_bd613fe43257554278ee5314eb5c03ae",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 8.7,
+        "end_sec": 8.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/17"
+        ]
+      },
+      {
+        "id": "audio_d00e6424d054fbda1604d25449948256",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 8.85,
+        "end_sec": 8.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/35"
+        ]
+      },
+      {
+        "id": "audio_cc537a96c0aa757cd2397406e2820c28",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 9.1,
+        "end_sec": 9.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/36"
+        ]
+      },
+      {
+        "id": "audio_019e5da8023f7866f8bb08785b1538ea",
+        "type": "energy_sample",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 9.125,
+        "end_sec": 9.125,
+        "scope": "sampled_measurement",
+        "provenance": "observed",
+        "method": "existing_rms_frame",
+        "confidence": null,
+        "numbers": {
+          "loudness_db": -20,
+          "low_ratio": 0.6,
+          "mid_ratio": 0.3,
+          "high_ratio": 0.1
+        },
+        "source_refs": [
+          "/dynamics_and_bands/curves/36"
+        ]
+      },
+      {
+        "id": "audio_532f506c6aa15b2a0ad9b15cdbc28156",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 9.2,
+        "end_sec": 9.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/18"
+        ]
+      },
+      {
+        "id": "audio_0c20f4a418ca13daea415a14a2c70086",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 9.35,
+        "end_sec": 9.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/37"
+        ]
+      },
+      {
+        "id": "audio_b446586c64778d32ca47619c961453ae",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 9.6,
+        "end_sec": 9.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/38"
+        ]
+      },
+      {
+        "id": "audio_95203f22b476720049e8959256165ecc",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 9.7,
+        "end_sec": 9.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/19"
+        ]
+      },
+      {
+        "id": "audio_f27ab8387011761eeb9bfd68b12f41ea",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 9.85,
+        "end_sec": 9.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/39"
+        ]
+      },
+      {
+        "id": "audio_2813e994b7c7a822cd280a041b5aa2de",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 10.1,
+        "end_sec": 10.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/40"
+        ]
+      },
+      {
+        "id": "audio_2901be78a9cd8c6699763a686b1dec02",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 10.2,
+        "end_sec": 10.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/20"
+        ]
+      },
+      {
+        "id": "audio_7b08c264a74d4822e7a855d46beb06de",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 10.35,
+        "end_sec": 10.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/41"
+        ]
+      },
+      {
+        "id": "audio_f4697588f0f0a216a32eb238532af302",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 10.6,
+        "end_sec": 10.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/42"
+        ]
+      },
+      {
+        "id": "audio_f844db70169261566a7ce7605e82a5b2",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 10.7,
+        "end_sec": 10.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/21"
+        ]
+      },
+      {
+        "id": "audio_9f7e8792b04cc4101c76e682d12e6c5c",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 10.85,
+        "end_sec": 10.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/43"
+        ]
+      },
+      {
+        "id": "audio_7d99f0749145671244d3636422b1085e",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 11.1,
+        "end_sec": 11.1,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/44"
+        ]
+      },
+      {
+        "id": "audio_f3318fc4353b79caa3ccaf940e8cf4ee",
+        "type": "energy_sample",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 11.125,
+        "end_sec": 11.125,
+        "scope": "sampled_measurement",
+        "provenance": "observed",
+        "method": "existing_rms_frame",
+        "confidence": null,
+        "numbers": {
+          "loudness_db": -20,
+          "low_ratio": 0.6,
+          "mid_ratio": 0.3,
+          "high_ratio": 0.1
+        },
+        "source_refs": [
+          "/dynamics_and_bands/curves/44"
+        ]
+      },
+      {
+        "id": "audio_7a642b50cfaf4f8e1b9b41000d700b1a",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 11.2,
+        "end_sec": 11.2,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/22"
+        ]
+      },
+      {
+        "id": "audio_74668c2a6989f8c802e81a9aeb0d5454",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 11.35,
+        "end_sec": 11.35,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/45"
+        ]
+      },
+      {
+        "id": "audio_38101848b33d4e66157089b86c2fef72",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 11.6,
+        "end_sec": 11.6,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/46"
+        ]
+      },
+      {
+        "id": "audio_7d9deae89f56245e0f8a8a9856f59bfa",
+        "type": "detected_beat",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 11.7,
+        "end_sec": 11.7,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": 0.8,
+        "numbers": {},
+        "source_refs": [
+          "/rhythm/beat_times_sec/23"
+        ]
+      },
+      {
+        "id": "audio_0c501940a681be06ba386cb0c6fea302",
+        "type": "onset",
+        "source": "Master",
+        "source_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+        "start_sec": 11.85,
+        "end_sec": 11.85,
+        "scope": "local_detector_event",
+        "provenance": "estimated",
+        "method": "synthetic_detector",
+        "confidence": null,
+        "numbers": {},
+        "source_refs": [
+          "/onset/onset_times_sec/47"
+        ]
+      }
+    ],
+    "availability": {
+      "sources": [
+        "Master"
+      ],
+      "mid_band_onsets": "not_computed",
+      "bar_grid": "not_computed",
+      "beat_grid": "detector_output",
+      "energy_observations": "existing_rms_frames"
+    },
+    "note": "Detector timestamps are estimates. RMS samples are observations of decoded audio, not calibrated loudness. Motion windows remain separate."
+  },
+  "reference_schema": "mv_music_analysis.references.v0.7.0",
+  "reference_identity": {
+    "algorithm": "fnv1a32x4-utf16-canonical-json-v1",
+    "scope": "source content SHA-256 when available, otherwise metadata; detector versions, semantic type and original coordinates",
+    "source_fingerprint": "metadata_fallback",
+    "limitations": "IDs are reproducible for identical inputs and conditions. Audio differences below metadata visibility are not distinguished in fallback mode. Text IDs include physical source line. Identical duplicate SRT cues use an occurrence suffix. Not a cryptographic identity guarantee."
+  },
+  "review_items": [
+    {
+      "id": "review_3a16f6c8ea2192e6b22a5f5816010102",
+      "kind": "metadata_identity",
+      "target_id": "source_a9b73c0cefa696721b2bb63c3a4fad36",
+      "start_sec": null,
+      "end_sec": null,
+      "reason": "Content hashing was unavailable; metadata cannot distinguish different audio with identical metadata.",
+      "recommended_check": "Use a secure context with Web Crypto and reanalyze when cross-file identity matters.",
+      "priority": null
+    },
+    {
+      "id": "review_4163680183536f575879ab71e3c1e73b",
+      "kind": "structure_candidate",
+      "target_id": "text_dc5c04b3f658414578172383adedd091",
+      "start_sec": null,
+      "end_sec": null,
+      "reason": "Structure was inferred from formatting and context.",
+      "recommended_check": "Confirm this is a heading/instruction; use an explicit vocal tag if it is sung.",
+      "priority": null
+    },
+    {
+      "id": "review_e93734a6c18420907c57dad6465842d4",
+      "kind": "structure_candidate",
+      "target_id": "text_809ca13ef1071d381b4e2ece81d7805c",
+      "start_sec": null,
+      "end_sec": null,
+      "reason": "Structure was inferred from formatting and context.",
+      "recommended_check": "Confirm this is a heading/instruction; use an explicit vocal tag if it is sung.",
+      "priority": null
+    },
+    {
+      "id": "review_60797af9f23dbd6f0dae7ce93fcdc18b",
+      "kind": "ambiguous_structure",
+      "target_id": "text_5749f06d430ee8e32d09135df915de8f",
+      "start_sec": null,
+      "end_sec": null,
+      "reason": "Text structure is unresolved.",
+      "recommended_check": "Read the original line and specify [SECTION], [DIRECTIVE], or a vocal tag, then reanalyze.",
+      "priority": null
+    },
+    {
+      "id": "review_f7e6b6bda04eaeffe7863ded13bc7693",
+      "kind": "vocal_classification",
+      "target_id": "lyric_3bb556204739613aa7480a5002913226",
+      "start_sec": 1,
+      "end_sec": 2,
+      "reason": "Text-only vocal classification has unconfirmed candidates.",
+      "recommended_check": "Listen to the vocal and confirm the type in the editor.",
+      "priority": null
+    },
+    {
+      "id": "review_c446a04ccc9ac4aeb374a4dc7481aae2",
+      "kind": "estimated_lyric_time",
+      "target_id": "lyric_8f3be346b0fb3818bc409976606fe9bc",
+      "start_sec": 8,
+      "end_sec": 12,
+      "reason": "At least one boundary is heuristically estimated.",
+      "recommended_check": "Listen and correct the boundaries; this is not forced alignment.",
+      "priority": null
+    },
+    {
+      "id": "review_5b2a081fae324c31cf6511cfcf3722bd",
+      "kind": "unmatched_lyric",
+      "target_id": "lyric_8f3be346b0fb3818bc409976606fe9bc",
+      "start_sec": 8,
+      "end_sec": 12,
+      "reason": "No SRT cue matched this vocal line.",
+      "recommended_check": "Check omitted or misrecognized ASR words and timing.",
+      "priority": null
+    },
+    {
+      "id": "review_57f9036afbd1ffc45f2218ba1d9f7ce0",
+      "kind": "unmatched_srt",
+      "target_id": "srt_2a85911e67c2a74c9a05554e734d5328",
+      "start_sec": 9,
+      "end_sec": 10,
+      "reason": "SRT cue is not matched to canonical lyrics.",
+      "recommended_check": "Listen for ad-lib, scat, ASR errors or missing canonical lyrics.",
+      "priority": null
+    },
+    {
+      "id": "review_048db2d6c1fb72d8d1a3a1c6da807c4c",
+      "kind": "unquantified_event_confidence",
+      "target_id": "audio_0099593ac9d86e70564c2e2a44ffc41c",
+      "start_sec": 0.1,
+      "end_sec": 11.85,
+      "reason": "Detector confidence is not available for these events.",
+      "recommended_check": "Check the referenced detector output and listen before using these events as precise cut points.",
+      "priority": null,
+      "related_ids": [
+        "audio_0099593ac9d86e70564c2e2a44ffc41c",
+        "audio_0c20f4a418ca13daea415a14a2c70086",
+        "audio_0c501940a681be06ba386cb0c6fea302",
+        "audio_0d234fa69fb4181c07b82cd634176948",
+        "audio_0ee12b24e4e3de8ab7c1af948f161e86",
+        "audio_16b0b96c96ae3e42595b79dc69c7535e",
+        "audio_176e35e4c5b7f2daa9f7f25464b9c7d6",
+        "audio_2813e994b7c7a822cd280a041b5aa2de",
+        "audio_38101848b33d4e66157089b86c2fef72",
+        "audio_3d88f156943bf1f496ecbdc61c1632a0",
+        "audio_51712d92eff6bad0d6e753c29c55552c",
+        "audio_52bcc9f4acf353ba363a7fa470df43f6",
+        "audio_53726542c4c667d8cd499b321ed88da4",
+        "audio_5f859fd0c9ceeef6c7f1b300d3e78a02",
+        "audio_62d1a48a8948f930e5b01f7a5cbfa61c",
+        "audio_67fc8b0ccbaeff62b3cc33fcbd50657e",
+        "audio_70afd150bbaf79166ff1da80a413d502",
+        "audio_72aab12444f74cfaad71e714fbb2b1e6",
+        "audio_74668c2a6989f8c802e81a9aeb0d5454",
+        "audio_7b08c264a74d4822e7a855d46beb06de",
+        "audio_7d99f0749145671244d3636422b1085e",
+        "audio_817688e2c6787b10d2623612feed56fc",
+        "audio_84056be40dd1e7aaccd25954303e18f6",
+        "audio_854e03f42c37502a235781e412f26926",
+        "audio_8cb512705f44d7b684511960c5115202",
+        "audio_8ce50cbe0d274cace1579aee71afa978",
+        "audio_94df37acaf85c5322599f0dcd8f5d6de",
+        "audio_98afac6452d7c29a830956944ff604a6",
+        "audio_9f7e8792b04cc4101c76e682d12e6c5c",
+        "audio_a87f91dc4a65a3a21b5ef98c367986be",
+        "audio_b429144ce2d256625114af7c4b1b5ede",
+        "audio_b446586c64778d32ca47619c961453ae",
+        "audio_c2f9c8c0b11e63e658ffd6706acdd7f2",
+        "audio_c7e847ac8aaede420265b59c70c34ebe",
+        "audio_c937d25445dc405a2197c044a2b955c6",
+        "audio_cc537a96c0aa757cd2397406e2820c28",
+        "audio_d00e6424d054fbda1604d25449948256",
+        "audio_d59b60e091753d864f6232105dbefd72",
+        "audio_df0e8f005867af2625b502b0a9d84a32",
+        "audio_dfc5c724399ec99a12ec389461543b86",
+        "audio_eca0f9b66d08831c0bcbd6a6fc18ce78",
+        "audio_ed6dae3020f8b2569f1aa2a013b1bac2",
+        "audio_f20e5b4800cb9d3eb3039eb85a56ce5a",
+        "audio_f27ab8387011761eeb9bfd68b12f41ea",
+        "audio_f4697588f0f0a216a32eb238532af302",
+        "audio_f94c43f806cc456ed5f13c280583d06a",
+        "audio_fe5e22949f360b8a7f96c4c4d6d230d6",
+        "audio_fecc830485c226da221a62f42f33b7c6"
+      ]
+    }
+  ],
+  "example_metadata": {
+    "synthetic": true,
+    "description": "Fabricated detector outputs for reference-layer tests; not a real song analysis."
+  }
+}

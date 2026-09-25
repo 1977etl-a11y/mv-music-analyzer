@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://1977etl-a11y.github.io/mv-music-analyzer/music_analysis_schema_v7.json",
+  "title": "MV Music Analyzer 0.7.0 additive reference envelope",
+  "type": "object",
+  "required": ["schema", "reference_schema", "source", "audio_events", "motion_primitives", "lyric_timeline", "vocal_asr_timeline", "unified_timeline", "review_items", "reference_identity"],
+  "properties": {
+    "schema": {"const": "mv_music_analysis.v6.1"},
+    "reference_schema": {"const": "mv_music_analysis.references.v0.7.0"},
+    "source": {"type": "object", "required": ["id", "duration_sec"], "properties": {"id": {"type": "string"}, "duration_sec": {"type": "number", "minimum": 0}}},
+    "audio_events": {
+      "type": "object", "required": ["version", "events", "availability"],
+      "properties": {"version": {"const": "0.7.0"}, "events": {"type": "array", "items": {"$ref": "#/$defs/event"}}, "availability": {"type": "object"}}
+    },
+    "unified_timeline": {
+      "type": "object", "required": ["references", "time_index", "sections", "time_unit", "time_origin"],
+      "properties": {
+        "references": {"type": "object", "additionalProperties": {"$ref": "#/$defs/reference"}},
+        "time_index": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "sections": {"type": "array"}, "time_unit": {"const": "seconds"}, "time_origin": {"const": "Master audio start"}
+      }
+    },
+    "review_items": {"type": "array", "items": {"type": "object", "required": ["id", "kind", "target_id", "start_sec", "end_sec", "reason", "recommended_check", "priority"], "properties": {"id": {"type": "string"}, "target_id": {"type": "string"}, "start_sec": {"type": ["number", "null"]}, "end_sec": {"type": ["number", "null"]}, "priority": {"type": "null"}, "related_ids": {"type": "array", "items": {"type": "string"}}}}}
+  },
+  "$defs": {
+    "provenance": {"enum": ["observed", "estimated", "external_estimate", "manual", "mixed_user_estimate"]},
+    "reference": {
+      "type": "object", "required": ["kind", "pointer", "provenance"],
+      "properties": {"kind": {"type": "string"}, "pointer": {"type": "string", "pattern": "^/"}, "provenance": {"$ref": "#/$defs/provenance"}, "start_sec": {"type": "number", "minimum": 0}, "end_sec": {"type": "number", "minimum": 0}}
+    },
+    "event": {
+      "type": "object", "required": ["id", "type", "source", "source_id", "start_sec", "end_sec", "scope", "provenance", "method", "confidence", "numbers", "source_refs"],
+      "properties": {
+        "id": {"type": "string"}, "type": {"type": "string"}, "source": {"enum": ["Master", "Vocals", "Drums", "Bass", "Other"]}, "source_id": {"type": "string"},
+        "start_sec": {"type": "number", "minimum": 0}, "end_sec": {"type": "number", "minimum": 0},
+        "scope": {"enum": ["local_detector_event", "sampled_measurement"]}, "provenance": {"$ref": "#/$defs/provenance"},
+        "method": {"type": "string"}, "confidence": {"type": ["number", "string", "null"]}, "numbers": {"type": "object"}, "source_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^/"}}
+      }
+    }
+  }
+}

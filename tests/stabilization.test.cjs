@@ -23,6 +23,7 @@ function harness() {
     head:{appendChild(el){scripts.push(el);}}
   };
   const context=vm.createContext({document,navigator:{},console:{warn(){},error(){}},setTimeout,clearTimeout,Blob});
+  vm.runInContext(fs.readFileSync(path.join(root,'references.js'),'utf8'),context);
   vm.runInContext(source,context);
   return {context,elements,scripts,run(code){return vm.runInContext(code,context);}};
 }
@@ -146,7 +147,7 @@ test('analysis snapshots inputs, prevents reentry, preserves v6.1 and excludes s
   assert.equal(result.onset.selected_method,'Essentia OnsetRate');
   assert.equal(result.schema,'mv_music_analysis.v6.1');assert.equal(h.run('outputName()'),'original_music_analysis_v6_1.json');
   assert.equal(h.elements.get('lyricsInput').disabled,false);
-  assert.deepEqual(Object.keys(result).sort(),['schema','generated_at','engine','source','rhythm','tonal','stems','semantic_audio_events','onset','dynamics_and_bands','section_change_candidates','mv_sync_candidates','motion_primitives','lyric_timeline','vocal_asr_timeline','lyric_asr_alignment','unified_timeline','mv_mapping_hint','warnings'].sort());
+  assert.deepEqual(Object.keys(result).sort(),['schema','generated_at','engine','source','rhythm','tonal','stems','semantic_audio_events','onset','dynamics_and_bands','section_change_candidates','mv_sync_candidates','motion_primitives','lyric_timeline','vocal_asr_timeline','lyric_asr_alignment','unified_timeline','mv_mapping_hint','warnings','reference_schema','reference_identity','audio_events','review_items'].sort());
 });
 
 test('onset method records actual fallback or success independently of band failures',async()=>{

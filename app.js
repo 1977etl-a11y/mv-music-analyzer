@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.6.2';
+const VERSION = '0.7.0';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
@@ -150,6 +150,8 @@ async function ensureLibraries(){
 
 async function decodeAndResample(file){
   const arrayBuffer=await file.arrayBuffer();
+  let contentHash=null;
+  if(globalThis.crypto?.subtle){try{contentHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',arrayBuffer)),b=>b.toString(16).padStart(2,'0')).join('');}catch(err){console.warn('Source hashing unavailable; using metadata identity',err);}}
   const Ctx=window.AudioContext||window.webkitAudioContext;
   const ctx=new Ctx();
   const decoded=await ctx.decodeAudioData(arrayBuffer.slice(0));
@@ -162,7 +164,7 @@ async function decodeAndResample(file){
     buffer=await offline.startRendering();
   }
   await ctx.close();
-  return{buffer,sourceRate,sourceChannels};
+  return{buffer,sourceRate,sourceChannels,contentHash};
 }
 function downmixToMono(buffer){
   const n=buffer.length,ch=buffer.numberOfChannels,mono=new Float32Array(n);
@@ -406,7 +408,7 @@ function compactStemCurves(curves){
   return curves.map(x=>({t:x.t,loudness_db:x.loudness_db,low_ratio:x.low_ratio,mid_ratio:x.mid_ratio,high_ratio:x.high_ratio}));
 }
 async function analyzeStemFile(file,role,originalDuration){
-  const {buffer,sourceRate,sourceChannels}=await decodeAndResample(file);
+  const {buffer,sourceRate,sourceChannels,contentHash}=await decodeAndResample(file);
   const mono=downmixToMono(buffer),duration=mono.length/ANALYSIS_SR;
   const bands=buildBandSignals(mono,ANALYSIS_SR);
   const curves=buildBandCurves(mono,bands,ANALYSIS_SR);
@@ -424,7 +426,7 @@ async function analyzeStemFile(file,role,originalDuration){
       note:role==='vocals'?'Vocal stem上の発声/子音/ブレス等の候補。意味種別は未確定。':'Stem上のオンセット候補。'};
   });
   return {
-    file_name:file.name,mime_type:file.type||null,file_size_bytes:file.size,
+    file_name:file.name,mime_type:file.type||null,file_size_bytes:file.size,content_sha256:contentHash,
     duration_sec:round(duration,5),source_sample_rate_hz:sourceRate,source_channels:sourceChannels,
     duration_delta_from_original_sec:round(duration-originalDuration,5),
     alignment_status:Math.abs(duration-originalDuration)<=.25?'aligned':'check_required',
@@ -621,7 +623,7 @@ function buildAsrLyricAlignment(lyricText,srtEntries,duration){
     }
     if(best&&best.similarity>=.18){
       const cues=srtEntries.slice(best.i,best.i+best.span), start=cues[0].start_sec,end=cues[cues.length-1].end_sec;
-      matches.push({line_index:line.line_index,source_line_number:line.source_line_number,section_id:line.section_id,type:line.type,canonical_text:line.text,start_sec:start,end_sec:end,asr_text:best.text,similarity:round(best.similarity,4),confidence:best.similarity>=.62?'high':best.similarity>=.38?'medium':'low',source:'canonical_lyrics_x_srt'});
+      matches.push({line_index:line.line_index,source_line_number:line.source_line_number,section_id:line.section_id,type:line.type,canonical_text:line.text,start_sec:start,end_sec:end,asr_text:best.text,srt_cue_indices:cues.map(c=>c.cue_index).filter(Number.isInteger),similarity:round(best.similarity,4),confidence:best.similarity>=.62?'high':best.similarity>=.38?'medium':'low',source:'canonical_lyrics_x_srt'});
       minCue=best.i+best.span;
     }
   }
@@ -676,12 +678,19 @@ function parseLyricStructure(text){
     const isolated=(i===0||!sourceLines[i-1].trim())&&i+1<sourceLines.length&&!!sourceLines[i+1].trim();
     const vocalHints=vocalClassification(inner);
     const sentence=/[!?！？。]/.test(inner)||/\b(?:i|you|we|my|your)\b/i.test(inner)||/[がをにはでと].+[ぁ-ん]/.test(inner);
+    const next=(sourceLines.slice(i+1).find(s=>s.trim())?.trim()||'').replace(/^\[\d+:[0-5]?\d(?:\.\d+)?\]\s*/, '');
+    const followedByVocal=!!next&&(!pairs[next[0]]||/^\[(?:LYRIC|SCAT|VOCAL|BREATH)\]/i.test(next));
+    const peerHeading=rows.some(r=>r.kind==='SECTION'&&r.raw_text.trim()[0]===rest[0]);
+    const titleShape=/^(?:[A-Z][a-zA-Z0-9]*(?:[ -][A-Z][a-zA-Z0-9]*){0,4}|[\p{Script=Han}\p{Script=Katakana}ー]{1,16})$/u.test(title);
+    const annotated=/\s[-–—:]\s/.test(inner)&&/[（(].+[）)]/.test(inner);
+    const contextualHeading=wrapped&&'【[〈《'.includes(rest[0])&&followedByVocal&&!sentence&&!vocalHints.candidates.length&&!directive&&titleShape&&(peerHeading||(isolated&&annotated));
     if(!kind){
       if(markdown){kind='SECTION';confidence='high';evidence=['markdown_heading_shape'];}
       else if(wrapped&&(sectionWord||sectionCode||numberedTitle)&&!/[!?！？。]/.test(inner)){
         kind='SECTION';confidence=sectionWord?'high':'medium';evidence=['whole_line_wrapper',sectionWord?'section_description':sectionCode?'section_label_shape':'numbered_title_shape'];
         if(isolated)evidence.push('isolated_before_content');
-      }else if(wrapped&&directive&&!sentence){kind='DIRECTIVE';confidence='medium';evidence=['whole_line_wrapper','instruction_phrase'];}
+      }else if(contextualHeading){kind='SECTION';confidence='medium';evidence=['whole_line_wrapper','title_shape','following_vocal_content',peerHeading?'matching_heading_context':'isolated_annotated_heading'];}
+      else if(wrapped&&directive&&!sentence){kind='DIRECTIVE';confidence='medium';evidence=['whole_line_wrapper','instruction_phrase'];}
       else if(wrapped&&!sentence&&!vocalHints.candidates.length){kind='AMBIGUOUS';evidence=['whole_line_wrapper','insufficient_structure_or_vocal_evidence'];}
       else {kind='VOCAL_LINE';confidence=wrapped?'medium':'low';evidence=[anchor!==null?'explicit_timecode':wrapped?'vocal_text_inside_wrapper':'unmarked_content_line'];}
     }
@@ -743,7 +752,7 @@ function applySrtAlignment(timeline,alignment,text,motionPrimitives){
   let applied=false;
   timeline.entries=timeline.entries.map(e=>{
     const m=byLine.get(e.line_index);if(!m||anchors.has(e.line_index))return e;
-    applied=true;return {...e,timing_status:'srt_candidate',start_sec:m.start_sec,end_sec:m.end_sec,confidence:m.confidence,alignment_method:'external_srt_match',asr_text:m.asr_text,asr_similarity:m.similarity};
+    applied=true;return {...e,timing_origin:MVReferences.state(e),timing_status:'srt_candidate',start_sec:m.start_sec,end_sec:m.end_sec,confidence:m.confidence,alignment_method:'external_srt_match',asr_text:m.asr_text,asr_similarity:m.similarity};
   });
   if(applied){timeline.status='external_srt_alignment_available';timeline.alignment_method='canonical_lyrics_x_external_srt';}
   refreshLyricAudioContext(timeline,motionPrimitives);
@@ -759,14 +768,21 @@ function renderLyricEditor(){
     row.innerHTML=`<input type="number" step="0.01" min="0" value="${e.start_sec}" aria-label="開始秒"><input type="number" step="0.01" min="0" value="${e.end_sec}" aria-label="終了秒"><select aria-label="種別">${['LYRIC','SCAT','BREATH','VOCALIZATION','INSTRUMENTAL'].map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('')}</select><div class="lyric-text">${escapeHtml(e.text||'（テキストなし）')}<br><small>${escapeHtml(e.confidence)} / ${escapeHtml(e.alignment_method)} / ${escapeHtml(e.timing_status||'candidate')}<br>発声分類候補: ${escapeHtml((e.classification?.candidates||[]).map(c=>`${c.type} (${c.confidence})`).join(', ')||'未確定')}</small></div>`;
     const [a,b,sel]=row.querySelectorAll('input,select');
     const update=(timing)=>{
+      const before=MVReferences.state(e);
       if(timing){e.start_sec=round(clamp(Number(a.value)||0,0,analysisResult.source.duration_sec),3);e.end_sec=round(clamp(Number(b.value)||e.start_sec,e.start_sec,analysisResult.source.duration_sec),3);e.confidence='user_corrected';e.alignment_method='manual';e.timing_status='manual';a.value=e.start_sec;b.value=e.end_sec;}
       else{e.type=sel.value;e.classification={status:'manual',confidence:'user_corrected',evidence:['manual_type_selection'],candidates:[{type:e.type,confidence:'user_corrected',evidence:['manual_type_selection']}]};}
-      e.manual_corrected=true;refreshLyricAudioContext(analysisResult.lyric_timeline,analysisResult.motion_primitives);renderJsonPreviewOnly();renderLyricEditor();
+      e.manual_corrected=true;MVReferences.recordEdit(e,before,timing?'timing':'classification');refreshLyricAudioContext(analysisResult.lyric_timeline,analysisResult.motion_primitives);MVReferences.enrich(analysisResult,{rebuildAudio:false});renderReferenceSummary();renderJsonPreviewOnly();renderLyricEditor();
     };
     a.addEventListener('change',()=>update(true));b.addEventListener('change',()=>update(true));sel.addEventListener('change',()=>update(false));ui.lyricEditor.appendChild(row);
   }
 }
-function renderJsonPreviewOnly(){if(!analysisResult)return;const data=analysisResult;const preview={...data,dynamics_and_bands:{...data.dynamics_and_bands,curves:`[${data.dynamics_and_bands.curves.length} frames — JSON保存時は全データ]`}};ui.json.textContent=JSON.stringify(preview,null,2);}
+function jsonPreview(data){
+  return {...data,dynamics_and_bands:{...data.dynamics_and_bands,curves:`[${data.dynamics_and_bands.curves.length} frames — JSON保存時は全データ]`},
+    ...(data.audio_events?{audio_events:{...data.audio_events,events:`[${data.audio_events.events.length} events — JSON保存時は全データ]`},
+      unified_timeline:{...data.unified_timeline,references:`[${Object.keys(data.unified_timeline.references).length} references — JSON保存時は全データ]`,time_index:`[${data.unified_timeline.time_index.length} IDs — JSON保存時は全データ]`},
+      review_items:`[${data.review_items.length} items — JSON保存時は全データ]`}:{})};
+}
+function renderJsonPreviewOnly(){if(analysisResult)ui.json.textContent=JSON.stringify(jsonPreview(analysisResult),null,2);}
 
 async function analyzeSelectedFile(){
   if(!selectedFile||analyzing)return;
@@ -779,7 +795,7 @@ async function analyzeSelectedFile(){
   try{
     await ensureLibraries();
     setProgress(14,'音源をデコード中…');
-    const {buffer,sourceRate,sourceChannels}=await decodeAndResample(input.file);
+    const {buffer,sourceRate,sourceChannels,contentHash}=await decodeAndResample(input.file);
     const mono=downmixToMono(buffer),duration=mono.length/ANALYSIS_SR;
 
     setProgress(23,'帯域信号を準備中…');
@@ -872,7 +888,7 @@ async function analyzeSelectedFile(){
         analysis_sample_rate_hz:ANALYSIS_SR
       },
       source:{
-        file_name:input.file.name,mime_type:input.file.type||null,file_size_bytes:input.file.size,
+        file_name:input.file.name,mime_type:input.file.type||null,file_size_bytes:input.file.size,content_sha256:contentHash,
         duration_sec:round(duration,5),source_sample_rate_hz:sourceRate,source_channels:sourceChannels
       },
       rhythm:{
@@ -939,6 +955,8 @@ async function analyzeSelectedFile(){
       warnings
     };
 
+    MVReferences.enrich(analysisResult);
+    renderReferenceSummary();
     setProgress(95,'画面を描画中…');
     renderResults(analysisResult);
     renderLyricEditor();
@@ -987,8 +1005,16 @@ function renderResults(data){
     `<div class="event-item"><b>一致度</b><small>${cc.agreement_score==null?'—':Math.round(cc.agreement_score*100)+'%'}（ハーフ/ダブルテンポは近似的に吸収）</small></div>`
   ].join('');
 
-  const preview={...data,dynamics_and_bands:{...data.dynamics_and_bands,curves:`[${data.dynamics_and_bands.curves.length} frames — JSON保存時は全データ]`}};
+  const preview=jsonPreview(data);
   ui.json.textContent=JSON.stringify(preview,null,2);
+}
+
+function renderReferenceSummary(){
+  const panel=$('referenceSummary');if(!panel||!analysisResult)return;
+  const d=analysisResult;
+  panel.innerHTML=`<p>音響イベント ${d.audio_events.events.length}件 / 参照ID ${Object.keys(d.unified_timeline.references).length}件 / 要確認 ${d.review_items.length}件。全件は保存JSONで参照できます。</p>`+
+    '<details><summary>音響イベント先頭10件</summary>'+d.audio_events.events.slice(0,10).map(e=>`<div class="event-item"><b>${fmtTime(e.start_sec)} / ${escapeHtml(e.type)}</b><small>${escapeHtml(e.id)}<br>${escapeHtml(e.source)} / ${escapeHtml(e.provenance)}</small></div>`).join('')+'</details>'+
+    d.review_items.slice(0,20).map(r=>`<div class="event-item"><b>${escapeHtml(r.kind)}</b><small>${escapeHtml(r.target_id)}<br>${escapeHtml(r.reason)}<br>${escapeHtml(r.recommended_check)}</small></div>`).join('');
 }
 
 function renderCurves(curves){
