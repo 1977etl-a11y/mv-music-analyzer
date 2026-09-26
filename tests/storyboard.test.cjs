@@ -15,3 +15,24 @@ test('missing analysis, malformed files and dangling author targets are handled'
 test('legacy import preserves decisions, timing and old arrays',()=>{const old=JSON.parse(fs.readFileSync(require.resolve('../sample_storyboard_references_v0.7.json'),'utf8')),b=S.importJSON(JSON.stringify(old));assert.deepEqual(b.cuts[0].audio_event_ids,old.cuts[0].audio_event_ids);assert.equal(b.cuts[0].start_sec,old.cuts[0].start_sec);assert.equal(b.cuts[0].relations[0].explanation,old.cuts[0].relations[0].explanation);assert.equal(S.importJSON(JSON.stringify(old)).cuts[0].id,b.cuts[0].id);});
 test('baseline stores only referenced values and detects source identity change',()=>{const a=copy(source);a.source.id='changed';assert.ok(codes(original,a).includes('analysis_identity_changed'));assert.ok(Object.keys(original.baseline.references).length<10);assert.equal(original.schema,S.SCHEMA);});
 test('motion primitive value changes are tracked independently of window IDs',()=>{const a=copy(source),b=copy(original),id=Object.keys(a.unified_timeline.references).find(id=>a.unified_timeline.references[id].kind==='motion_window');b.cuts[0].references.push({target_id:id,kind:'motion_window',purpose:'sustain'});const captured=S.captureBaseline(b,a);S.resolve(a,id).value.primitives.SUSTAIN.strength=.001;assert.ok(codes(captured,a).includes('analysis_changed'));});
+
+test('bare cuts_v71-style array and cuts wrapper retain every input field and count',()=>{
+  const cuts=[{cut:'CUT23',block:'B',start:1,end:2,audio_event_ids:['missing_event'],direction:{action:'turn',notes:['keep all']},custom:null},{cut:'CUT24',block:'C',start:3,end:2,references:[{target_id:'missing_lyric',kind:'lyric_line',purpose:'contrast'}],relations:[],camera:'wide'}];
+  for(const input of [cuts,{cuts,title:'Original title',baseline:{references:{},analysis:{}},custom:'keep'}]){
+    const b=S.importJSON(JSON.stringify(input));assert.equal(b.cuts.length,cuts.length);
+    cuts.forEach((c,i)=>{for(const key of Object.keys(c))assert.deepEqual(b.cuts[i][key],c[key]);});
+    assert.equal(b.cuts[0].start_sec,1);assert.equal(b.cuts[0].id,'CUT23');
+    assert.ok(codes(b).includes('missing_reference'));assert.ok(codes(b).includes('cut_time'));
+    if(!Array.isArray(input)){assert.deepEqual(b.baseline,input.baseline);assert.equal(b.custom,'keep');}
+  }
+});
+test('import rejects empty arrays, invalid containers and non-cut elements with location',()=>{
+  for(const input of [[],{cuts:[]}])assert.throws(()=>S.importJSON(JSON.stringify(input)),/空/);
+  for(const input of [null,1,'text',{}, {cuts:{}}])assert.throws(()=>S.importJSON(JSON.stringify(input)),/最上位/);
+  for(const item of [null,5,'cut',[],{}, {unrelated:true}])assert.throws(()=>S.importJSON(JSON.stringify([{cut:'ok'},item])),/カット2/);
+});
+test('alias import does not overwrite canonical values or turn reference defects into load errors',()=>{
+  const b=S.importJSON(JSON.stringify([{cut:'A',id:'canonical',start:1,start_sec:9,end:2,references:[{kind:'audio_event'}]}]));
+  assert.equal(b.cuts[0].id,'canonical');assert.equal(b.cuts[0].start_sec,9);assert.equal(b.cuts[0].start,1);
+  assert.ok(codes(b).includes('invalid_storyboard'));
+});

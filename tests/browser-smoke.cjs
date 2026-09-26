@@ -53,6 +53,23 @@ const root=path.join(__dirname,'..');
     assert.deepEqual(JSON.parse(boardText),require('../sample_storyboard_v0_7_1.synthetic.json'));
     await page.locator('#storyboardFile').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{')});
     await page.waitForFunction(()=>document.getElementById('storyboardStatus').textContent.includes('読込失敗'));
+    const cuts=[{cut:'CUT23',block:'A',start:1,end:2,audio_event_ids:['not_real'],direction:{action:'preserve'}}];
+    for(const input of [cuts,{cuts}]){
+      await page.locator('#storyboardFile').setInputFiles({name:'cuts_v71.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))});
+      await page.waitForFunction(()=>document.getElementById('storyboardStatus').textContent.includes('1 CUT'));
+      await page.locator('#storyboardValidate').click();
+      assert.match(await page.locator('#storyboardOutput').innerText(),/missing_reference/);
+      assert.doesNotMatch(await page.locator('#storyboardStatus').innerText(),/読込失敗/);
+      const saved=page.waitForEvent('download');await page.locator('#storyboardExport').click();
+      const file=await saved,stream=await file.createReadStream();let text='';for await(const part of stream)text+=part;
+      const data=JSON.parse(text);assert.equal(data.cuts.length,1);for(const key of Object.keys(cuts[0]))assert.deepEqual(data.cuts[0][key],cuts[0][key]);
+    }
+    for(const width of [320,390]){
+      await page.setViewportSize({width,height:844});
+      const boxes=await page.locator('#storyboardPanel .actions button').evaluateAll(buttons=>buttons.map(b=>({width:b.getBoundingClientRect().width,height:b.getBoundingClientRect().height,top:b.getBoundingClientRect().top,scroll:b.scrollWidth,client:b.clientWidth})));
+      assert.ok(boxes.every(b=>b.width>200&&b.height>=44&&b.scroll<=b.client));
+      assert.ok(boxes.every((b,i)=>i===0||b.top>=boxes[i-1].top+boxes[i-1].height));
+    }
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({browser:browser.version(),viewport:'390x844',synthetic_ui:'passed',download:'passed',service_worker:'offline_reload_passed',synthetic_decode:decoded,page_errors:errors}));
   }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

@@ -132,3 +132,8 @@ code { color:#fff0a1; }
 @media(max-width:620px){.lyric-row{grid-template-columns:1fr 1fr}.lyric-row .lyric-text{grid-column:1/-1}.lyric-row select{grid-column:1/-1}}
 
 .srt-import{margin-top:12px;padding:12px;border:1px solid #2b2b31;border-radius:12px;background:#101014}.srt-title{margin-bottom:10px}.visually-hidden-file{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.srt-choose{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:0 0 8px;touch-action:manipulation;cursor:pointer}.srt-import .stem-info{margin-top:4px}
+
+/* Keep storyboard controls readable on narrow screens. */
+#storyboardPanel .actions{display:flex;flex-wrap:wrap;gap:8px}
+#storyboardPanel .actions button{flex:1 0 180px;white-space:normal;word-break:normal;overflow-wrap:normal;min-height:44px}
+@media(max-width:620px){#storyboardPanel .actions{flex-direction:column}#storyboardPanel .actions button{flex:none;width:100%}}

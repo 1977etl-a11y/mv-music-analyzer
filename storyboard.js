@@ -40,8 +40,23 @@
   }
   function identity(a){return {schema:a.schema,reference_schema:a.reference_schema,source_id:a.source?.id,duration_sec:a.source?.duration_sec,conditions:{essentia_js:a.engine?.essentia_js,audio_beat:a.engine?.audio_beat,analysis_sample_rate_hz:a.engine?.analysis_sample_rate_hz},reference_identity:a.reference_identity};}
   function importJSON(text){
-    const b=JSON.parse(text);
-    if(!b||!Array.isArray(b.cuts))throw Error('cuts配列が必要です。');
+    const parsed=JSON.parse(text);
+    const b=Array.isArray(parsed)?{cuts:parsed}:parsed;
+    if(!b||typeof b!=='object'||!Array.isArray(b.cuts))throw Error('最上位をカット配列 [...] または cuts配列を持つオブジェクトにしてください。');
+    if(!b.cuts.length)throw Error('カット配列が空です。1件以上のカットが必要です。');
+    b.cuts.forEach((c,i)=>{
+      if(!c||typeof c!=='object'||Array.isArray(c)||!Object.keys(c).some(k=>['id','cut','cut_number','start','end','start_sec','end_sec'].includes(k)))throw Error(`カット${i+1}: CUT識別子または時刻を持つオブジェクトが必要です。`);
+    });
+    if(b.schema===undefined){
+      // Preserve all input fields; add only aliases consumed by the existing validator.
+      return {...b,schema:SCHEMA,cuts:b.cuts.map(c=>{
+        const out={...c};
+        for(const [key,alias] of [['id','cut'],['cut_number','cut'],['start_sec','start'],['end_sec','end']])
+          if(!Object.prototype.hasOwnProperty.call(out,key)&&Object.prototype.hasOwnProperty.call(c,alias))out[key]=c[alias];
+        if(!Object.prototype.hasOwnProperty.call(out,'references'))out.references=Object.entries({audio_event_ids:'audio_event',motion_window_ids:'motion_window',lyric_line_ids:'lyric_line',srt_ids:'srt_cue',section_ids:'section'}).flatMap(([key,kind])=>Array.isArray(c[key])?c[key].map(target_id=>({target_id,kind,purpose:'未指定'})):[]);
+        return out;
+      })};
+    }
     if(b.schema===SCHEMA)return shape(b);
     if(b.schema!=='mv_storyboard_references.v0.1')throw Error('未対応のコンテスキーマです。');
     const id=R.stableId('storyboard',b);
