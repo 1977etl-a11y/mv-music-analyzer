@@ -166,6 +166,10 @@
 <label>解析JSON <input id="storyboardAnalysisFile" type="file" accept=".json,application/json"></label>
 <label>コンテJSON <input id="storyboardFile" type="file" accept=".json,application/json"></label>
 <div class="actions"><button id="storyboardCurrent">現在の解析を使用</button><button id="storyboardValidate">検証</button><button id="storyboardBaseline">初回の比較基準を保存</button><button id="storyboardReport">検証結果JSON</button><button id="storyboardExport">コンテJSONを書き出す</button></div>
+<p id="storyboardBaselineStatus" aria-live="polite">比較基準：確認中</p><p id="storyboardBaselineMessage" aria-live="polite"></p>
+<div class="actions"><button id="storyboardBaselineExport">比較基準JSONを書き出す</button><button id="storyboardCompare">保存済み基準と比較</button></div>
+<label>比較基準JSONを読み込む <input id="storyboardBaselineFile" type="file" accept=".json,application/json"></label>
+<pre id="storyboardComparison" style="white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite"></pre>
 <p id="storyboardStatus" aria-live="polite">コンテJSONを読み込んでください。</p><div id="storyboardOutput"></div>
 </section>
 <footer>
@@ -177,6 +181,7 @@
   <script src="references.js" defer></script>
   <script src="app.js" defer></script>
   <script src="storyboard.js" defer></script>
+  <script src="storyboard-baseline.js" defer></script>
   <script src="storyboard-ui.js" defer></script>
 </body>
 </html>
