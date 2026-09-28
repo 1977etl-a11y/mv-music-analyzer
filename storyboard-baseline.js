@@ -35,14 +35,23 @@
   }
   function compare(record,board,analysis){
     if(!board||!analysis)throw Error('現在の解析とコンテを読み込んでください。');
-    const report=MVStoryboard.validate({...board,baseline:record.baseline,analysis:record.baseline.analysis},analysis);
+    const stored=record.baseline.references,working={...stored},derived=[];
+    const originalTargets=MVStoryboard.targets(record.board);
+    const currentTargets=MVStoryboard.targets(board);
+    // Recover only original references from the archived analysis, never from current data.
+    const identityMatches=MVReferences.stableId('identity',record.baseline.analysis)===MVReferences.stableId('identity',MVStoryboard.identity(record.analysis));
+    if(identityMatches)for(const id of originalTargets)if(!Object.prototype.hasOwnProperty.call(working,id)){
+      const value=MVStoryboard.snapshot(record.analysis,id);if(value){working[id]=value;derived.push(id);}
+    }
+    const report=MVStoryboard.validate({...board,baseline:{...record.baseline,references:working},analysis:record.baseline.analysis},analysis);
+    const compared=[...currentTargets].filter(id=>working[id]&&MVStoryboard.snapshot(analysis,id));
     const old=record.board.cuts,now=board.cuts,changes=[];
     const key=(c,i)=>c.id??c.cut??`position:${i+1}`;
     const before=new Map(old.map((c,i)=>[key(c,i),c]));
     const after=new Map(now.map((c,i)=>[key(c,i),c]));
     for(const [id,c] of after){if(!before.has(id))changes.push({cut_id:id,change:'added'});else if(MVReferences.stableId('cut',c)!==MVReferences.stableId('cut',before.get(id)))changes.push({cut_id:id,change:'changed'});}
     for(const id of before.keys())if(!after.has(id))changes.push({cut_id:id,change:'removed'});
-    return {saved_at:record.saved_at,compared_reference_count:Object.keys(record.baseline.references).length,cut_changes:changes,analysis_comparison:report,note:'指摘0件は解析精度や永続保存の証明ではありません。参照0件の場合、解析イベントの値比較はできません。CUT IDがない場合はcutまたは位置で比較します。'};
+    return {saved_at:record.saved_at,compared_reference_count:compared.length,stored_reference_count:Object.keys(stored).length,derived_reference_count:derived.length,derived_reference_ids:derived,baseline_derivation:derived.length?'保存時の解析JSONから一時取得。永続保存した基準は未変更。':'保存済み参照値を使用。取得できない参照はmissing_baselineで報告。',cut_changes:changes,analysis_comparison:report,note:'指摘0件は解析精度や永続保存の証明ではありません。参照0件の場合、解析イベントの値比較はできません。CUT IDがない場合はcutまたは位置で比較します。'};
   }
   globalThis.MVStoryboardBaseline={check,create,compare,load:()=>access(),save:record=>access(check(record))};
 })();

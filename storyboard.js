@@ -3,7 +3,7 @@
   'use strict';
   const R=typeof module==='object'&&module.exports?require('./references.js'):root.MVReferences;
   const SCHEMA='mv_storyboard.v0.7.1', clone=x=>JSON.parse(JSON.stringify(x));
-  const kinds=['audio_event','motion_window','lyric_line','srt_cue','section'];
+  const kinds=['audio_event','motion_window','lyric_line','srt_cue','section','review_item'];
   const finite=x=>typeof x==='number'&&Number.isFinite(x);
   function shape(b){
     if(!b||!Array.isArray(b.cuts)||b.cuts.some(c=>!c||typeof c!=='object'||['references','relations','mappings','actions','subjects','uncertainties'].some(k=>c[k]!==undefined&&!Array.isArray(c[k]))))throw Error('CUTと配列フィールドの形式を確認してください。');
@@ -17,9 +17,33 @@
     if((b.transitions||[]).some(t=>!t))throw Error('境界設定が不正です。');
     return b;
   }
+  // Read-only adapter: canonical and named references share one extraction path.
+  function extractReferences(c){
+    const refs=[],errors=[],seen=new Set();
+    const add=(item,kind,field,index)=>{
+      const value=typeof item==='string'?{target_id:item}:item;
+      const id=value&&typeof value==='object'?(value.target_id??value.id??value.ref_id??value.reference_id??value.lyric_line_id??value.srt_cue_id??value.motion_window_id??value.event_id??value.lyric_id??value.srt_id??value.motion_id??value.window_id??value.audio_event_id??value.review_id):null;
+      if(typeof id!=='string'||!id.trim()){errors.push({field,index,reason:'参照IDがない、または文字列ではありません。'});return;}
+      const ref={...value,target_id:id,kind:kind??value.kind,purpose:value.purpose??'未指定'};
+      // Deduplicate identical aliases only; keep different uses/timing of the same ID.
+      const comparable={...ref};for(const key of ['id','ref_id','reference_id','lyric_line_id','srt_cue_id','motion_window_id','event_id','lyric_id','srt_id','motion_id','window_id','audio_event_id','review_id'])delete comparable[key];
+      const hash=R.stableId('reference',comparable);
+      if(!seen.has(hash)){seen.add(hash);refs.push(ref);}
+    };
+    const fields={references:null,lyric_refs:'lyric_line',srt_refs:'srt_cue',motion_refs:'motion_window',audio_event_refs:'audio_event',review_refs:'review_item',section_refs:'section',audio_event_ids:'audio_event',motion_window_ids:'motion_window',lyric_line_ids:'lyric_line',srt_ids:'srt_cue',section_ids:'section'};
+    for(const [field,kind] of Object.entries(fields)){
+      if(c[field]===undefined)continue;
+      if(!Array.isArray(c[field])){errors.push({field,reason:'参照フィールドは配列である必要があります。'});continue;}
+      c[field].forEach((item,index)=>add(item,kind,field,index));
+    }
+    return {references:refs,errors};
+  }
   function resolve(a,id){
     const ref=a?.unified_timeline?.references?.[id];
-    if(!ref||typeof ref.pointer!=='string')return null;
+    if(!ref||typeof ref.pointer!=='string'){
+      const review=Array.isArray(a?.review_items)?a.review_items.find(item=>item.id===id):null;
+      return review?{ref:{kind:'review_item',start_sec:review.start_sec,end_sec:review.end_sec,provenance:'review_requirement'},value:review,kind:'review_item'}:null;
+    }
     let value=a;
     for(const part of ref.pointer.split('/').slice(1)){
       const key=part.replace(/~1/g,'/').replace(/~0/g,'~');
@@ -34,7 +58,7 @@
     const {ref,value,kind}=found;
     const detail={};
     // Small values only; no audio_context, frame arrays, or edit-history duplication.
-    for(const key of ['type','text','raw_text','kind','classification','primitives','metrics','numbers','scores','dominant','method','alignment_method','timing_status','manual_corrected','source','source_id'])
+    for(const key of ['type','text','raw_text','kind','target_id','related_ids','reason','recommended_check','priority','classification','primitives','metrics','numbers','scores','dominant','method','alignment_method','timing_status','manual_corrected','source','source_id'])
       if(value[key]!==undefined)detail[key]=value[key];
     return {kind,start_sec:ref.start_sec??null,end_sec:ref.end_sec??null,provenance:ref.provenance,confidence:value.confidence??null,detail:clone(detail)};
   }
@@ -62,7 +86,7 @@
     const id=R.stableId('storyboard',b);
     return {...b,schema:SCHEMA,legacy_schema:b.schema,id,title:b.title||'Imported storyboard',version:'1',analysis:{file:b.analysis_file,reference_schema:b.reference_schema,source_id:b.source_id},motifs:[],transitions:[],migration_notes:['旧フィールドを保持。初回に割り当てたCUT IDは保存後に再生成しない。未指定の演出は空欄。'],cuts:b.cuts.map((c,i)=>({...c,id:c.id||R.stableId('cut',{storyboard:id,original:c,duplicate:i}),subjects:[],shot:{},actions:[],mappings:[],uncertainties:[],review_status:'pending',references:[...Object.entries({audio_event_ids:'audio_event',motion_window_ids:'motion_window',lyric_line_ids:'lyric_line',srt_ids:'srt_cue',section_ids:'section'}).flatMap(([key,kind])=>(c[key]||[]).map(target_id=>({target_id,kind,purpose:'未指定',usage_status:'candidate'})))],relations:(c.relations||[]).map(r=>({...r,targets:[...['audio_event_id','lyric_line_id'].filter(k=>r[k]).map(k=>({type:'analysis',id:r[k]}))],decision_by:r.decision_by||'unspecified'}))}))};
   }
-  function targets(b){const ids=new Set();for(const c of b.cuts){for(const r of c.references||[])ids.add(r.target_id);for(const rel of c.relations||[])for(const t of rel.targets||[])if(t.type==='analysis')ids.add(t.id);for(const m of c.mappings||[])for(const id of m.analysis_ids||[])ids.add(id);}return ids;}
+  function targets(b){const ids=new Set();for(const c of b.cuts){for(const r of extractReferences(c).references)ids.add(r.target_id);for(const rel of c.relations||[])for(const t of rel.targets||[])if(t.type==='analysis')ids.add(t.id);for(const m of c.mappings||[])for(const id of m.analysis_ids||[])ids.add(id);}return ids;}
   function captureBaseline(b,a){
     if(!a?.unified_timeline?.references)throw Error('v0.7の参照索引を持つ解析JSONが必要です。');
     const out=clone(b);out.analysis={...out.analysis,...identity(a)};
@@ -102,12 +126,14 @@
       if(!finite(c.start_sec)||!finite(c.end_sec)||c.start_sec<0||c.end_sec<=c.start_sec)add('cut_time',c,null,'CUT時刻が不正です。',false,'error');
       if(finite(duration)&&c.end_sec>duration)add('outside_audio',c,null,'CUTが音源尺を超えています。',false,'error');
       if(changedSource||changedConditions)add('analysis_identity_changed',c,null,'解析元または解析条件が変わりました。');
-      for(const r of c.references||[]){
+      const extracted=extractReferences(c);
+      for(const error of extracted.errors)add('invalid_reference',c,null,`${error.field}[${error.index??''}]: ${error.reason}`,false,'error');
+      for(const r of extracted.references){
         if(!kinds.includes(r.kind))add('reference_kind',c,r.target_id,'未対応の参照種類です。',false,'error');
         const s=checkTarget(c,r.target_id,r.kind);if(!s)continue;
         if(r.source_range&&(r.source_range.start_sec!==s.start_sec||r.source_range.end_sec!==s.end_sec))add(s.detail.manual_corrected?'stale_manual_time':'stale_reference_time',c,r.target_id,'保存した参照時刻が現在の解析と異なります。');
         if(r.usage_status==='confirmed'&&(typeof s.confidence!=='number'||s.confidence<.7))add('uncertain_confirmed',c,r.target_id,'数値信頼度が低い、または未定義の解析を確定扱いしています。');
-        if(finite(s.start_sec)){
+        if(finite(s.start_sec)&&r.kind!=='review_item'){
           const at=r.cut_time_sec??c.start_sec,delta=at-s.start_sec;
           const declared=r.timing?.offset_sec;
           const intentional=r.timing?.intentional===true&&typeof r.timing.explanation==='string'&&r.timing.explanation.trim().length>0&&finite(declared)&&Math.abs(delta-declared)<.001;
@@ -129,8 +155,8 @@
     for(const c of ordered){if(furthest&&c.start_sec>furthest.end_sec)boundary(furthest,c,'gap');active=active.filter(prior=>prior.end_sec>c.start_sec);for(const prior of active)boundary(prior,c,'overlap');active.push(c);if(!furthest||c.end_sec>furthest.end_sec)furthest=c;}
     for(const m of b.motifs||[])for(const o of m.occurrences||[])for(const id of [o.cut_id,o.previous_cut_id,o.next_cut_id].filter(Boolean))if(!cutIds.has(id))add('motif_cut',null,id,'モチーフの登場CUTが存在しません。',false,'error');
     for(const t of b.transitions||[])if(!cutIds.has(t.from_cut_id)||!cutIds.has(t.to_cut_id))add('transition_cut',null,null,'境界設定のCUTが存在しません。',false,'error');
-    return {issues,affected_cut_ids:[...new Set(issues.filter(i=>i.cut_id&&i.severity!=='intentional').map(i=>i.cut_id))],policy:'Validation never changes author decisions or baseline.'};
+    return {reference_count:b.cuts.reduce((n,c)=>n+extractReferences(c).references.length,0),issues,affected_cut_ids:[...new Set(issues.filter(i=>i.cut_id&&i.severity!=='intentional').map(i=>i.cut_id))],policy:'Validation never changes author decisions or baseline.'};
   }
-  const api={SCHEMA,importJSON,resolve,snapshot,identity,captureBaseline,validate};
+  const api={SCHEMA,extractReferences,targets,importJSON,resolve,snapshot,identity,captureBaseline,validate};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.MVStoryboard=api;
 })(typeof globalThis==='object'?globalThis:this);
