@@ -1,0 +1,241 @@
+{
+  "schema": "mv_storyboard_revision_proposal.v0.8.4",
+  "version": "0.8.4",
+  "source_handoff": {
+    "schema": "mv_storyboard_revision_handoff.v0.8.3",
+    "version": "0.8.3",
+    "id": null,
+    "content_fingerprint": "handoff_33b80279e795d403d7275b29ce9e03b7",
+    "source_review": {
+      "schema": "mv_impact_cut_review.v0.8.2",
+      "review_id": "review_9c7e4f387243426626c82f0858a39322"
+    },
+    "source_storyboard": {
+      "id": null,
+      "title": null,
+      "version": null,
+      "cut_count": 44
+    }
+  },
+  "baseline_saved_at": "2026-01-01T00:00:00Z",
+  "target_count": 1,
+  "targets": [
+    {
+      "cut_id": "cut_1",
+      "cut_number": "CUT 02",
+      "original_cut": {
+        "id": "cut_1",
+        "cut_number": "CUT 02",
+        "start_sec": 1,
+        "end_sec": 2,
+        "references": [
+          {
+            "target_id": "audio_046374677ed4c2adcbc94bd7e65e2ae9",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_41328357b2241235d9f995a7b41776f9",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_8cc31b1f9424324531cacc6f71055159",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_3b25be6fa7f4e10dfb10fcbfb2031591",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_547d4037b5894fed8f689a87d8eac471",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          }
+        ],
+        "actions": [
+          {
+            "subject_id": "synthetic_subject",
+            "initial_state": "still",
+            "action": "turn"
+          }
+        ],
+        "shot": {
+          "camera_direction": "front"
+        }
+      },
+      "draft_cut": {
+        "id": "cut_1",
+        "cut_number": "CUT 02",
+        "start_sec": 1,
+        "end_sec": 2,
+        "references": [
+          {
+            "target_id": "audio_046374677ed4c2adcbc94bd7e65e2ae9",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_41328357b2241235d9f995a7b41776f9",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_8cc31b1f9424324531cacc6f71055159",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_3b25be6fa7f4e10dfb10fcbfb2031591",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          },
+          {
+            "target_id": "audio_547d4037b5894fed8f689a87d8eac471",
+            "kind": "audio_event",
+            "purpose": "action_start"
+          }
+        ],
+        "actions": [
+          {
+            "subject_id": "synthetic_subject",
+            "initial_state": "still",
+            "action": "turn"
+          }
+        ],
+        "shot": {
+          "camera_direction": "front"
+        }
+      },
+      "review_entries": [
+        {
+          "cut_id": "cut_1",
+          "cut_number": "CUT 02",
+          "status": "needs_revision",
+          "events": [
+            {
+              "event_id": "audio_046374677ed4c2adcbc94bd7e65e2ae9",
+              "change": "event_changed",
+              "fields": [
+                {
+                  "field": "start_sec",
+                  "before": 2.3917,
+                  "after": 2.6917,
+                  "before_present": true,
+                  "after_present": true
+                },
+                {
+                  "field": "end_sec",
+                  "before": 2.3917,
+                  "after": 2.6917,
+                  "before_present": true,
+                  "after_present": true
+                }
+              ],
+              "time_shifts": [
+                {
+                  "field": "start_sec",
+                  "delta_sec": 0.3
+                },
+                {
+                  "field": "end_sec",
+                  "delta_sec": 0.3
+                }
+              ],
+              "review_candidates": [
+                "動作開始のタイミング",
+                "カメラ切り替えのタイミング",
+                "音響との同期・意図的な時間差"
+              ],
+              "authored_items": {
+                "references": [
+                  {
+                    "target_id": "audio_046374677ed4c2adcbc94bd7e65e2ae9",
+                    "kind": "audio_event",
+                    "purpose": "action_start"
+                  }
+                ],
+                "relations": [],
+                "mappings": [],
+                "actions": [
+                  {
+                    "subject_id": "synthetic_subject",
+                    "initial_state": "still",
+                    "action": "turn"
+                  }
+                ],
+                "shot": {
+                  "camera_direction": "front"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "draft_changes": [],
+      "decision": "unreviewed",
+      "revision_summary": "",
+      "reason": "",
+      "unconfirmed_notes": "",
+      "continuity": {
+        "neighbors": {
+          "previous": {
+            "basis": null,
+            "declared_id": null,
+            "status": "unconfirmed",
+            "reason": "前後CUTの元データがありません。",
+            "original_cut": null
+          },
+          "next": {
+            "basis": null,
+            "declared_id": null,
+            "status": "unconfirmed",
+            "reason": "前後CUTの元データがありません。",
+            "original_cut": null
+          }
+        },
+        "timing_findings": [
+          {
+            "side": "previous",
+            "status": "unconfirmed",
+            "reason": "境界の時刻情報が不足しています。"
+          },
+          {
+            "side": "next",
+            "status": "unconfirmed",
+            "reason": "境界の時刻情報が不足しています。"
+          }
+        ],
+        "author_checks": {
+          "timing": {
+            "status": "unconfirmed",
+            "note": ""
+          },
+          "actions": {
+            "status": "unconfirmed",
+            "note": ""
+          },
+          "subjects": {
+            "status": "unconfirmed",
+            "note": ""
+          },
+          "props": {
+            "status": "unconfirmed",
+            "note": ""
+          },
+          "wardrobe": {
+            "status": "unconfirmed",
+            "note": ""
+          },
+          "camera": {
+            "status": "unconfirmed",
+            "note": ""
+          }
+        }
+      }
+    }
+  ],
+  "policy": "original_cutは入力の未改変コピー。draft_cutは制作者の編集用。解析差分を自動適用せず、採用判断でも元コンテを上書きしません。"
+}

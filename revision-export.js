@@ -31,15 +31,15 @@
   const $=id=>document.getElementById(id),summary=$('revisionSummary'),issues=$('revisionErrors'),exportButton=$('revisionExport');
   let board=null,review=null,currentReview=null,origin=null,output=null;
   function refresh(){
-    output=null;exportButton.disabled=true;issues.replaceChildren();
+    output=null;root.MVProposalUI?.setHandoff(null);exportButton.disabled=true;issues.replaceChildren();
     if(!review){summary.textContent='画面のレビューを使用するか、v0.8.2のレビューJSONを読み込んでください。';return;}
     try{
       output=build(review,board);summary.textContent=`改稿対象 ${output.target_count} CUT / ${origin==='imported'?'読み込んだレビューJSON':'画面のレビュー'} / エラー ${output.errors.length}件`;
       for(const error of output.errors){const p=document.createElement('p');p.textContent=`${error.cut_id}: ${error.reason}`;issues.append(p);}
-      exportButton.disabled=output.errors.length>0;
+      exportButton.disabled=output.errors.length>0;root.MVProposalUI?.setHandoff(output.errors.length?null:output);
     }catch(e){summary.textContent=e.message;}
   }
-  function setBoard(value){board=value;refresh();}
+  function setBoard(value){board=value;root.MVProposalUI?.setBoard(value);refresh();}
   function setCurrentReview(value){currentReview=value;if(origin!=='imported'){review=value;origin='current';refresh();}}
   $('revisionUseCurrent').addEventListener('click',()=>{review=currentReview;origin='current';refresh();});
   $('revisionReviewFile').addEventListener('change',async event=>{
