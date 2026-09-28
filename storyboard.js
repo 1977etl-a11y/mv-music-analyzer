@@ -60,7 +60,7 @@
     // Small values only; no audio_context, frame arrays, or edit-history duplication.
     for(const key of ['type','text','raw_text','kind','target_id','related_ids','reason','recommended_check','priority','classification','primitives','metrics','numbers','scores','dominant','method','alignment_method','timing_status','manual_corrected','source','source_id'])
       if(value[key]!==undefined)detail[key]=value[key];
-    return {kind,start_sec:ref.start_sec??null,end_sec:ref.end_sec??null,provenance:ref.provenance,confidence:value.confidence??null,detail:clone(detail)};
+    return {kind,start_sec:finite(value.start_sec)?value.start_sec:(ref.start_sec??null),end_sec:finite(value.end_sec)?value.end_sec:(ref.end_sec??null),provenance:ref.provenance,confidence:value.confidence??null,detail:clone(detail)};
   }
   function identity(a){return {schema:a.schema,reference_schema:a.reference_schema,source_id:a.source?.id,duration_sec:a.source?.duration_sec,conditions:{essentia_js:a.engine?.essentia_js,audio_beat:a.engine?.audio_beat,analysis_sample_rate_hz:a.engine?.analysis_sample_rate_hz},reference_identity:a.reference_identity};}
   function importJSON(text){

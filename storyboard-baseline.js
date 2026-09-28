@@ -49,14 +49,29 @@
     if(before&&after&&typeof before==='object'&&typeof after==='object'&&!Array.isArray(before)&&!Array.isArray(after))return [...new Set([...Object.keys(before),...Object.keys(after)])].flatMap(key=>differences(before[key],after[key],path?path+'.'+key:key));
     return [{field:path,before:before??null,after:after??null,before_present:before!==undefined,after_present:after!==undefined}];
   }
+  function baselineValues(record){
+    const stored=record.baseline.references,values={...stored},sources={},unavailable={};
+    const archived=record.analysis;
+    const present=!!archived?.unified_timeline?.references;
+    const identityMatches=present&&record.baseline.analysis?.source_id&&MVReferences.stableId('identity',record.baseline.analysis)===MVReferences.stableId('identity',MVStoryboard.identity(archived));
+    for(const id of MVStoryboard.targets(record.board)){
+      if(stored[id]){sources[id]={origin:'baseline.references',saved_at:record.saved_at};continue;}
+      if(!present){unavailable[id]='missing_snapshot_and_saved_analysis';continue;}
+      if(!identityMatches){unavailable[id]='saved_analysis_identity_mismatch';continue;}
+      const value=MVStoryboard.snapshot(archived,id);
+      if(!value){unavailable[id]='reference_absent_from_saved_analysis';continue;}
+      values[id]=value;sources[id]={origin:'analysis',pointer:archived.unified_timeline.references[id]?.pointer??'review_items',saved_at:record.saved_at};
+    }
+    return {values,sources,unavailable};
+  }
   function compare(record,board,analysis){
     if(!board||!analysis?.unified_timeline?.references)throw Error('現在の解析JSONとコンテを読み込んでください。保存基準だけでは現在の解析値を比較できません。');
-    const stored=record.baseline.references;
+    const stored=record.baseline.references,resolved=baselineValues(record),values=resolved.values;
     const originalTargets=MVStoryboard.targets(record.board),currentTargets=MVStoryboard.targets(board);
     const allTargets=new Set([...originalTargets,...currentTargets]);
     const identityChanges=differences(record.baseline.analysis,MVStoryboard.identity(analysis));
     const compatible=identityChanges.length===0;
-    const report=MVStoryboard.validate({...board,baseline:record.baseline,analysis:record.baseline.analysis},analysis);
+    const report=MVStoryboard.validate({...board,baseline:{...record.baseline,references:values},analysis:record.baseline.analysis},analysis);
     const old=record.board.cuts,now=board.cuts,changes=[];
     const key=(c,i)=>c.id??c.cut??'position:'+(i+1);
     const before=new Map(old.map((c,i)=>[key(c,i),c])),after=new Map(now.map((c,i)=>[key(c,i),c]));
@@ -70,20 +85,20 @@
     const affected=id=>[...(affectedIndex.get(id)?.values()||[])];
     const eventChanges=[],unavailable=[];let valueCount=0;
     for(const id of allTargets){
-      const prior=stored[id],current=MVStoryboard.snapshot(analysis,id),was=originalTargets.has(id),is=currentTargets.has(id);
+      const prior=values[id],current=MVStoryboard.snapshot(analysis,id),was=originalTargets.has(id),is=currentTargets.has(id);
       const entry={reference_id:id,affected_cuts:affected(id)};
       if(!was&&is)eventChanges.push({...entry,change:'reference_added'});
       if(was&&!is)eventChanges.push({...entry,change:'reference_removed'});
       if(!current){const change=prior?'event_deleted':'unresolved_reference';eventChanges.push({...entry,change});unavailable.push({...entry,reason:change});continue;}
       if(!was||!is)continue;
-      if(!prior){unavailable.push({...entry,reason:'missing_snapshot'});continue;}
+      if(!prior){unavailable.push({...entry,reason:resolved.unavailable[id]??'missing_snapshot'});continue;}
       if(!compatible){unavailable.push({...entry,reason:'source_or_conditions_changed'});continue;}
       valueCount++;
       const fields=differences(prior,current);
       if(fields.length)eventChanges.push({...entry,change:'event_changed',fields});
     }
     const status=!compatible?'解析値の比較不可：音源・解析条件が異なります':valueCount===0?'解析値の比較不可':unavailable.length?'一部比較不可':eventChanges.length?'比較済み・差分あり':'比較済み・差分0件';
-    return {saved_at:record.saved_at,analysis_status:status,cut_status:changes.length?'CUT差分あり':'CUT比較済み・差分0件',compared_reference_count:allTargets.size,value_compared_reference_count:valueCount,stored_reference_count:Object.keys(stored).length,cut_changes:changes,event_changes:eventChanges,unavailable_references:unavailable,identity_changes:identityChanges,analysis_comparison:report,note:'参照IDの照合件数と実際の値比較件数は別です。旧基準に保存されていない値は復元・推定しません。比較は読み取り専用です。'};
+    return {saved_at:record.saved_at,analysis_status:status,cut_status:changes.length?'CUT差分あり':'CUT比較済み・差分0件',compared_reference_count:allTargets.size,value_compared_reference_count:valueCount,stored_reference_count:Object.keys(stored).length,legacy_reference_count:Object.values(resolved.sources).filter(s=>s.origin==='analysis').length,baseline_value_sources:resolved.sources,cut_changes:changes,event_changes:eventChanges,unavailable_references:unavailable,identity_changes:identityChanges,analysis_comparison:report,note:'参照IDの照合件数と実際の値比較件数は別です。旧形式の保存済み解析値は由来を明示して読み取ります。現在値による代用はしません。比較は読み取り専用です。'};
   }
-  globalThis.MVStoryboardBaseline={check,create,compare,load:()=>access(),save:record=>access(check(record)),recreate:(record,expected)=>access(check(record),MVReferences.stableId('baseline',expected))};
+  globalThis.MVStoryboardBaseline={check,create,compare,baselineValues,load:()=>access(),save:record=>access(check(record)),recreate:(record,expected)=>access(check(record),MVReferences.stableId('baseline',expected))};
 })();
