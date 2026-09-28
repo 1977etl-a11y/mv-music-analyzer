@@ -1,8 +1,8 @@
 /* One immutable local baseline. Commit success is reported only after IDB completion. */
 (()=>{
-  const schema='mv_storyboard_baseline.v0.7.1';
+  const schema='mv_storyboard_baseline.v0.8.1';
   function check(record){
-    if(record?.schema!==schema||!record.board||!Array.isArray(record.board.cuts)||!record.board.cuts.length||!record.baseline?.references||!record.baseline?.analysis||!record.analysis?.unified_timeline?.references||!Number.isFinite(Date.parse(record.saved_at)))throw Error('比較基準JSONの形式が不正です。専用の書き出しファイルを指定してください。');
+    if(![schema,'mv_storyboard_baseline.v0.7.1'].includes(record?.schema)||!record.board||!Array.isArray(record.board.cuts)||!record.board.cuts.length||!record.baseline?.references||!record.baseline?.analysis||!Number.isFinite(Date.parse(record.saved_at)))throw Error('比較基準JSONの形式が不正です。専用の書き出しファイルを指定してください。');
     MVStoryboard.importJSON(JSON.stringify(record.board));
     return record;
   }
@@ -15,13 +15,24 @@
       request.onsuccess=()=>resolve(request.result);
     });
   }
-  async function access(record){
+  async function access(record,replaceExpected){
     const db=await database();
     return new Promise((resolve,reject)=>{
       let value;const tx=db.transaction('baselines',record?'readwrite':'readonly');
       // add, not put: concurrent tabs cannot overwrite the first baseline.
-      const request=record?tx.objectStore('baselines').add(record,'initial'):tx.objectStore('baselines').get('initial');
-      request.onsuccess=()=>{value=request.result;};
+      const store=tx.objectStore('baselines');
+      const request=store.get('active');
+      request.onsuccess=()=>{
+        const initial=store.get('initial');initial.onsuccess=()=>{
+          value=request.result||initial.result||null;
+          if(!record)return;
+          if(replaceExpected){
+            if(!value||MVReferences.stableId('baseline',value)!==replaceExpected){tx.abort();return;}
+            store.add(value,'history:'+crypto.randomUUID());
+            store.put(record,'active');
+          }else if(value){tx.abort();}else store.add(record,'initial');
+        };
+      };
       tx.oncomplete=()=>{db.close();resolve(record||value||null);};
       tx.onabort=()=>{db.close();reject(tx.error||Error('比較基準の保存を完了できませんでした。'));};
       tx.onerror=()=>{};
@@ -30,28 +41,49 @@
   function create(board,analysis){
     if(!board)throw Error('コンテを読み込んでください。');
     if(!analysis?.unified_timeline?.references)throw Error('解析JSONを読み込んでください。');
-    const baseline=board.baseline||MVStoryboard.captureBaseline(board,analysis).baseline;
-    return check(JSON.parse(JSON.stringify({schema,saved_at:new Date().toISOString(),board,analysis,baseline})));
+    const baseline=MVStoryboard.captureBaseline(board,analysis).baseline;
+    return check(JSON.parse(JSON.stringify({schema,snapshot_version:'1',saved_at:new Date().toISOString(),board,baseline})));
+  }
+  function differences(before,after,path=''){
+    if(JSON.stringify(before)===JSON.stringify(after))return [];
+    if(before&&after&&typeof before==='object'&&typeof after==='object'&&!Array.isArray(before)&&!Array.isArray(after))return [...new Set([...Object.keys(before),...Object.keys(after)])].flatMap(key=>differences(before[key],after[key],path?path+'.'+key:key));
+    return [{field:path,before:before??null,after:after??null,before_present:before!==undefined,after_present:after!==undefined}];
   }
   function compare(record,board,analysis){
-    if(!board||!analysis)throw Error('現在の解析とコンテを読み込んでください。');
-    const stored=record.baseline.references,working={...stored},derived=[];
-    const originalTargets=MVStoryboard.targets(record.board);
-    const currentTargets=MVStoryboard.targets(board);
-    // Recover only original references from the archived analysis, never from current data.
-    const identityMatches=MVReferences.stableId('identity',record.baseline.analysis)===MVReferences.stableId('identity',MVStoryboard.identity(record.analysis));
-    if(identityMatches)for(const id of originalTargets)if(!Object.prototype.hasOwnProperty.call(working,id)){
-      const value=MVStoryboard.snapshot(record.analysis,id);if(value){working[id]=value;derived.push(id);}
-    }
-    const report=MVStoryboard.validate({...board,baseline:{...record.baseline,references:working},analysis:record.baseline.analysis},analysis);
-    const compared=[...currentTargets].filter(id=>working[id]&&MVStoryboard.snapshot(analysis,id));
+    if(!board||!analysis?.unified_timeline?.references)throw Error('現在の解析JSONとコンテを読み込んでください。保存基準だけでは現在の解析値を比較できません。');
+    const stored=record.baseline.references;
+    const originalTargets=MVStoryboard.targets(record.board),currentTargets=MVStoryboard.targets(board);
+    const allTargets=new Set([...originalTargets,...currentTargets]);
+    const identityChanges=differences(record.baseline.analysis,MVStoryboard.identity(analysis));
+    const compatible=identityChanges.length===0;
+    const report=MVStoryboard.validate({...board,baseline:record.baseline,analysis:record.baseline.analysis},analysis);
     const old=record.board.cuts,now=board.cuts,changes=[];
-    const key=(c,i)=>c.id??c.cut??`position:${i+1}`;
-    const before=new Map(old.map((c,i)=>[key(c,i),c]));
-    const after=new Map(now.map((c,i)=>[key(c,i),c]));
-    for(const [id,c] of after){if(!before.has(id))changes.push({cut_id:id,change:'added'});else if(MVReferences.stableId('cut',c)!==MVReferences.stableId('cut',before.get(id)))changes.push({cut_id:id,change:'changed'});}
-    for(const id of before.keys())if(!after.has(id))changes.push({cut_id:id,change:'removed'});
-    return {saved_at:record.saved_at,compared_reference_count:compared.length,stored_reference_count:Object.keys(stored).length,derived_reference_count:derived.length,derived_reference_ids:derived,baseline_derivation:derived.length?'保存時の解析JSONから一時取得。永続保存した基準は未変更。':'保存済み参照値を使用。取得できない参照はmissing_baselineで報告。',cut_changes:changes,analysis_comparison:report,note:'指摘0件は解析精度や永続保存の証明ではありません。参照0件の場合、解析イベントの値比較はできません。CUT IDがない場合はcutまたは位置で比較します。'};
+    const key=(c,i)=>c.id??c.cut??'position:'+(i+1);
+    const before=new Map(old.map((c,i)=>[key(c,i),c])),after=new Map(now.map((c,i)=>[key(c,i),c]));
+    for(const [id,c] of after){if(!before.has(id))changes.push({cut_id:id,cut_number:c.cut_number??c.cut??id,change:'added'});else if(MVReferences.stableId('cut',c)!==MVReferences.stableId('cut',before.get(id)))changes.push({cut_id:id,cut_number:c.cut_number??c.cut??id,change:'changed'});}
+    for(const [id,c] of before)if(!after.has(id))changes.push({cut_id:id,cut_number:c.cut_number??c.cut??id,change:'removed'});
+    const affectedIndex=new Map();
+    for(const cuts of [old,now])cuts.forEach((c,i)=>{for(const id of MVStoryboard.targets({cuts:[c]})){
+      if(!affectedIndex.has(id))affectedIndex.set(id,new Map());
+      affectedIndex.get(id).set(key(c,i),{cut_id:key(c,i),cut_number:c.cut_number??c.cut??key(c,i)});
+    }});
+    const affected=id=>[...(affectedIndex.get(id)?.values()||[])];
+    const eventChanges=[],unavailable=[];let valueCount=0;
+    for(const id of allTargets){
+      const prior=stored[id],current=MVStoryboard.snapshot(analysis,id),was=originalTargets.has(id),is=currentTargets.has(id);
+      const entry={reference_id:id,affected_cuts:affected(id)};
+      if(!was&&is)eventChanges.push({...entry,change:'reference_added'});
+      if(was&&!is)eventChanges.push({...entry,change:'reference_removed'});
+      if(!current){const change=prior?'event_deleted':'unresolved_reference';eventChanges.push({...entry,change});unavailable.push({...entry,reason:change});continue;}
+      if(!was||!is)continue;
+      if(!prior){unavailable.push({...entry,reason:'missing_snapshot'});continue;}
+      if(!compatible){unavailable.push({...entry,reason:'source_or_conditions_changed'});continue;}
+      valueCount++;
+      const fields=differences(prior,current);
+      if(fields.length)eventChanges.push({...entry,change:'event_changed',fields});
+    }
+    const status=!compatible?'解析値の比較不可：音源・解析条件が異なります':valueCount===0?'解析値の比較不可':unavailable.length?'一部比較不可':eventChanges.length?'比較済み・差分あり':'比較済み・差分0件';
+    return {saved_at:record.saved_at,analysis_status:status,cut_status:changes.length?'CUT差分あり':'CUT比較済み・差分0件',compared_reference_count:allTargets.size,value_compared_reference_count:valueCount,stored_reference_count:Object.keys(stored).length,cut_changes:changes,event_changes:eventChanges,unavailable_references:unavailable,identity_changes:identityChanges,analysis_comparison:report,note:'参照IDの照合件数と実際の値比較件数は別です。旧基準に保存されていない値は復元・推定しません。比較は読み取り専用です。'};
   }
-  globalThis.MVStoryboardBaseline={check,create,compare,load:()=>access(),save:record=>access(check(record))};
+  globalThis.MVStoryboardBaseline={check,create,compare,load:()=>access(),save:record=>access(check(record)),recreate:(record,expected)=>access(check(record),MVReferences.stableId('baseline',expected))};
 })();
