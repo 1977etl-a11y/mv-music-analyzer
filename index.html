@@ -9,13 +9,13 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="stylesheet" href="styles.css" />
-  <title>MV Music Analyzer v0.8.5</title>
+  <title>MV Music Analyzer v0.8.6</title>
 </head>
 <body>
   <main class="app-shell">
     <header class="hero">
       <div class="eyebrow">意味変質型MV / AUDIO FRONTEND</div>
-      <h1>MV Music Analyzer <span class="version-badge">v0.8.5</span></h1>
+      <h1>MV Music Analyzer <span class="version-badge">v0.8.6</span></h1>
       <p>原曲と任意Stemを解析し、9つの運動プリミティブに加えて、正規歌詞と外部ASRのSRTを照合し、歌詞にない発声も保持した共通タイムラインの <code>music_analysis.json</code> を生成します。</p>
     </header>
 
@@ -172,13 +172,13 @@
 <section id="impactReview" hidden aria-label="影響CUTレビュー"><h2>影響CUTレビュー</h2><p id="impactReviewSummary" aria-live="polite"></p><p>判断はこの画面内で保持します。ページ更新前にレビューJSONを書き出してください。</p><div class="actions"><button id="impactReviewExport" disabled>レビューJSONを書き出す</button></div><div id="impactReviewList"></div></section>
 <section id="revisionPanel" aria-label="改稿用JSON"><h2>改稿用JSON</h2><p>「要修正」のCUTと根拠を抽出します。演出や時刻は変更しません。元コンテは上の「コンテJSON」の読み込み済みデータを使用します。</p><label>レビューJSON <input id="revisionReviewFile" type="file" accept=".json,application/json"></label><div class="actions"><button id="revisionUseCurrent">画面のレビューを使用</button><button id="revisionExport" disabled>改稿用JSONを書き出す</button></div><p id="revisionSummary" aria-live="polite">レビューを読み込むか、画面で判断してください。</p><div id="revisionErrors" role="alert"></div></section>
 <section id="proposalPanel" aria-label="改稿案作成"><h2>改稿案作成</h2><p>元コンテとは別の編集用データです。解析差分は自動適用しません。ページ更新前に書き出してください。</p><label>v0.8.3改稿用JSON <input id="proposalFile" type="file" accept=".json,application/json"></label><div class="actions"><button id="proposalUseCurrent">画面の改稿用JSONを使用</button><button id="proposalContext">読み込み済み元コンテで前後情報を更新</button><button id="proposalExport" disabled>改稿案JSONを書き出す</button></div><p id="proposalStatus" aria-live="polite">改稿用JSONを読み込んでください。</p><label>CUTを選択 <select id="proposalCut" hidden></select></label><div id="proposalEditor"></div></section>
-<section id="applyPanel" aria-label="改稿案の適用前チェック"><h2>改稿案の適用前チェック</h2><p>採用判断だけでは適用しません。元CUTの一致、制作指示の確定、整合確認、最終確認を通過した変更だけを複製へ反映します。</p><label>v0.8.4改稿案JSON <input id="applyProposalFile" type="file" accept=".json,application/json"></label><button id="applyUseCurrent">画面の改稿案を使用</button><label>元コンテJSON（読み込み済みなら再選択不要） <input id="applySourceFile" type="file" accept=".json,application/json"></label><p id="applyStatus" aria-live="polite">改稿案JSONを読み込んでください。</p><div id="applyList"></div><label>一部が適用できない場合 <select id="applyMode"><option value="all">全件を保留する</option><option value="eligible_only">適用可能なCUTだけを出力する</option></select></label><p id="applyReady"></p><label><input id="applyFinal" type="checkbox" disabled>上記の適用可能なCUTと変更フィールドを最終確認し、別ファイルへの反映を許可する</label><div class="actions"><button id="applyGenerate" disabled>確認済み変更で改訂版を生成</button><button id="applyBoardExport" disabled>改訂版コンテJSONを書き出す</button><button id="applyHistoryExport" disabled>適用履歴JSONを書き出す</button></div></section>
+<section id="applyPanel" aria-label="改稿案の適用前チェック"><h2>改稿案の適用前チェック</h2><p>採用判断だけでは適用しません。元CUTの一致、制作指示の確定、整合確認、最終確認を通過した変更だけを複製へ反映します。</p><label>v0.8.4改稿案JSON <input id="applyProposalFile" type="file" accept=".json,application/json"></label><button id="applyUseCurrent">画面の改稿案を使用</button><label>元コンテJSON（読み込み済みなら再選択不要） <input id="applySourceFile" type="file" accept=".json,application/json"></label><p id="applyStatus" aria-live="polite">改稿案JSONを読み込んでください。</p><div id="applyBlockers" aria-live="polite"></div><div id="applyIssueGroups"></div><div id="applyList"></div><label>一部が適用できない場合 <select id="applyMode"><option value="all">全件を保留する</option><option value="eligible_only">適用可能なCUTだけを出力する</option></select></label><p id="applyReady"></p><label><input id="applyFinal" type="checkbox" disabled>上記の適用可能なCUTと変更フィールドを最終確認し、別ファイルへの反映を許可する</label><div class="actions"><button id="applyGenerate" disabled>確認済み変更で改訂版を生成</button><button id="applyBoardExport" disabled>改訂版コンテJSONを書き出す</button><button id="applyHistoryExport" disabled>適用履歴JSONを書き出す</button></div></section>
 <details id="storyboardComparisonDetails"><summary>比較結果JSONを表示</summary><pre id="storyboardComparison" style="white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite"></pre></details>
 <p id="storyboardStatus" aria-live="polite">コンテJSONを読み込んでください。</p><div id="storyboardOutput"></div>
 </section>
 <footer>
-      <p>MV Music Analyzer v0.8.5 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
-      <p>Stemは外部分離データを任意入力します。v0.8.5は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
+      <p>MV Music Analyzer v0.8.6 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
+      <p>Stemは外部分離データを任意入力します。v0.8.6は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
     </footer>
   </main>
 
@@ -187,6 +187,7 @@
   <script src="storyboard.js" defer></script>
   <script src="storyboard-baseline.js" defer></script>
   <script src="revision-proposal.js" defer></script>
+  <script src="revision-scope.js" defer></script>
   <script src="revision-apply.js" defer></script>
   <script src="revision-export.js" defer></script>
   <script src="impact-review.js" defer></script>

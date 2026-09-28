@@ -1,11 +1,13 @@
-const test=require('node:test'),assert=require('node:assert/strict'),A=require('../revision-apply'),P=require('../revision-proposal'),fixture=require('../sample_revision_handoff_v0_8_3.synthetic.json'),S=require('../storyboard');
+const test=require('node:test'),assert=require('node:assert/strict'),Core=require('../revision-apply'),P=require('../revision-proposal'),fixture=require('../sample_revision_handoff_v0_8_3.synthetic.json'),S=require('../storyboard');
+const analysis=require('./application-fixture.cjs').analysis();
+const A={inspect:(p,b,c)=>Core.inspect(p,b,c,analysis),apply:(p,b,c,o)=>Core.apply(p,b,c,{...o,analysis})};
 const copy=x=>JSON.parse(JSON.stringify(x));
 function setup(){
  const h=copy(fixture),original=h.targets[0].original_cut;
  const board={cuts:Array.from({length:44},(_,i)=>i===1?copy(original):{id:'synthetic_'+i,cut_number:'CUT '+String(i+1).padStart(2,'0'),start_sec:i,end_sec:i+1,action:'synthetic unchanged',audio_event_refs:['preserved_'+i]})};
  h.source_storyboard={id:null,title:null,version:null,cut_count:44};
  const p=P.create(h,board),t=p.targets[0];t.decision='adopt_proposal';P.edit(t,['actions','0','action'],'右踵二打のタイミングを再検討');
- const checks={[t.cut_id]:{content_confirmed:true,source_confirmed:true,...Object.fromEntries(Object.keys(P.topics).map(k=>[k,true]))}};
+ const checks={[t.cut_id]:{related_confirmed:true,content_confirmed:true,source_confirmed:true,...Object.fromEntries(Object.keys(P.topics).map(k=>[k,true]))}};
  return {p,t,board,checks};
 }
 test('A/F: adoption is not application permission; content, continuity and final approval required',()=>{

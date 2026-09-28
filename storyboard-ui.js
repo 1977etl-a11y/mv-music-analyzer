@@ -8,12 +8,13 @@
   async function persist(record){await baselineReady;if(savedBaseline)throw Error('比較基準は保存済みです。上書きしません。');await MVStoryboardBaseline.save(record);savedBaseline=record;MVImpactReviewUI.invalidate();if(!board)board=record.board;if(!analysis)analysis=record.analysis;baselineDisplay();show();baselineMessage.textContent='保存成功：ブラウザ内に保存しました。別端末用には比較基準JSONを書き出してください。';}
   const status=$('storyboardStatus'),output=$('storyboardOutput');
   function show(){
+    MVApplyUI.setAnalysis(analysis);
     MVRevisionUI.setBoard(revisionSource??board);
     output.replaceChildren();if(!board)return;
     const report=MVStoryboard.validate(board,analysis);
     const count=board.cuts.reduce((n,c)=>n+MVStoryboard.extractReferences(c).references.length,0);
     report.reference_count=count;report.note='指摘0件は比較基準の保存を意味しません。解析への参照がないCUTはイベント値を照合できません。';
-    status.textContent=`検証結果: ${board.title??'読み込みコンテ'} / ${board.cuts.length} CUT / 要確認 ${report.affected_cut_ids.length} CUT / 指摘 ${report.issues.length}件`;
+    status.textContent=`全コンテの通常検証（適用停止判定とは別）: ${board.title??'読み込みコンテ'} / ${board.cuts.length} CUT / 要確認 ${report.affected_cut_ids.length} CUT / 指摘 ${report.issues.length}件`;
     const summary=document.createElement('pre');summary.style.whiteSpace='pre-wrap';summary.textContent=JSON.stringify({...report,issues:report.issues.slice(0,100),display_note:'指摘は先頭100件を表示。全件は検証結果JSONへ書き出せます。'},null,2);output.append(summary);
     const motifs=document.createElement('details'),label=document.createElement('summary'),body=document.createElement('pre');label.textContent='モチーフ連鎖・境界の意図・コンテ情報';body.style.whiteSpace='pre-wrap';motifs.addEventListener('toggle',()=>{if(motifs.open)body.textContent=JSON.stringify({id:board.id,version:board.version,analysis:board.analysis,motifs:board.motifs,transitions:board.transitions},null,2);});motifs.append(label,body);output.append(motifs);
     // Collapsed text safely displays author data without interpreting HTML.

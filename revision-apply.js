@@ -3,6 +3,7 @@
   'use strict';
   const P=typeof module==='object'&&module.exports?require('./revision-proposal'):root.MVRevisionProposal;
   const R=typeof module==='object'&&module.exports?require('./references'):root.MVReferences;
+  const Scope=typeof module==='object'&&module.exports?require('./revision-scope'):root.MVRevisionScope;
   const clone=x=>JSON.parse(JSON.stringify(x)),key=c=>c?.id??c?.cut;
   const canon=x=>JSON.stringify(x&&typeof x==='object'?Array.isArray(x)?x.map(v=>JSON.parse(canon(v))):Object.fromEntries(Object.keys(x).sort().map(k=>[k,JSON.parse(canon(x[k]))])):x);
   const equal=(a,b)=>canon(a)===canon(b);
@@ -14,7 +15,7 @@
     for(const t of proposal.targets)if(!t||!['string','number'].includes(typeof t.cut_id)||t.cut_id===''||!t.original_cut||!t.draft_cut||typeof t.original_cut!=='object'||typeof t.draft_cut!=='object'||Array.isArray(t.original_cut)||Array.isArray(t.draft_cut)||!Array.isArray(t.draft_changes)||!Object.hasOwn(P.decisions,t.decision))throw Error('対象CUTのID・元CUT・改稿案・変更一覧・判断が不正です。');
     return proposal;
   }
-  function inspect(proposal,board,approvals={}){
+  function inspect(proposal,board,approvals={},analysis=null){
     validate(proposal);
     const candidates=proposal.targets.filter(t=>t.decision==='adopt_proposal');
     if(!candidates.length)return {candidate_count:0,eligible_count:0,rows:[]};
@@ -39,6 +40,7 @@
       }
       // A leaf diff cannot express empty container changes. Do not silently lose them.
       if(!blockers.length){const reconstructed=clone(t.original_cut);for(const d of diff){let parent=reconstructed;for(const k of d.path.slice(0,-1))parent=parent[k];parent[d.path.at(-1)]=clone(read(t.draft_cut,d.path).value);}if(!equal(reconstructed,t.draft_cut))blockers.push('変更一覧では表現できない構造変更があります。適用を停止します。');}
+      const previewSafe=!blockers.length;
       const scan=(v,path=[])=>{if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v))if(!forbidden(k))scan(x,path.concat(k));}else if(typeof v==='string'&&/再検討|未定|仮/.test(v))warnings.push(path.join('.')+': 未確定の可能性がある語句。語句だけでは判定できません。');};scan(t.draft_cut);scan(t.revision_summary,['改稿内容']);
       const temp=clone(t);temp.continuity={...temp.continuity,neighbors:P.neighbors(t,board)};
       const timing=P.timing(temp);
@@ -53,35 +55,58 @@
       if(approval.content_confirmed!==true)pending.push('改稿内容を具体的な制作指示として確定してください。');
       for(const [topic,label] of Object.entries(topics))if(approval[topic]!==true)pending.push(`${label}の確認が必要です（未記載・非該当の場合も確認）。`);
       if(approval.source_confirmed!==true)pending.push('改稿案作成時の元コンテであることを確認してください。');
-      return {cut_id:t.cut_id,cut_number:t.cut_number,index:matches[0]??null,changes:diff,original_differences:originalDifferences,blockers:[...new Set(blockers)],warnings:[...new Set(warnings)],pending,neighbors:temp.continuity.neighbors,timing,eligible:blockers.length===0&&pending.length===0};
+      return {cut_id:t.cut_id,cut_number:t.cut_number,preview_safe:previewSafe,index:matches[0]??null,changes:diff,original_differences:originalDifferences,blockers:[...new Set(blockers)],warnings:[...new Set(warnings)],pending,neighbors:temp.continuity.neighbors,timing,eligible:blockers.length===0&&pending.length===0};
     });
-    return {candidate_count:rows.length,eligible_count:rows.filter(r=>r.eligible).length,rows};
+    const validation=Scope.compare(proposal,board,rows,analysis);
+    for(const row of rows){
+      row.related_issues=[...validation.related_existing_issues,...validation.new_issues].filter(i=>i.affected_application_cut_ids.includes(row.cut_id));
+      if(validation.unavailable_reason)row.blockers.push('変更前後の検証ができません: '+validation.unavailable_reason);
+      for(const issue of row.related_issues)if(issue.severity==='error')row.blockers.push(issue.code+(issue.reference_id?' / '+issue.reference_id:'')+': '+issue.reason+' 次の確認: '+(issue.code==='missing_analysis'?'今回の元コンテに対応する解析JSONを読み込んでください。':issue.recommended_check));
+      const scope=validation.scopes.find(s=>s.cut_id===row.cut_id);
+      if(scope?.timing||scope?.semantic)for(const [side,n] of Object.entries(row.neighbors)){
+        const boundary=row.index===(side==='previous'?0:(Array.isArray(board)?board:board.cuts).length-1)&&n.declared_id==null;
+        if(!n.original_cut&&!boundary)row.blockers.push((side==='previous'?'前CUT':'後CUT')+'が特定できません。接続先の元データを確認してください。');
+        if(n.original_cut){const a=n.original_cut.start_sec??n.original_cut.start,b=n.original_cut.end_sec??n.original_cut.end;if(typeof a!=='number'||typeof b!=='number'||a<0||b<=a)row.blockers.push('前後CUTの時刻を確認できません。接続先の開始・終了を確認してください。');}
+      }
+      if(row.related_issues.some(i=>i.severity!=='error'&&i.severity!=='intentional')&&approvals[String(row.cut_id)]?.related_confirmed!==true)row.pending.push('今回の変更に関係する指摘・新規指摘の意図と対処を確認してください。');
+      row.eligible=!row.blockers.length&&!row.pending.length;
+    }
+    return {candidate_count:rows.length,eligible_count:rows.filter(r=>r.eligible).length,rows,validation};
   }
   function apply(proposal,board,approvals,options={}){
-    const report=inspect(proposal,board,approvals);
+    const report=inspect(proposal,board,approvals,options.analysis);
     if(!report.candidate_count)return {status:'no_targets',report};
     if(options.final_confirmed!==true)throw Error('制作者の最終確認が必要です。');
     if(!['all','eligible_only'].includes(options.mode))throw Error('全件保留／適用可能なCUTのみの方針を選んでください。');
     if(options.mode==='all'&&report.eligible_count!==report.candidate_count)throw Error('適用不可または未確認のCUTがあるため全件保留します。');
     if(!report.eligible_count)throw Error('適用可能なCUTがありません。');
+    if(report.eligible_count!==report.candidate_count){
+      const selected=proposal.targets.filter(t=>report.rows.some(r=>r.cut_id===t.cut_id&&r.eligible));
+      const finalReport=inspect({...proposal,targets:selected,target_count:selected.length},board,approvals,options.analysis);
+      const issueKey=items=>JSON.stringify(items.map(i=>[i.code,i.cut_id,i.reference_id,i.severity,i.reason]).sort());
+      for(const row of finalReport.rows){const prior=report.rows.find(r=>r.cut_id===row.cut_id);if(!row.eligible||issueKey(row.related_issues)!==issueKey(prior.related_issues))throw Error('部分適用により接続条件・関連指摘が変わります。対象を絞った改稿案で再確認してください。');}
+    }
     const output=clone(board),cuts=Array.isArray(output)?output:output.cuts,applied=report.rows.filter(r=>r.eligible);
     for(const row of applied)for(const d of row.changes){let parent=cuts[row.index];for(const part of d.path.slice(0,-1))parent=parent[part];parent[d.path.at(-1)]=clone(read(proposal.targets.find(t=>t.cut_id===row.cut_id).draft_cut,d.path).value);}
-    const history={schema:'mv_storyboard_revision_application.v0.8.5',version:'0.8.5',created_at:new Date().toISOString(),source_proposal:{schema:proposal.schema,version:proposal.version,id:proposal.id??null,content_fingerprint:R.stableId('proposal',proposal),source_handoff:clone(proposal.source_handoff??{})},baseline_saved_at:proposal.baseline_saved_at??null,original_storyboard_fingerprint:R.stableId('storyboard',board),revised_storyboard_fingerprint:R.stableId('storyboard',output),final_confirmation:{confirmed:true,mode:options.mode},applied:applied.map(r=>({cut_id:r.cut_id,cut_number:r.cut_number,changes:clone(r.changes),author_checks:clone(approvals[String(r.cut_id)]),warnings:clone(r.warnings)})),held:report.rows.filter(r=>!r.eligible).map(r=>({cut_id:r.cut_id,blockers:r.blockers,pending:r.pending}))};
+    const history={schema:'mv_storyboard_revision_application.v0.8.5',version:'0.8.5',application_version:'0.8.6',created_at:new Date().toISOString(),source_proposal:{schema:proposal.schema,version:proposal.version,id:proposal.id??null,content_fingerprint:R.stableId('proposal',proposal),source_handoff:clone(proposal.source_handoff??{})},baseline_saved_at:proposal.baseline_saved_at??null,original_storyboard_fingerprint:R.stableId('storyboard',board),revised_storyboard_fingerprint:R.stableId('storyboard',output),validation_scope:clone(report.validation),final_confirmation:{confirmed:true,mode:options.mode},applied:applied.map(r=>({cut_id:r.cut_id,cut_number:r.cut_number,changes:clone(r.changes),author_checks:clone(approvals[String(r.cut_id)]),warnings:clone(r.warnings)})),held:report.rows.filter(r=>!r.eligible).map(r=>({cut_id:r.cut_id,blockers:r.blockers,pending:r.pending}))};
     return {status:'applied',storyboard:output,history};
   }
   const api={validate,inspect,apply};
   if(typeof module==='object'&&module.exports){module.exports=api;return;}
   root.MVRevisionApply=api;
   const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;return n;};
-  let proposal=null,board=null,approvals=Object.create(null),result=null,boardOrigin='loaded';
+  let proposal=null,board=null,analysis=null,approvals=Object.create(null),result=null,boardOrigin='loaded';
   const reset=()=>{approvals=Object.create(null);result=null;$('applyFinal').checked=false;$('applyBoardExport').disabled=true;$('applyHistoryExport').disabled=true;};
   function checkbox(label,checked,change){const l=el('label',label),input=el('input','');input.type='checkbox';input.checked=checked;input.addEventListener('change',()=>change(input.checked));l.prepend(input);return l;}
   function render(){
     result=null;$('applyBoardExport').disabled=true;$('applyHistoryExport').disabled=true;$('applyFinal').checked=false;$('applyFinal').disabled=true;$('applyGenerate').disabled=true;$('applyReady').textContent='必須チェックと最終確認が終わるまで生成できません。';
-    const list=$('applyList');list.replaceChildren();if(!proposal){$('applyStatus').textContent='v0.8.4改稿案JSONを読み込むか、画面の改稿案を使用してください。';return;}
+    const list=$('applyList');list.replaceChildren();$('applyIssueGroups').replaceChildren();$('applyBlockers').replaceChildren(el('h3','今回の適用を妨げている項目'));if(!proposal){$('applyStatus').textContent='v0.8.4改稿案JSONを読み込むか、画面の改稿案を使用してください。';return;}
     if(!proposal.targets.some(t=>t.decision==='adopt_proposal')){$('applyStatus').textContent='適用対象なし';return;}
-    try{const report=inspect(proposal,board,approvals);$('applyStatus').textContent=`適用候補 ${report.candidate_count} CUT / 適用可能 ${report.eligible_count} CUT。元コンテ: ${boardOrigin==='imported'?'この欄で読み込んだファイル':'読み込み済みコンテ'}。最終確認後に別ファイルを生成します。`;
-      for(const row of report.rows){const section=el('section','');section.append(el('h3',`${row.cut_number??row.cut_id} (${row.cut_id})`));
+    try{const report=inspect(proposal,board,approvals,analysis);$('applyStatus').textContent=`適用候補 ${report.candidate_count} CUT / 適用可能 ${report.eligible_count} CUT。元コンテ: ${boardOrigin==='imported'?'この欄で読み込んだファイル':'読み込み済みコンテ'}。最終確認後に別ファイルを生成します。`;
+      if(report.validation)for(const [key,label] of Object.entries({existing_issues:'元コンテの既存指摘（全CUT・適用停止件数ではありません）',related_existing_issues:'今回の変更に関係する既存指摘（既存指摘の内数）',new_issues:'今回の変更で新たに生じた指摘'})){const d=el('details',''),items=report.validation[key];d.append(el('summary',label+'：'+items.length+'件'));for(const i of items)d.append(el('p',(i.cut_id??'全体')+' / '+i.code+(i.reference_id?' / '+i.reference_id:'')+': '+i.reason));$('applyIssueGroups').append(d);}
+      for(const row of report.rows){
+        for(const message of [...row.blockers,...row.pending])$('applyBlockers').append(el('p',(row.cut_number??row.cut_id)+': '+message));
+        if(!row.blockers.length&&!row.pending.length)$('applyBlockers').append(el('p',(row.cut_number??row.cut_id)+': 個別確認済み。最後に最終確認が必要です。'));const section=el('section','');section.append(el('h3',`${row.cut_number??row.cut_id} (${row.cut_id})`));
         for(const d of row.changes)section.append(el('p',`${d.path.join(' / ')}: ${JSON.stringify(d.before)} → ${JSON.stringify(d.after)}`));
         for(const d of row.original_differences)section.append(el('p',`元データ不一致 ${d.path.join(' / ')}: 改稿案の元 ${JSON.stringify(d.before)} / 現在 ${JSON.stringify(d.after)}`));
         for(const b of row.blockers)section.append(el('p','適用停止: '+b));
@@ -90,13 +115,13 @@
         const display=(value,path=[])=>{if(value&&typeof value==='object')for(const [k,v] of Object.entries(value))display(v,path.concat(k));else context.append(el('p',path.join(' / ')+': '+String(value)));};
         const target=proposal.targets.find(t=>t.cut_id===row.cut_id);display({draft_cut:target.draft_cut,continuity:target.continuity,unconfirmed_notes:target.unconfirmed_notes,current_neighbors:row.neighbors});section.append(context);
         const checks=approvals[String(row.cut_id)]??(approvals[String(row.cut_id)]={});
-        const labels={source_confirmed:'改稿案作成時の元コンテであることを確認',content_confirmed:'改稿内容を確定（再検討・仮の表現も含め具体的な制作指示として確認）',...Object.fromEntries(Object.entries(topics).map(([k,v])=>[k,`${v}：明示条件・未確認事項を確認し、適用を妨げる不整合なし（非該当も確認）`]))};
+        const labels={...(row.related_issues.some(i=>i.severity!=='error'&&i.severity!=='intentional')?{related_confirmed:'今回の変更に関係する指摘・新規指摘を確認（意図・対処を判断済み）'}:{}),source_confirmed:'改稿案作成時の元コンテであることを確認',content_confirmed:'改稿内容を確定（再検討・仮の表現も含め具体的な制作指示として確認）',...Object.fromEntries(Object.entries(topics).map(([k,v])=>[k,`${v}：明示条件・未確認事項を確認し、適用を妨げる不整合なし（非該当も確認）`]))};
         for(const [k,label] of Object.entries(labels)){const field=checkbox(label,checks[k]===true,v=>{checks[k]=v;render();});field.querySelector('input').dataset.approval=k;field.querySelector('input').dataset.cut=String(row.cut_id);section.append(field);}
         for(const p of row.pending)section.append(el('p','未確認: '+p));list.append(section);
       }
       const ready=report.eligible_count>0&&($('applyMode').value==='eligible_only'||report.eligible_count===report.candidate_count);$('applyFinal').disabled=!ready;
       $('applyReady').textContent=ready?'下記の最終確認を行ってください。':'生成不可：各CUTの適用停止・未確認を解消してください。一部のみ適用する場合は方針を選択してください。';
-    }catch(e){$('applyStatus').textContent=e.message;$('applyFinal').disabled=true;}
+    }catch(e){$('applyStatus').textContent=e.message;$('applyBlockers').append(el('p','判定停止: '+e.message));$('applyFinal').disabled=true;}
   }
   function openProposal(p){validate(p);proposal=clone(p);reset();render();}
   $('applyProposalFile').addEventListener('change',async e=>{try{if(e.target.files[0])openProposal(JSON.parse(await e.target.files[0].text()));}catch(err){proposal=null;reset();render();$('applyStatus').textContent='読込失敗: '+err.message;}finally{e.target.value='';}});
@@ -104,9 +129,9 @@
   $('applyUseCurrent').addEventListener('click',()=>{try{const p=root.MVProposalUI.getProposal();if(!p)throw Error('画面に改稿案がありません。');openProposal(p);}catch(e){$('applyStatus').textContent=e.message;}});
   $('applyMode').addEventListener('change',render);
   $('applyFinal').addEventListener('change',()=>{result=null;$('applyBoardExport').disabled=true;$('applyHistoryExport').disabled=true;$('applyGenerate').disabled=!$('applyFinal').checked||$('applyFinal').disabled;});
-  $('applyGenerate').addEventListener('click',()=>{try{result=apply(proposal,board,approvals,{mode:$('applyMode').value,final_confirmed:$('applyFinal').checked});$('applyBoardExport').disabled=!result.storyboard;$('applyHistoryExport').disabled=!result.history;$('applyStatus').textContent=`改訂版を生成しました：${result.history?.applied.length??0} CUT適用。コンテ本体と適用履歴を別々に保存してください。元データは変更していません。`;}catch(e){$('applyStatus').textContent=e.message;}});
+  $('applyGenerate').addEventListener('click',()=>{try{result=apply(proposal,board,approvals,{analysis,mode:$('applyMode').value,final_confirmed:$('applyFinal').checked});$('applyBoardExport').disabled=!result.storyboard;$('applyHistoryExport').disabled=!result.history;$('applyStatus').textContent=`改訂版を生成しました：${result.history?.applied.length??0} CUT適用。コンテ本体と適用履歴を別々に保存してください。元データは変更していません。`;}catch(e){$('applyStatus').textContent=e.message;}});
   function download(value,name){if(!value)return;const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'})),a=el('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-  $('applyBoardExport').addEventListener('click',()=>download(result?.storyboard,'mv_storyboard_revised_v0_8_5.json'));
-  $('applyHistoryExport').addEventListener('click',()=>download(result?.history,'mv_storyboard_revision_application_v0_8_5.json'));
-  root.MVApplyUI={setBoard(value){if(boardOrigin==='imported')return;if(!equal(board,value)){board=value?clone(value):null;reset();render();}}};
+  $('applyBoardExport').addEventListener('click',()=>download(result?.storyboard,'mv_storyboard_revised_v0_8_6.json'));
+  $('applyHistoryExport').addEventListener('click',()=>download(result?.history,'mv_storyboard_revision_application_v0_8_6.json'));
+  root.MVApplyUI={setAnalysis(value){if(!equal(analysis,value)){analysis=value?clone(value):null;reset();render();}},setBoard(value){if(boardOrigin==='imported')return;if(!equal(board,value)){board=value?clone(value):null;reset();render();}}};
 })(globalThis);
