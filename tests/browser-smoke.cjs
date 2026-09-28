@@ -66,7 +66,7 @@ const root=path.join(__dirname,'..');
     }
     for(const width of [320,390]){
       await page.setViewportSize({width,height:844});
-      const boxes=await page.locator('#storyboardPanel .actions button').evaluateAll(buttons=>buttons.map(b=>({width:b.getBoundingClientRect().width,height:b.getBoundingClientRect().height,top:b.getBoundingClientRect().top,scroll:b.scrollWidth,client:b.clientWidth})));
+      const boxes=await page.locator('#storyboardPanel .actions button:visible').evaluateAll(buttons=>buttons.map(b=>({width:b.getBoundingClientRect().width,height:b.getBoundingClientRect().height,top:b.getBoundingClientRect().top,scroll:b.scrollWidth,client:b.clientWidth})));
       assert.ok(boxes.every(b=>b.width>200&&b.height>=44&&b.scroll<=b.client));
       assert.ok(boxes.every((b,i)=>i===0||b.top>=boxes[i-1].top+boxes[i-1].height));
     }
@@ -96,7 +96,7 @@ const root=path.join(__dirname,'..');
     await page.locator('#storyboardAnalysisFile').setInputFiles({name:'current.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(require('../sample_music_analysis_v7.synthetic.json')))});
     await page.locator('#storyboardCompare').click();
     await page.waitForFunction(()=>document.getElementById('storyboardComparison').textContent.includes('cut_changes'));
-    const comparison=()=>page.locator('#storyboardComparison').innerText();
+    const comparison=()=>page.locator('#storyboardComparison').textContent();
     assert.deepEqual(JSON.parse((await comparison()).replace(/^比較結果\n/, '')).cut_changes,[]);
     assert.ok(JSON.parse((await comparison()).replace(/^比較結果\n/, '')).compared_reference_count>=5);
     assert.equal(JSON.parse((await comparison()).replace(/^比較結果\n/, '')).analysis_status,'比較済み・差分0件');
@@ -141,9 +141,29 @@ const root=path.join(__dirname,'..');
     await legacyPage.waitForFunction(()=>document.getElementById('storyboardBaselineMessage').textContent.includes('保存成功'));
     await legacyPage.locator('#storyboardCompare').click();
     await legacyPage.waitForFunction(()=>document.getElementById('storyboardComparison').textContent.includes('比較済み・差分0件'));
-    const legacyComparison=JSON.parse((await legacyPage.locator('#storyboardComparison').innerText()).replace(/^比較結果\n/,''));assert.ok(legacyComparison.legacy_reference_count>=5);assert.equal(legacyComparison.stored_reference_count,0);
+    const legacyComparison=JSON.parse((await legacyPage.locator('#storyboardComparison').textContent()).replace(/^比較結果\n/,''));assert.ok(legacyComparison.legacy_reference_count>=5);assert.equal(legacyComparison.stored_reference_count,0);
     assert.deepEqual(await legacyPage.evaluate(()=>MVStoryboardBaseline.load()),legacy);
     await legacyContext.close();
+    const reviewContext=await browser.newContext({viewport:{width:390,height:844}}),reviewPage=await reviewContext.newPage();
+    await reviewPage.goto(page.url());await reviewPage.waitForFunction(()=>document.getElementById('storyboardBaselineStatus').textContent.includes('未保存'));
+    const reviewFixture=require('./impact-review-fixture.cjs')();
+    await reviewPage.locator('#storyboardBaselineFile').setInputFiles({name:'baseline.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(reviewFixture.baseline))});
+    await reviewPage.waitForFunction(()=>document.getElementById('storyboardBaselineMessage').textContent.includes('保存成功'));
+    await reviewPage.locator('#storyboardAnalysisFile').setInputFiles({name:'current.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(reviewFixture.updated))});
+    await reviewPage.locator('#storyboardCompare').click();
+    await reviewPage.locator('#impactReview').waitFor({state:'visible'});
+    assert.equal(await reviewPage.locator('.impact-cut').count(),1);assert.match(await reviewPage.locator('#impactReview').innerText(),/CUT 02/);assert.match(await reviewPage.locator('#impactReview').innerText(),/\+0\.3000秒/);
+    assert.equal(await reviewPage.locator('#storyboardComparisonDetails').getAttribute('open'),null);
+    await reviewPage.locator('.impact-cut select').selectOption('needs_revision');
+    await reviewPage.locator('#storyboardCompare').click();assert.equal(await reviewPage.locator('.impact-cut select').inputValue(),'needs_revision');
+    const reviewDownload=reviewPage.waitForEvent('download');await reviewPage.locator('#impactReviewExport').click();const reviewFile=await reviewDownload,reviewStream=await reviewFile.createReadStream();let reviewText='';for await(const part of reviewStream)reviewText+=part;
+    const reviewJSON=JSON.parse(reviewText);assert.equal(reviewJSON.schema,'mv_impact_cut_review.v0.8.2');assert.equal(reviewJSON.cuts[0].status,'needs_revision');assert.equal(reviewJSON.comparison.value_compared_reference_count,211);
+    for(const width of [320,390]){await reviewPage.setViewportSize({width,height:844});const fits=await reviewPage.locator('#impactReview').evaluate(el=>el.scrollWidth<=el.clientWidth);assert.equal(fits,true);}
+    await reviewPage.locator('#impactReview').scrollIntoViewIfNeeded();if(process.env.IMPACT_REVIEW_SCREENSHOT)await reviewPage.screenshot({path:process.env.IMPACT_REVIEW_SCREENSHOT});
+    assert.deepEqual(await reviewPage.evaluate(()=>MVStoryboardBaseline.load()),reviewFixture.baseline);
+    await reviewPage.locator('#storyboardAnalysisFile').setInputFiles({name:'unchanged.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(reviewFixture.analysis))});
+    await reviewPage.locator('#impactReview').waitFor({state:'hidden'});await reviewPage.waitForFunction(()=>document.getElementById('storyboardComparison').textContent.includes('入力が変わりました'));await reviewPage.locator('#storyboardCompare').click();await reviewPage.waitForFunction(()=>document.querySelectorAll('.impact-cut').length===0);assert.equal(await reviewPage.locator('.impact-cut').count(),0);
+    await reviewContext.close();
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({browser:browser.version(),viewport:'390x844',synthetic_ui:'passed',download:'passed',service_worker:'offline_reload_passed',synthetic_decode:decoded,page_errors:errors}));
   }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

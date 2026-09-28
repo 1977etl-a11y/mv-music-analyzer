@@ -137,3 +137,10 @@ code { color:#fff0a1; }
 #storyboardPanel .actions{display:flex;flex-wrap:wrap;gap:8px}
 #storyboardPanel .actions button{flex:1 0 180px;white-space:normal;word-break:normal;overflow-wrap:normal;min-height:44px}
 @media(max-width:620px){#storyboardPanel .actions{flex-direction:column}#storyboardPanel .actions button{flex:none;width:100%}}
+
+/* Impact review cards stay readable at phone widths. */
+#impactReview .impact-cut{border:1px solid #454550;border-radius:12px;padding:12px;margin:12px 0;min-width:0;overflow-wrap:anywhere}
+#impactReview .impact-cut label{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}
+#impactReview select{min-height:44px;max-width:100%;padding:8px;color:inherit;background:#202027;border:1px solid #666;border-radius:6px}
+#impactReview .impact-event{border-top:1px solid #454550;margin-top:10px;padding-top:8px}
+#impactReview pre{white-space:pre-wrap;overflow-wrap:anywhere}

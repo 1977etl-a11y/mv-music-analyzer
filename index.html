@@ -9,13 +9,13 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="stylesheet" href="styles.css" />
-  <title>MV Music Analyzer v0.8.1</title>
+  <title>MV Music Analyzer v0.8.2</title>
 </head>
 <body>
   <main class="app-shell">
     <header class="hero">
       <div class="eyebrow">意味変質型MV / AUDIO FRONTEND</div>
-      <h1>MV Music Analyzer <span class="version-badge">v0.8.1</span></h1>
+      <h1>MV Music Analyzer <span class="version-badge">v0.8.2</span></h1>
       <p>原曲と任意Stemを解析し、9つの運動プリミティブに加えて、正規歌詞と外部ASRのSRTを照合し、歌詞にない発声も保持した共通タイムラインの <code>music_analysis.json</code> を生成します。</p>
     </header>
 
@@ -169,12 +169,13 @@
 <p id="storyboardBaselineStatus" aria-live="polite">比較基準：確認中</p><p id="storyboardBaselineMessage" aria-live="polite"></p>
 <div class="actions"><button id="storyboardBaselineRecreate">比較基準を再作成（確認あり）</button><button id="storyboardBaselineExport">比較基準JSONを書き出す</button><button id="storyboardCompare">保存済み基準と比較</button></div>
 <label>比較基準JSONを読み込む <input id="storyboardBaselineFile" type="file" accept=".json,application/json"></label>
-<pre id="storyboardComparison" style="white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite"></pre>
+<section id="impactReview" hidden aria-label="影響CUTレビュー"><h2>影響CUTレビュー</h2><p id="impactReviewSummary" aria-live="polite"></p><p>判断はこの画面内で保持します。ページ更新前にレビューJSONを書き出してください。</p><div class="actions"><button id="impactReviewExport" disabled>レビューJSONを書き出す</button></div><div id="impactReviewList"></div></section>
+<details id="storyboardComparisonDetails"><summary>比較結果JSONを表示</summary><pre id="storyboardComparison" style="white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite"></pre></details>
 <p id="storyboardStatus" aria-live="polite">コンテJSONを読み込んでください。</p><div id="storyboardOutput"></div>
 </section>
 <footer>
-      <p>MV Music Analyzer v0.8.1 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
-      <p>Stemは外部分離データを任意入力します。v0.8.1は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
+      <p>MV Music Analyzer v0.8.2 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
+      <p>Stemは外部分離データを任意入力します。v0.8.2は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
     </footer>
   </main>
 
@@ -182,6 +183,7 @@
   <script src="app.js" defer></script>
   <script src="storyboard.js" defer></script>
   <script src="storyboard-baseline.js" defer></script>
+  <script src="impact-review.js" defer></script>
   <script src="storyboard-ui.js" defer></script>
 </body>
 </html>
