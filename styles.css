@@ -144,3 +144,5 @@ code { color:#fff0a1; }
 #impactReview select{min-height:44px;max-width:100%;padding:8px;color:inherit;background:#202027;border:1px solid #666;border-radius:6px}
 #impactReview .impact-event{border-top:1px solid #454550;margin-top:10px;padding-top:8px}
 #impactReview pre{white-space:pre-wrap;overflow-wrap:anywhere}
+
+#revisionPanel{overflow-wrap:anywhere}#revisionPanel input[type=file]{max-width:100%}

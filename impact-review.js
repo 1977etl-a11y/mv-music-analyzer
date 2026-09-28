@@ -34,7 +34,7 @@
   root.MVImpactReview=api;
   const $=id=>document.getElementById(id),panel=$('impactReview'),summary=$('impactReviewSummary'),list=$('impactReviewList'),exportButton=$('impactReviewExport');
   let review=null;
-  function invalidate(){panel.hidden=true;exportButton.disabled=true;}
+  function invalidate(){panel.hidden=true;exportButton.disabled=true;root.MVRevisionUI?.setCurrentReview(null);}
   function node(tag,text){const el=document.createElement(tag);el.textContent=text;return el;}
   const changeNames={event_changed:'イベント値の変更',event_deleted:'参照イベントの消失',unresolved_reference:'参照先不明',reference_added:'参照の追加',reference_removed:'参照の解除'};
   function render(comparison,board){
@@ -46,7 +46,7 @@
     for(const cut of review.cuts){
       const card=node('article','');card.className='impact-cut';card.append(node('h3',String(cut.cut_number)),node('small',String(cut.cut_id)));
       const label=node('label','レビュー判断 '),select=node('select','');select.setAttribute('aria-label',`${cut.cut_number} レビュー判断`);
-      for(const [value,text] of Object.entries(statuses)){const option=node('option',text);option.value=value;select.append(option);}select.value=cut.status;select.addEventListener('change',()=>setStatus(review,cut.cut_id,select.value));label.append(select);card.append(label);
+      for(const [value,text] of Object.entries(statuses)){const option=node('option',text);option.value=value;select.append(option);}select.value=cut.status;select.addEventListener('change',()=>{setStatus(review,cut.cut_id,select.value);root.MVRevisionUI?.setCurrentReview(review);});label.append(select);card.append(label);
       for(const event of cut.events){
         const detail=node('div','');detail.className='impact-event';detail.append(node('h4',changeNames[event.change]||event.change),node('code',event.event_id));
         for(const field of event.fields){const before=field.before_present===false?'未取得':JSON.stringify(field.before),after=field.after_present===false?'未取得':JSON.stringify(field.after);detail.append(node('p',`${field.field}: ${before} → ${after}`));}
@@ -56,6 +56,7 @@
       }
       list.append(card);
     }
+    root.MVRevisionUI?.setCurrentReview(review);
   }
   exportButton.addEventListener('click',()=>{if(!review||exportButton.disabled)return;const url=URL.createObjectURL(new Blob([JSON.stringify(review,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='mv_impact_cut_review_v0_8_2.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   root.MVImpactReviewUI={render,invalidate};
