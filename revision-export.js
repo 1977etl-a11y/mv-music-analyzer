@@ -39,7 +39,7 @@
       exportButton.disabled=output.errors.length>0;root.MVProposalUI?.setHandoff(output.errors.length?null:output);
     }catch(e){summary.textContent=e.message;}
   }
-  function setBoard(value){board=value;root.MVProposalUI?.setBoard(value);refresh();}
+  function setBoard(value){board=value;root.MVApplyUI?.setBoard(value);root.MVProposalUI?.setBoard(value);refresh();}
   function setCurrentReview(value){currentReview=value;if(origin!=='imported'){review=value;origin='current';refresh();}}
   $('revisionUseCurrent').addEventListener('click',()=>{review=currentReview;origin='current';refresh();});
   $('revisionReviewFile').addEventListener('change',async event=>{

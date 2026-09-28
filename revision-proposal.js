@@ -110,5 +110,5 @@
   $('proposalUseCurrent').addEventListener('click',()=>{try{if(!available)throw Error('先に改稿用JSONを作成するか、ファイルを読み込んでください。');open(available);}catch(e){status.textContent=e.message;}});
   $('proposalContext').addEventListener('click',()=>{if(!proposal)return;for(const item of proposal.targets){item.continuity.neighbors=neighbors(item,board);item.continuity.timing_findings=timing(item);for(const c of Object.values(item.continuity.author_checks))c.status='unconfirmed';}render();});
   exportButton.addEventListener('click',()=>{if(!proposal||exportButton.disabled)return;const url=URL.createObjectURL(new Blob([JSON.stringify(proposal,null,2)],{type:'application/json'}));const a=node('a','');a.href=url;a.download='mv_storyboard_revision_proposal_v0_8_4.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-  root.MVProposalUI={setBoard:value=>{board=value;},setHandoff:value=>{available=value;}};
+  root.MVProposalUI={getProposal:()=>{if(content.querySelector(':invalid'))throw Error('改稿案の不正な入力を修正してください。');return proposal?clone(proposal):null;},setBoard:value=>{board=value;},setHandoff:value=>{available=value;}};
 })(globalThis);

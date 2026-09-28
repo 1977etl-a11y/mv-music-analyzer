@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.8.4';
+const VERSION = '0.8.5';
 const ESSENTIA_VERSION = '0.1.3';
 const AUDIO_BEAT_VERSION = '2.1.3';
 const ESSENTIA_BASE = `https://cdn.jsdelivr.net/npm/essentia.js@${ESSENTIA_VERSION}/dist`;
