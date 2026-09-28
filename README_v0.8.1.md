@@ -48,3 +48,7 @@ Node回帰テストとEdgeの実ブラウザテストを実行します。合成
 取得不能理由はmissing_snapshot_and_saved_analysis（保存データなし）、saved_analysis_identity_mismatch（保存元識別不一致）、reference_absent_from_saved_analysis（保存解析にIDがない）です。未取得値を推測しません。時刻はイベント本体を優先し、SECTION等の本体に時刻のない項目では索引の導出範囲を使います。
 
 回帰テストには明示的な合成44CUT・211参照の旧形式を含め、211件の値比較、同一解析で差分0件、イベント本体の時刻変更による影響CUT検出、入力不変を検証します。ユーザーの指定日時の実JSONは作業環境にないため、そのファイル自体の検証とは区別します。
+
+## 比較時のメタデータ指摘の分離
+
+比較結果のstoryboard_metadata_issues配列に、コンテ最上位のid/title/version不足の指摘を保持します（同じcode・severity・reason）。analysis_comparison.issuesからはこの種類のみを除きます。通常のMVStoryboard.validate()と「検証」操作は変更していません。既存の比較結果の主要フィールド・イベント差分・件数・影響CUTは維持します。メタデータ指摘を利用する下流処理は、新しい配列も参照してください。コンテや基準は書き換えず、仮のメタデータを生成しません。

@@ -72,6 +72,9 @@
     const identityChanges=differences(record.baseline.analysis,MVStoryboard.identity(analysis));
     const compatible=identityChanges.length===0;
     const report=MVStoryboard.validate({...board,baseline:{...record.baseline,references:values},analysis:record.baseline.analysis},analysis);
+    // Keep full validation unchanged; separate only top-level metadata findings in comparison output.
+    const metadataIssues=report.issues.filter(issue=>issue.code==='storyboard_metadata');
+    const analysisReport={...report,issues:report.issues.filter(issue=>issue.code!=='storyboard_metadata')};
     const old=record.board.cuts,now=board.cuts,changes=[];
     const key=(c,i)=>c.id??c.cut??'position:'+(i+1);
     const before=new Map(old.map((c,i)=>[key(c,i),c])),after=new Map(now.map((c,i)=>[key(c,i),c]));
@@ -98,7 +101,7 @@
       if(fields.length)eventChanges.push({...entry,change:'event_changed',fields});
     }
     const status=!compatible?'解析値の比較不可：音源・解析条件が異なります':valueCount===0?'解析値の比較不可':unavailable.length?'一部比較不可':eventChanges.length?'比較済み・差分あり':'比較済み・差分0件';
-    return {saved_at:record.saved_at,analysis_status:status,cut_status:changes.length?'CUT差分あり':'CUT比較済み・差分0件',compared_reference_count:allTargets.size,value_compared_reference_count:valueCount,stored_reference_count:Object.keys(stored).length,legacy_reference_count:Object.values(resolved.sources).filter(s=>s.origin==='analysis').length,baseline_value_sources:resolved.sources,cut_changes:changes,event_changes:eventChanges,unavailable_references:unavailable,identity_changes:identityChanges,analysis_comparison:report,note:'参照IDの照合件数と実際の値比較件数は別です。旧形式の保存済み解析値は由来を明示して読み取ります。現在値による代用はしません。比較は読み取り専用です。'};
+    return {saved_at:record.saved_at,analysis_status:status,cut_status:changes.length?'CUT差分あり':'CUT比較済み・差分0件',compared_reference_count:allTargets.size,value_compared_reference_count:valueCount,stored_reference_count:Object.keys(stored).length,legacy_reference_count:Object.values(resolved.sources).filter(s=>s.origin==='analysis').length,baseline_value_sources:resolved.sources,cut_changes:changes,event_changes:eventChanges,unavailable_references:unavailable,identity_changes:identityChanges,analysis_comparison:analysisReport,storyboard_metadata_issues:metadataIssues,note:'参照IDの照合件数と実際の値比較件数は別です。旧形式の保存済み解析値は由来を明示して読み取ります。現在値による代用はしません。比較は読み取り専用です。'};
   }
   globalThis.MVStoryboardBaseline={check,create,compare,baselineValues,load:()=>access(),save:record=>access(check(record)),recreate:(record,expected)=>access(check(record),MVReferences.stableId('baseline',expected))};
 })();

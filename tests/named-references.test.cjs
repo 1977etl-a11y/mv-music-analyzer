@@ -71,3 +71,34 @@ test('synthetic legacy 44 CUT and 211 references compare archived values without
  const updated=structuredClone(audio);S.resolve(updated,ids[17]).value.start_sec+=.1;
  const changed=B.compare(record,b,updated);assert.equal(changed.event_changes.length,1);assert.equal(changed.event_changes[0].affected_cuts[0].cut_number,'CUT18');assert.equal(changed.cut_changes.length,0);assert.equal(JSON.stringify(record),before);
 });
+
+test('comparison separates metadata findings; ordinary validation and all other findings stay unchanged',()=>{
+ for(const complete of [false,true]){
+  const b=board();if(!complete){delete b.id;delete b.title;delete b.version;}
+  const record=B.create(b,a),before=JSON.stringify([record,b,a]);
+  const full=S.validate({...b,baseline:record.baseline,analysis:record.baseline.analysis},a),result=B.compare(record,b,a);
+  assert.equal(result.storyboard_metadata_issues.length,complete?0:3);
+  assert.equal(JSON.stringify(result.storyboard_metadata_issues),JSON.stringify(full.issues.filter(i=>i.code==='storyboard_metadata')));
+  assert.equal(JSON.stringify(result.analysis_comparison.issues),JSON.stringify(full.issues.filter(i=>i.code!=='storyboard_metadata')));
+  assert.equal(JSON.stringify(result.analysis_comparison.affected_cut_ids),JSON.stringify(full.affected_cut_ids));
+  assert.equal(S.validate(b,a).issues.filter(i=>i.code==='storyboard_metadata').length,complete?0:3);
+  assert.equal(result.analysis_status,'比較済み・差分0件');assert.equal(JSON.stringify([record,b,a]),before);
+ }
+});
+test('synthetic exact reported event time change still affects CUT 02 with or without metadata',()=>{
+ // The user file is unavailable; reproduce its stated ID and times in an explicit synthetic fixture.
+ const id='audio_046374677ed4c2adcbc94bd7e65e2ae9',audio=structuredClone(a);
+ const originalId=Object.keys(audio.unified_timeline.references).find(key=>audio.unified_timeline.references[key].kind==='audio_event');
+ const target=S.resolve(audio,originalId);target.value.id=id;target.value.start_sec=2.3917;target.value.end_sec=2.3917;
+ const ref=audio.unified_timeline.references[originalId];delete audio.unified_timeline.references[originalId];audio.unified_timeline.references[id]={...ref,start_sec:2.3917,end_sec:2.3917};
+ for(const complete of [false,true]){
+  const b=S.importJSON(JSON.stringify({...(complete?{id:'synthetic',title:'Synthetic CUT 02',version:'1'}:{}),cuts:[{id:'cut_02',cut_number:'CUT 02',start_sec:2,end_sec:3,audio_event_refs:[id]}]}));
+  const record=B.create(b,audio),updated=structuredClone(audio),before=JSON.stringify(record);
+  S.resolve(updated,id).value.start_sec=2.6917;S.resolve(updated,id).value.end_sec=2.6917;
+  const result=B.compare(record,b,updated),change=result.event_changes.find(e=>e.reference_id===id);
+  assert.equal(result.cut_changes.length,0);assert.equal(result.event_changes.length,1);assert.equal(change.change,'event_changed');assert.equal(change.affected_cuts[0].cut_number,'CUT 02');
+  for(const field of ['start_sec','end_sec']){const delta=change.fields.find(f=>f.field===field);assert.equal(delta.before,2.3917);assert.equal(delta.after,2.6917);}
+  assert.equal(result.storyboard_metadata_issues.length,complete?0:3);assert.ok(!result.analysis_comparison.issues.some(i=>i.code==='storyboard_metadata'));
+  assert.ok(result.analysis_comparison.issues.some(i=>i.code==='analysis_changed'));assert.equal(JSON.stringify(record),before);
+ }
+});

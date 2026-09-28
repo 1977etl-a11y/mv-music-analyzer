@@ -1,4 +1,4 @@
-const CACHE = 'mv-music-analyzer-v0.8.1-legacy-values-fix1';
+const CACHE = 'mv-music-analyzer-v0.8.1-metadata-separation-fix1';
 const APP_SHELL = ['./','./index.html','./styles.css','./app.js','./references.js','./storyboard.js','./storyboard-ui.js','./storyboard-baseline.js','./storyboard_schema_v0_7_1.json','./music_analysis_schema_v7.json','./manifest.webmanifest','./icon.svg','./music_analysis_schema_v6.json','./music_analysis_schema_v6_1.json'];
 
 self.addEventListener('install',event=>{
