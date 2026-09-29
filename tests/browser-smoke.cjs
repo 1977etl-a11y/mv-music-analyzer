@@ -215,6 +215,27 @@ const root=path.join(__dirname,'..');
     }
     const emptyHandoff={...handoff,target_count:0,targets:[]};proposalPage.once('dialog',dialog=>dialog.accept());await proposalPage.locator('#proposalFile').setInputFiles({name:'empty.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(emptyHandoff))});await proposalPage.waitForFunction(()=>document.getElementById('proposalStatus').textContent==='改稿対象なし');assert.equal(await proposalPage.locator('#proposalExport').isEnabled(),true);assert.equal(await proposalPage.locator('#proposalEditor').innerText(),'');
     await proposalContext.close();
+    { // Saved proposal -> editor -> checks -> apply -> field-only export.
+      const resumeContext=await browser.newContext({viewport:{width:390,height:844}}),resume=await resumeContext.newPage();resume.on('pageerror',e=>errors.push(e.message));await resume.goto(page.url());
+      const RP=require('../revision-proposal'),savedHandoff=structuredClone(require('../sample_revision_handoff_v0_8_3.synthetic.json'));
+      const source=Array.from({length:44},(_,i)=>i===1?structuredClone(savedHandoff.targets[0].original_cut):{id:'cut_'+i,start_sec:i,end_sec:i+1,actions:[{action:'unchanged'}],audio_event_refs:Array.from({length:13},(_,j)=>'missing_'+i+'_'+j)});
+      const saved=RP.create(savedHandoff,source),target=saved.targets[0];RP.edit(target,['actions','0','action'],'右踵二打のタイミングを再検討');target.decision='adopt_proposal';target.revision_summary='保存済み改稿内容';target.reason='保存済み理由';for(const c of Object.values(target.continuity.author_checks)){c.status='consistent';c.note='保存済み確認メモ';}
+      const upload=async(selector,data)=>resume.locator(selector).setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
+      await resume.evaluate(value=>MVStoryboardBaseline.save(value),reviewFixture.baseline);
+      await upload('#storyboardFile',source);await upload('#storyboardAnalysisFile',require('./application-fixture.cjs').analysis());await upload('#proposalSavedFile',saved);
+      await resume.waitForFunction(()=>document.getElementById('proposalSummary').value==='保存済み改稿内容');assert.equal(await resume.locator('#proposalReason').inputValue(),'保存済み理由');assert.equal(await resume.locator('[data-check-topic="actions"]').inputValue(),'consistent');
+      await resume.locator('#proposalToApply').click();assert.equal(await resume.locator('[data-approval="actions"]').isChecked(),true);assert.equal(await resume.locator('#applyFinal').isChecked(),false);assert.match(await resume.locator('#applyIssueGroups').innerText(),/567件/);
+      await resume.locator('[data-edit-cut="cut_1"]').first().click();assert.equal(await resume.locator('#proposalCut').inputValue(),'0');
+      await resume.locator('#proposalEditor [data-path="actions.0.action"]').fill('右踵を二度踏む');assert.equal(await resume.locator('[data-check-topic="actions"]').inputValue(),'unconfirmed');assert.match(await resume.locator('#proposalStatus').innerText(),/確認メモは保持/);assert.equal(await resume.locator('#applyGenerate').isDisabled(),true);
+      for(const topic of ['timing','actions','subjects','props','wardrobe','camera'])await resume.locator('[data-check-topic="'+topic+'"]').selectOption('consistent');
+      await resume.locator('#proposalToApply').click();for(const topic of ['timing','actions','subjects','props','wardrobe','camera'])assert.equal(await resume.locator('[data-approval="'+topic+'"]').isChecked(),true);
+      for(const topic of ['source_confirmed','content_confirmed','related_confirmed'])await resume.locator('[data-approval="'+topic+'"]').check();assert.equal(await resume.locator('#applyGenerate').isDisabled(),true);await resume.locator('#applyFinal').check();await resume.locator('#applyGenerate').click();
+      const waiting=resume.waitForEvent('download');await resume.locator('#applyBoardExport').click();const downloaded=await waiting,stream=await downloaded.createReadStream();let text='';for await(const chunk of stream)text+=chunk;const out=JSON.parse(text),expected=structuredClone(source);expected[1].actions[0].action='右踵を二度踏む';assert.deepEqual(out,expected);
+      const state=await resume.evaluate(()=>MVProposalUI.getProposal());assert.deepEqual(state.targets[0].original_cut,source[1]);assert.deepEqual(state.targets[0].review_entries,target.review_entries);assert.equal(state.targets[0].draft_cut.start_sec,1);assert.equal(state.targets[0].continuity.author_checks.actions.note,'保存済み確認メモ');assert.deepEqual(await resume.evaluate(()=>MVStoryboardBaseline.load()),reviewFixture.baseline);
+      for(const width of [320,390]){await resume.setViewportSize({width,height:844});assert.equal(await resume.locator('#proposalPanel').evaluate(e=>e.scrollWidth<=e.clientWidth),true);assert.equal(await resume.locator('#applyPanel').evaluate(e=>e.scrollWidth<=e.clientWidth),true);}
+      await upload('#applyProposalFile',saved);resume.once('dialog',dialog=>dialog.accept());await resume.locator('[data-edit-cut="cut_1"]').first().click();assert.equal(await resume.locator('#proposalEditor [data-path="actions.0.action"]').inputValue(),'右踵二打のタイミングを再検討');assert.equal(await resume.locator('#proposalReason').inputValue(),'保存済み理由');
+      await resumeContext.close();
+    }
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({browser:browser.version(),viewport:'390x844',synthetic_ui:'passed',download:'passed',service_worker:'offline_reload_passed',synthetic_decode:decoded,page_errors:errors}));
   }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

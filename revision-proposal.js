@@ -53,14 +53,35 @@
     if(before&&after&&typeof before==='object'&&typeof after==='object')return [...new Set([...Object.keys(before),...Object.keys(after)])].flatMap(key=>changes(before[key],after[key],path.concat(key)));
     return [{path,before:before??null,after:after??null}];
   }
+  function restore(value){
+    if(value?.schema!=='mv_storyboard_revision_proposal.v0.8.4'||!Array.isArray(value.targets)||value.target_count!==value.targets.length)throw Error('v0.8.4改稿案JSONのschema・targets・target_countを確認してください。');
+    const result=clone(value),ids=new Set();
+    for(const item of result.targets){
+      if(!item||!['string','number'].includes(typeof item.cut_id)||item.cut_id===''||ids.has(String(item.cut_id))||!item.original_cut||typeof item.original_cut!=='object'||Array.isArray(item.original_cut)||!item.draft_cut||typeof item.draft_cut!=='object'||Array.isArray(item.draft_cut)||!Array.isArray(item.review_entries)||!Array.isArray(item.draft_changes))throw Error('対象CUTの識別子・元CUT・改稿案・根拠・変更一覧が不正または重複しています。');
+      ids.add(String(item.cut_id));
+      if(!Object.hasOwn(decisions,item.decision??'unreviewed'))throw Error('改稿案の判断が不正です。');item.decision??='unreviewed';
+      for(const name of ['revision_summary','reason','unconfirmed_notes'])if(typeof item[name]!=='string'){if(item[name]!=null)throw Error(name+'は文字列である必要があります。');item[name]='';}
+      const c=item.continuity&&typeof item.continuity==='object'&&!Array.isArray(item.continuity)?item.continuity:{};
+      const saved=c.author_checks&&typeof c.author_checks==='object'&&!Array.isArray(c.author_checks)?c.author_checks:{};
+      c.author_checks={...saved};const missing=[];
+      for(const topic of Object.keys(topics)){const v=saved[topic];const valid=v&&['unconfirmed','consistent','inconsistent'].includes(v.status);c.author_checks[topic]={...(v&&typeof v==='object'?v:{}),status:valid?v.status:'unconfirmed',note:typeof v?.note==='string'?v.note:''};if(!valid)missing.push(topics[topic]);}
+      const fallback=neighbors(item,null);c.neighbors=c.neighbors&&typeof c.neighbors==='object'&&!Array.isArray(c.neighbors)?c.neighbors:{};
+      for(const side of ['previous','next'])if(!c.neighbors[side]||typeof c.neighbors[side]!=='object'||Array.isArray(c.neighbors[side])||!Object.hasOwn(c.neighbors[side],'original_cut')){c.neighbors[side]=fallback[side];for(const entry of Object.values(c.author_checks))entry.status='unconfirmed';missing.push(side==='previous'?'前CUT情報':'後CUT情報');}
+      item.continuity=c;c.timing_findings=timing(item);
+      if(missing.length)item.restoration_notice='復元できない項目は未確認です: '+missing.join('、');
+    }
+    return result;
+  }
   function edit(item,path,value){
     if(!Array.isArray(path)||!path.length)throw Error('編集項目が不正です。');
     let parent=item.draft_cut;
     for(const part of path.slice(0,-1)){if(!parent||!Object.prototype.hasOwnProperty.call(parent,part))throw Error('編集項目がありません。');parent=parent[part];}
     const field=path[path.length-1];if(!parent||!Object.prototype.hasOwnProperty.call(parent,field)||['__proto__','constructor','prototype'].includes(String(field)))throw Error('編集項目が不正です。');
+    if(JSON.stringify(parent[field])===JSON.stringify(value))return;
+    item.confirmation_notice='改稿案の値を変更したため、整合確認を未確認へ戻しました。確認メモは保持しています。';
     parent[field]=value;item.draft_changes=changes(item.original_cut,item.draft_cut);item.continuity.timing_findings=timing(item);for(const check of Object.values(item.continuity.author_checks))check.status='unconfirmed';
   }
-  const api={create,edit,check,neighbors,timing,changes,decisions,topics};
+  const api={create,restore,edit,check,neighbors,timing,changes,decisions,topics};
   if(typeof module==='object'&&module.exports){module.exports=api;return;}
   root.MVRevisionProposal=api;
   const $=id=>document.getElementById(id),content=$('proposalEditor'),status=$('proposalStatus'),picker=$('proposalCut'),exportButton=$('proposalExport');
@@ -82,12 +103,12 @@
     content.replaceChildren();if(!proposal)return;
     status.textContent=proposal.target_count?`改稿対象 ${proposal.target_count} CUT。変更は編集用データにのみ反映します。`:'改稿対象なし';exportButton.disabled=false;picker.hidden=!proposal.target_count;
     if(!proposal.target_count)return;
-    const item=proposal.targets[selected],original=node('details','');original.append(node('summary','元コンテ（変更しません）'),view(item.original_cut));content.append(node('h3',String(item.cut_number??item.cut_id)),original);
+    const item=proposal.targets[selected],original=node('details','');original.append(node('summary','元コンテ（変更しません）'),view(item.original_cut));content.append(node('h3',String(item.cut_number??item.cut_id)),original);for(const message of [item.restoration_notice,item.confirmation_notice].filter(Boolean))content.append(node('p',message));
     const evidence=node('details','');evidence.open=true;evidence.append(node('summary','解析イベントの変更根拠'));
     for(const entry of item.review_entries)for(const event of entry.events||[]){evidence.append(node('code',event.event_id));for(const f of event.fields||[])evidence.append(node('p',`${f.field}: ${JSON.stringify(f.before)} → ${JSON.stringify(f.after)}`));for(const shift of event.time_shifts||[])evidence.append(node('p',`移動量 ${shift.field}: ${shift.delta_sec>=0?'+':''}${shift.delta_sec}秒（自動適用しません）`));}content.append(evidence);
     const decision=node('label','制作者の判断'),select=node('select','');select.id='proposalDecision';for(const [key,label] of Object.entries(decisions)){const option=node('option',label);option.value=key;select.append(option);}select.value=item.decision;select.addEventListener('change',()=>{item.decision=select.value;});decision.append(select);content.append(decision);
     const continuityBox=node('div',''),diffBox=node('div','');const showDiff=()=>{diffBox.replaceChildren(node('h4','元コンテとの編集差分'));if(!item.draft_changes.length)diffBox.append(node('p','編集差分なし'));for(const f of item.draft_changes)diffBox.append(node('p',f.path.join(' / ')+': '+JSON.stringify(f.before)+' → '+JSON.stringify(f.after)));};showDiff();
-    const editor=node('details',''),locked=node('details','');locked.append(node('summary','識別ID・参照情報（編集対象外）'));editor.open=true;editor.append(node('summary','改稿案を編集（元の値で初期表示）'));
+    const editor=node('details','');editor.id='proposalDraftFields';const locked=node('details','');locked.append(node('summary','識別ID・参照情報（編集対象外）'));editor.open=true;editor.append(node('summary','改稿案を編集'));
     for(const leaf of leaves(item.draft_cut)){
       const path=leaf.path,label=path.map(k=>labels[k]||k).join(' / ');
       // Identity and analysis reference identifiers remain visible but read-only.
@@ -96,19 +117,24 @@
       if(typeof leaf.value==='boolean'){input=node('input','');input.type='checkbox';input.checked=leaf.value;}
       else {input=node(typeof leaf.value==='number'?'input':'textarea','');if(typeof leaf.value==='number'){input.type='number';input.step='any';}else input.rows=2;input.value=leaf.value??'';}
       input.dataset.path=path.join('.');input.addEventListener('input',()=>{let value=typeof leaf.value==='boolean'?input.checked:typeof leaf.value==='number'?Number(input.value):input.value;
-        if(typeof leaf.value==='number'&&(input.value.trim()===''||!Number.isFinite(value))){input.setCustomValidity('数値を入力してください。');exportButton.disabled=true;return;}input.setCustomValidity('');edit(item,path,value);showDiff();continuity(item,continuityBox);content.querySelectorAll('[data-check-topic]').forEach(el=>{el.value='unconfirmed';});exportButton.disabled=!!content.querySelector(':invalid');});wrap.append(input);editor.append(wrap);
+        if(typeof leaf.value==='number'&&(input.value.trim()===''||!Number.isFinite(value))){input.setCustomValidity('数値を入力してください。');exportButton.disabled=true;return;}input.setCustomValidity('');edit(item,path,value);status.textContent=item.confirmation_notice||status.textContent;showDiff();continuity(item,continuityBox);content.querySelectorAll('[data-check-topic]').forEach(el=>{el.value=item.continuity.author_checks[el.dataset.checkTopic].status;});exportButton.disabled=!!content.querySelector(':invalid');});wrap.append(input);editor.append(wrap);
     }editor.append(locked);content.append(editor,diffBox);
     const summaryField=field('改稿内容・補足',item.revision_summary,v=>{item.revision_summary=v;});summaryField.querySelector('textarea').id='proposalSummary';content.append(summaryField);
     const reasonField=field('改稿理由／維持する理由',item.reason,v=>{item.reason=v;});reasonField.querySelector('textarea').id='proposalReason';content.append(reasonField);
-    content.append(node('h3','前後CUTとの整合確認'),continuityBox);continuity(item,continuityBox);
+    const heading=node('h3','前後CUTとの整合確認');heading.id='proposalChecksHeading';heading.tabIndex=-1;content.append(heading,continuityBox);continuity(item,continuityBox);
     for(const [topic,label] of Object.entries(topics)){const row=node('label',label+'（制作者による確認）'),sel=node('select','');for(const [value,text] of Object.entries({unconfirmed:'未確認',consistent:'整合を確認',inconsistent:'不整合'})){const opt=node('option',text);opt.value=value;sel.append(opt);}sel.dataset.checkTopic=topic;sel.value=item.continuity.author_checks[topic].status;sel.addEventListener('change',()=>{item.continuity.author_checks[topic].status=sel.value;});row.append(sel);content.append(row,field(label+'の確認メモ',item.continuity.author_checks[topic].note,v=>{item.continuity.author_checks[topic].note=v;}));}
     const pending=field('未確認事項',item.unconfirmed_notes,v=>{item.unconfirmed_notes=v;});pending.querySelector('textarea').id='proposalUnconfirmed';content.append(pending);
   }
-  function open(value){const candidate=create(value,board);if(proposal&&!confirm('編集中の改稿案を切り替えます。未保存の編集は失われます。続行しますか？'))return;handoff=value;proposal=candidate;selected=0;picker.replaceChildren();proposal.targets.forEach((item,i)=>{const option=node('option',String(item.cut_number??item.cut_id));option.value=i;picker.append(option);});render();}
+  function install(candidate,cutId){if(proposal&&JSON.stringify(proposal)!==JSON.stringify(candidate)&&!confirm('編集中の改稿案を切り替えます。未保存の編集は失われます。続行しますか？'))return false;proposal=candidate;selected=Math.max(0,proposal.targets.findIndex(t=>t.cut_id===cutId));picker.replaceChildren();proposal.targets.forEach((item,i)=>{const option=node('option',String(item.cut_number??item.cut_id));option.value=i;picker.append(option);});picker.value=selected;render();root.MVApplyUI?.editorChanged(candidate);return true;}
+  function open(value){return install(create(value,board));}
   picker.addEventListener('change',()=>{if(content.querySelector(':invalid')){picker.value=selected;status.textContent='不正な数値入力を直してからCUTを切り替えてください。';return;}selected=Number(picker.value);render();});
   $('proposalFile').addEventListener('change',async event=>{try{const file=event.target.files[0];if(file)open(JSON.parse(await file.text()));}catch(e){status.textContent=`読込失敗: ${e.message}`;}finally{event.target.value='';}});
   $('proposalUseCurrent').addEventListener('click',()=>{try{if(!available)throw Error('先に改稿用JSONを作成するか、ファイルを読み込んでください。');open(available);}catch(e){status.textContent=e.message;}});
-  $('proposalContext').addEventListener('click',()=>{if(!proposal)return;for(const item of proposal.targets){item.continuity.neighbors=neighbors(item,board);item.continuity.timing_findings=timing(item);for(const c of Object.values(item.continuity.author_checks))c.status='unconfirmed';}render();});
+  $('proposalContext').addEventListener('click',()=>{if(!proposal)return;let changed=false;for(const item of proposal.targets){const next=neighbors(item,board);if(JSON.stringify(item.continuity.neighbors)!==JSON.stringify(next)){changed=true;item.continuity.neighbors=next;item.continuity.timing_findings=timing(item);for(const c of Object.values(item.continuity.author_checks))c.status='unconfirmed';item.confirmation_notice='前後CUTの情報が変わったため、整合確認を未確認へ戻しました。確認メモは保持しています。';}}render();status.textContent=changed?'前後情報を更新しました。情報が変わったCUTは再確認してください。':'前後情報は同じです。確認状態・メモを保持しました。';if(changed)root.MVApplyUI?.editorChanged();});
   exportButton.addEventListener('click',()=>{if(!proposal||exportButton.disabled)return;const url=URL.createObjectURL(new Blob([JSON.stringify(proposal,null,2)],{type:'application/json'}));const a=node('a','');a.href=url;a.download='mv_storyboard_revision_proposal_v0_8_4.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-  root.MVProposalUI={getProposal:()=>{if(content.querySelector(':invalid'))throw Error('改稿案の不正な入力を修正してください。');return proposal?clone(proposal):null;},setBoard:value=>{board=value;},setHandoff:value=>{available=value;}};
+  $('proposalSavedFile').addEventListener('change',async e=>{try{if(e.target.files[0])install(restore(JSON.parse(await e.target.files[0].text())));}catch(err){status.textContent='改稿案読込失敗: '+err.message;}finally{e.target.value='';}});
+  $('proposalToApply').addEventListener('click',()=>{try{const value=root.MVProposalUI.getProposal();if(!value)throw Error('改稿案を読み込んでください。');root.MVApplyUI.acceptProposal(value);$('applyPanel').scrollIntoView({block:'start'});}catch(e){status.textContent=e.message;}});
+  content.addEventListener('input',()=>root.MVApplyUI?.editorChanged());
+  content.addEventListener('change',()=>root.MVApplyUI?.editorChanged());
+  root.MVProposalUI={editProposal(value,cutId,topic,sourceBoard){if(!install(restore(value),cutId))return;if(sourceBoard)board=clone(sourceBoard);const focus=topic?content.querySelector('[data-check-topic="'+topic+'"]'):$('proposalDraftFields');focus?.scrollIntoView({block:'center'});if(focus){focus.tabIndex=focus.tabIndex<0?-1:focus.tabIndex;focus.focus();}},getProposal:()=>{if(content.querySelector(':invalid'))throw Error('改稿案の不正な入力を修正してください。');return proposal?clone(proposal):null;},setBoard:value=>{board=value;},setHandoff:value=>{available=value;}};
 })(globalThis);
