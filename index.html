@@ -9,13 +9,13 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="stylesheet" href="styles.css" />
-  <title>MV Music Analyzer v0.8.8</title>
+  <title>MV Music Analyzer v0.9.0</title>
 </head>
 <body>
   <main class="app-shell">
     <header class="hero">
       <div class="eyebrow">意味変質型MV / AUDIO FRONTEND</div>
-      <h1>MV Music Analyzer <span class="version-badge">v0.8.8</span></h1>
+      <h1>MV Music Analyzer <span class="version-badge">v0.9.0</span></h1>
       <p>原曲と任意Stemを解析し、9つの運動プリミティブに加えて、正規歌詞と外部ASRのSRTを照合し、歌詞にない発声も保持した共通タイムラインの <code>music_analysis.json</code> を生成します。</p>
     </header>
 
@@ -177,8 +177,8 @@
 <p id="storyboardStatus" aria-live="polite">コンテJSONを読み込んでください。</p><div id="storyboardOutput"></div>
 </section>
 <footer>
-      <p>MV Music Analyzer v0.8.8 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
-      <p>Stemは外部分離データを任意入力します。v0.8.8は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
+      <p>MV Music Analyzer v0.9.0 / Essentia.js 0.1.3 / @audio/beat 2.1.3 / 44.1 kHz</p>
+      <p>Stemは外部分離データを任意入力します。v0.9.0は外部SRTと正規歌詞を照合します。ASR文字列は時刻観測として扱い、正規歌詞を上書きしません。単語forced alignmentは未実装です。</p>
     </footer>
   </main>
 
@@ -188,6 +188,7 @@
   <script src="storyboard-baseline.js" defer></script>
   <script src="cut-identity.js" defer></script>
   <script src="revision-proposal.js" defer></script>
+  <script src="revision-fields.js" defer></script>
   <script src="revision-scope.js" defer></script>
   <script src="revision-apply.js" defer></script>
   <script src="revision-export.js" defer></script>
