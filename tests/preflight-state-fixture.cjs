@@ -1,0 +1,4 @@
+const P=require('../revision-proposal');
+const copy=x=>JSON.parse(JSON.stringify(x));
+function setup(){const h=copy(require('../sample_revision_handoff_v0_8_3.synthetic.json')),board={cuts:Array.from({length:44},(_,i)=>i===1?copy(h.targets[0].original_cut):{id:'cut_'+i,start_sec:i,end_sec:i+1,actions:[{action:'unchanged'}]})},proposal=P.create(h,board),t=proposal.targets[0];P.edit(t,['actions','0','action'],'右踵を二度踏む');t.decision='adopt_proposal';t.revision_summary='右踵を二度踏む動作を使用する';t.reason='元の演出意図を維持して動作を具体化する';t.unconfirmed_notes='';for(const [k,c] of Object.entries(t.continuity.author_checks)){c.status='consistent';c.note=k+'を制作者が確認';}const analysis=require('./application-fixture.cjs').analysis();board.baseline={references:Object.fromEntries(t.original_cut.references.map(r=>[r.target_id,require('../storyboard').snapshot(analysis,r.target_id)]))};return {proposal,t,board,analysis};}
+module.exports={setup};

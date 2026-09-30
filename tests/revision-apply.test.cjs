@@ -6,15 +6,15 @@ function setup(){
  const h=copy(fixture),original=h.targets[0].original_cut;
  const board={cuts:Array.from({length:44},(_,i)=>i===1?copy(original):{id:'synthetic_'+i,cut_number:'CUT '+String(i+1).padStart(2,'0'),start_sec:i,end_sec:i+1,action:'synthetic unchanged',audio_event_refs:['preserved_'+i]})};
  h.source_storyboard={id:null,title:null,version:null,cut_count:44};
- const p=P.create(h,board),t=p.targets[0];t.decision='adopt_proposal';P.edit(t,['actions','0','action'],'右踵二打のタイミングを再検討');
+ const p=P.create(h,board),t=p.targets[0];t.decision='adopt_proposal';P.edit(t,['actions','0','action'],'右踵二打のタイミングを再検討');for(const c of Object.values(t.continuity.author_checks))c.status='consistent';
  const checks={[t.cut_id]:{related_confirmed:true,content_confirmed:true,source_confirmed:true,...Object.fromEntries(Object.keys(P.topics).map(k=>[k,true]))}};
  return {p,t,board,checks};
 }
 test('A/F: adoption is not application permission; content, continuity and final approval required',()=>{
- const {p,board,checks,t}=setup();let r=A.inspect(p,board);assert.equal(r.eligible_count,0);assert.ok(r.rows[0].warnings.some(x=>x.includes('未確定')));assert.ok(r.rows[0].warnings.some(x=>x.includes('unconfirmed')));
+ const {p,board,checks,t}=setup();let r=A.inspect(p,board);assert.equal(r.eligible_count,0);assert.ok(r.rows[0].warnings.some(x=>x.includes('未確定')));assert.ok(r.rows[0].warnings.some(x=>x.includes('consistent')));
  assert.throws(()=>A.apply(p,board,checks,{mode:'all'}),/最終確認/);
  delete checks[t.cut_id].content_confirmed;assert.throws(()=>A.apply(p,board,checks,{mode:'all',final_confirmed:true}),/全件保留/);
- checks[t.cut_id].content_confirmed=true;delete checks[t.cut_id].actions;assert.equal(A.inspect(p,board,checks).eligible_count,0);
+ checks[t.cut_id].content_confirmed=true;t.continuity.author_checks.actions.status='unconfirmed';delete checks[t.cut_id].actions;assert.equal(A.inspect(p,board,checks).eligible_count,0);
 });
 test('B: mismatched original fields, duplicate/missing IDs and wrong source metadata block application',()=>{
  const {p,board,checks}=setup();board.cuts[1].actions[0].action='other';let r=A.inspect(p,board,checks);assert.equal(r.eligible_count,0);assert.deepEqual(r.rows[0].original_differences[0].path,['actions','0','action']);

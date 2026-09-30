@@ -15,6 +15,18 @@
     for(const t of proposal.targets)if(!t||!['string','number'].includes(typeof t.cut_id)||t.cut_id===''||!t.original_cut||!t.draft_cut||typeof t.original_cut!=='object'||typeof t.draft_cut!=='object'||Array.isArray(t.original_cut)||Array.isArray(t.draft_cut)||!Array.isArray(t.draft_changes)||!Object.hasOwn(P.decisions,t.decision))throw Error('対象CUTのID・元CUT・改稿案・変更一覧・判断が不正です。');
     return proposal;
   }
+  // Proposal statuses are authoritative; transient UI flags must not erase or override them.
+  function confirmationState(t,board,approval={}){
+    const cuts=Array.isArray(board)?board:board?.cuts,matches=(cuts||[]).filter(c=>key(c)===t.cut_id),now=P.neighbors(t,board);
+    const sourceMatches=matches.length===1&&equal(matches[0],t.original_cut);
+    const contextMatches=sourceMatches&&['previous','next'].every(side=>t.continuity?.neighbors?.[side]&&equal(t.continuity.neighbors[side].original_cut??null,now[side].original_cut??null));
+    const statuses=Object.fromEntries(Object.keys(topics).map(k=>[k,t.continuity?.author_checks?.[k]?.status??'unconfirmed']));
+    const allConsistent=Object.values(statuses).every(v=>v==='consistent');
+    const unresolved=typeof t.unconfirmed_notes==='string'&&t.unconfirmed_notes.trim().length>0;
+    const tentative=v=>v&&typeof v==='object'?Object.entries(v).some(([k,x])=>!forbidden(k)&&tentative(x)):typeof v==='string'&&/再検討|未定|仮/.test(v);
+    const authored=allConsistent&&t.decision==='adopt_proposal'&&typeof t.revision_summary==='string'&&t.revision_summary.trim().length>0&&!unresolved&&!tentative(t.revision_summary)&&!tentative(t.draft_cut);
+    return {statuses,source_matches:sourceMatches,context_matches:contextMatches,content_from_proposal:authored,content_confirmed:authored||approval.content_confirmed===true,source_confirmed:contextMatches||approval.source_confirmed===true,unresolved};
+  }
   function inspect(proposal,board,approvals={},analysis=null){
     validate(proposal);
     const candidates=proposal.targets.filter(t=>t.decision==='adopt_proposal');
@@ -50,12 +62,13 @@
       if(typeof start!=='number'||typeof end!=='number'||!Number.isFinite(start)||!Number.isFinite(end))blockers.push('CUT開始・終了の数値時刻を確認できません。');
       if(t.unconfirmed_notes)warnings.push('改稿案の未確認事項: '+t.unconfirmed_notes);
       for(const [topic,label] of Object.entries(topics))warnings.push(`${label}: 元の確認状態 ${t.continuity?.author_checks?.[topic]?.status??'unconfirmed'}。確認状態とメモを参照してください。適用側の確認状況は下のチェック欄に表示します。`);
-      const approval=approvals[String(t.cut_id)]||{};
+      const approval=approvals[String(t.cut_id)]||{},confirmations=confirmationState(t,board,approval);
       const pending=[];
-      if(approval.content_confirmed!==true)pending.push('改稿内容を具体的な制作指示として確定してください。');
-      for(const [topic,label] of Object.entries(topics))if(approval[topic]!==true)pending.push(`${label}の確認が必要です（未記載・非該当の場合も確認）。`);
-      if(approval.source_confirmed!==true)pending.push('改稿案作成時の元コンテであることを確認してください。');
-      return {cut_id:t.cut_id,cut_number:t.cut_number,preview_safe:previewSafe,index:matches[0]??null,changes:diff,original_differences:originalDifferences,blockers:[...new Set(blockers)],warnings:[...new Set(warnings)],pending,neighbors:temp.continuity.neighbors,timing,eligible:blockers.length===0&&pending.length===0};
+      if(!confirmations.content_confirmed)pending.push('改稿内容を具体的な制作指示として確定してください。');
+      for(const [topic,label] of Object.entries(topics))if(confirmations.statuses[topic]!=='consistent')pending.push(label+(confirmations.statuses[topic]==='inconsistent'?'は不整合です。改稿案作成画面で解消・再確認してください。':'は未確認です。改稿案作成画面で確認してください。'));
+      if(!confirmations.source_confirmed)pending.push('元CUT・前後CUTの保存時情報との一致を確認できません。接続情報を確認し、適用側で元コンテを再確認してください。');
+      if(confirmations.unresolved&&approval.content_confirmed!==true)pending.push('改稿案の未確認事項が残っています。内容を解消・確認してください。');
+      return {cut_id:t.cut_id,cut_number:t.cut_number,confirmations,preview_safe:previewSafe,index:matches[0]??null,changes:diff,original_differences:originalDifferences,blockers:[...new Set(blockers)],warnings:[...new Set(warnings)],pending,neighbors:temp.continuity.neighbors,timing,eligible:blockers.length===0&&pending.length===0};
     });
     const validation=Scope.compare(proposal,board,rows,analysis);
     for(const row of rows){
@@ -88,7 +101,7 @@
     }
     const output=clone(board),cuts=Array.isArray(output)?output:output.cuts,applied=report.rows.filter(r=>r.eligible);
     for(const row of applied)for(const d of row.changes){let parent=cuts[row.index];for(const part of d.path.slice(0,-1))parent=parent[part];parent[d.path.at(-1)]=clone(read(proposal.targets.find(t=>t.cut_id===row.cut_id).draft_cut,d.path).value);}
-    const history={schema:'mv_storyboard_revision_application.v0.8.5',version:'0.8.5',application_version:'0.8.6',created_at:new Date().toISOString(),source_proposal:{schema:proposal.schema,version:proposal.version,id:proposal.id??null,content_fingerprint:R.stableId('proposal',proposal),source_handoff:clone(proposal.source_handoff??{})},baseline_saved_at:proposal.baseline_saved_at??null,original_storyboard_fingerprint:R.stableId('storyboard',board),revised_storyboard_fingerprint:R.stableId('storyboard',output),validation_scope:clone(report.validation),final_confirmation:{confirmed:true,mode:options.mode},applied:applied.map(r=>({cut_id:r.cut_id,cut_number:r.cut_number,changes:clone(r.changes),author_checks:clone(approvals[String(r.cut_id)]),warnings:clone(r.warnings)})),held:report.rows.filter(r=>!r.eligible).map(r=>({cut_id:r.cut_id,blockers:r.blockers,pending:r.pending}))};
+    const history={schema:'mv_storyboard_revision_application.v0.8.5',version:'0.8.5',application_version:'0.8.7',created_at:new Date().toISOString(),source_proposal:{schema:proposal.schema,version:proposal.version,id:proposal.id??null,content_fingerprint:R.stableId('proposal',proposal),source_handoff:clone(proposal.source_handoff??{})},baseline_saved_at:proposal.baseline_saved_at??null,original_storyboard_fingerprint:R.stableId('storyboard',board),revised_storyboard_fingerprint:R.stableId('storyboard',output),validation_scope:clone(report.validation),final_confirmation:{confirmed:true,mode:options.mode},applied:applied.map(r=>({cut_id:r.cut_id,cut_number:r.cut_number,changes:clone(r.changes),author_checks:{...clone(approvals?.[String(r.cut_id)]||{}),...Object.fromEntries(Object.entries(r.confirmations.statuses).map(([k,v])=>[k,v==='consistent'])),content_confirmed:r.confirmations.content_confirmed,source_confirmed:r.confirmations.source_confirmed},proposal_author_checks:clone(proposal.targets.find(t=>t.cut_id===r.cut_id).continuity?.author_checks||{}),confirmation_evidence:clone(r.confirmations),warnings:clone(r.warnings)})),held:report.rows.filter(r=>!r.eligible).map(r=>({cut_id:r.cut_id,blockers:r.blockers,pending:r.pending}))};
     return {status:'applied',storyboard:output,history};
   }
   function carryChecks(value,board,previous=null,prior={}){
@@ -105,7 +118,7 @@
     }
     return {approvals,notices};
   }
-  const api={validate,inspect,apply,carryChecks};
+  const api={validate,inspect,apply,carryChecks,confirmationState};
   if(typeof module==='object'&&module.exports){module.exports=api;return;}
   root.MVRevisionApply=api;
   const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;return n;};
@@ -118,7 +131,7 @@
     if(!proposal.targets.some(t=>t.decision==='adopt_proposal')){$('applyStatus').textContent='適用対象なし';return;}
     try{const report=inspect(proposal,board,approvals,analysis);$('applyStatus').textContent=`適用候補 ${report.candidate_count} CUT / 適用可能 ${report.eligible_count} CUT。元コンテ: ${boardOrigin==='imported'?'この欄で読み込んだファイル':'読み込み済みコンテ'}。最終確認後に別ファイルを生成します。`;
       if(report.validation)for(const [key,label] of Object.entries({existing_issues:'元コンテの既存指摘（全CUT・適用停止件数ではありません）',related_existing_issues:'今回の変更に関係する既存指摘（既存指摘の内数）',new_issues:'今回の変更で新たに生じた指摘'})){const d=el('details',''),items=report.validation[key];d.append(el('summary',label+'：'+items.length+'件'));for(const i of items)d.append(el('p',(i.cut_id??'全体')+' / '+i.code+(i.reference_id?' / '+i.reference_id:'')+': '+i.reason));$('applyIssueGroups').append(d);}
-      for(const notice of transferNotices)$('applyBlockers').append(el('p',notice));
+      for(const notice of [...transferNotices.filter(n=>!n.includes('元CUT・前後CUT')), ...carryChecks(proposal,board).notices.filter(n=>n.includes('元CUT・前後CUT'))])$('applyBlockers').append(el('p',notice));
       for(const row of report.rows){
         for(const message of [...row.blockers,...row.pending]){const line=el('p',(row.cut_number??row.cut_id)+': '+message),back=el('button',(row.cut_number??row.cut_id)+'の編集・確認へ戻る');back.type='button';back.dataset.editCut=String(row.cut_id);back.addEventListener('click',()=>{try{const topic=Object.keys(topics).find(k=>message.includes(topics[k]));root.MVProposalUI.editProposal(proposal,row.cut_id,topic,board);}catch(e){$('applyStatus').textContent=e.message;}});line.append(back);$('applyBlockers').append(line);}
         if(!row.blockers.length&&!row.pending.length)$('applyBlockers').append(el('p',(row.cut_number??row.cut_id)+': 個別確認済み。最後に最終確認が必要です。'));const section=el('section','');section.append(el('h3',`${row.cut_number??row.cut_id} (${row.cut_id})`));
@@ -131,7 +144,7 @@
         const target=proposal.targets.find(t=>t.cut_id===row.cut_id);display({draft_cut:target.draft_cut,continuity:target.continuity,unconfirmed_notes:target.unconfirmed_notes,current_neighbors:row.neighbors});section.append(context);
         const checks=approvals[String(row.cut_id)]??(approvals[String(row.cut_id)]={});
         const labels={...(row.related_issues.some(i=>i.severity!=='error'&&i.severity!=='intentional')?{related_confirmed:'今回の変更に関係する指摘・新規指摘を確認（意図・対処を判断済み）'}:{}),source_confirmed:'改稿案作成時の元コンテであることを確認',content_confirmed:'改稿内容を確定（再検討・仮の表現も含め具体的な制作指示として確認）',...Object.fromEntries(Object.entries(topics).map(([k,v])=>[k,`${v}：明示条件・未確認事項を確認し、適用を妨げる不整合なし（非該当も確認）`]))};
-        for(const [k,label] of Object.entries(labels)){const field=checkbox(label,checks[k]===true,v=>{checks[k]=v;render();});field.querySelector('input').dataset.approval=k;field.querySelector('input').dataset.cut=String(row.cut_id);section.append(field);}
+        for(const [k,label] of Object.entries(labels)){const fromProposal=Object.hasOwn(topics,k),derived=fromProposal?row.confirmations.statuses[k]==='consistent':k==='content_confirmed'?row.confirmations.content_from_proposal:k==='source_confirmed'?row.confirmations.context_matches:false;const field=checkbox(label+(fromProposal?'（改稿案JSON: '+row.confirmations.statuses[k]+'）':derived?'（記録・照合から確認済み）':''),derived||(!fromProposal&&checks[k]===true),v=>{checks[k]=v;render();});const input=field.querySelector('input');input.disabled=fromProposal||derived;input.dataset.approval=k;input.dataset.cut=String(row.cut_id);section.append(field);}
         for(const p of row.pending)section.append(el('p','未確認: '+p));list.append(section);
       }
       if(editorStale)$('applyBlockers').append(el('p','作成画面が変更されています。「編集した改稿案を適用前チェックへ渡す」で再確認してください。'));
@@ -141,13 +154,13 @@
   }
   function openProposal(p){validate(p);const transfer=carryChecks(p,board,proposal,approvals);proposal=clone(p);reset();approvals=transfer.approvals;transferNotices=transfer.notices;editorStale=false;render();}
   $('applyProposalFile').addEventListener('change',async e=>{try{if(e.target.files[0])openProposal(JSON.parse(await e.target.files[0].text()));}catch(err){proposal=null;reset();render();$('applyStatus').textContent='読込失敗: '+err.message;}finally{e.target.value='';}});
-  $('applySourceFile').addEventListener('change',async e=>{try{if(!e.target.files[0])return;const text=await e.target.files[0].text();root.MVStoryboard.importJSON(text);board=JSON.parse(text);boardOrigin='imported';reset();render();}catch(err){board=null;reset();render();$('applyStatus').textContent='元コンテ読込失敗: '+err.message;}finally{e.target.value='';}});
+  $('applySourceFile').addEventListener('change',async e=>{try{if(!e.target.files[0])return;const text=await e.target.files[0].text();root.MVStoryboard.importJSON(text);const next=JSON.parse(text),changed=!equal(board,next);board=next;boardOrigin='imported';if(changed)reset();render();}catch(err){board=null;reset();render();$('applyStatus').textContent='元コンテ読込失敗: '+err.message;}finally{e.target.value='';}});
   $('applyUseCurrent').addEventListener('click',()=>{try{const p=root.MVProposalUI.getProposal();if(!p)throw Error('画面に改稿案がありません。');openProposal(p);}catch(e){$('applyStatus').textContent=e.message;}});
   $('applyMode').addEventListener('change',render);
   $('applyFinal').addEventListener('change',()=>{result=null;$('applyBoardExport').disabled=true;$('applyHistoryExport').disabled=true;$('applyGenerate').disabled=!$('applyFinal').checked||$('applyFinal').disabled;});
   $('applyGenerate').addEventListener('click',()=>{try{if(editorStale)throw Error('編集後の改稿案を適用前チェックへ渡してください。');result=apply(proposal,board,approvals,{analysis,mode:$('applyMode').value,final_confirmed:$('applyFinal').checked});$('applyBoardExport').disabled=!result.storyboard;$('applyHistoryExport').disabled=!result.history;$('applyStatus').textContent=`改訂版を生成しました：${result.history?.applied.length??0} CUT適用。コンテ本体と適用履歴を別々に保存してください。元データは変更していません。`;}catch(e){$('applyStatus').textContent=e.message;}});
   function download(value,name){if(!value)return;const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'})),a=el('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-  $('applyBoardExport').addEventListener('click',()=>download(result?.storyboard,'mv_storyboard_revised_v0_8_6.json'));
-  $('applyHistoryExport').addEventListener('click',()=>download(result?.history,'mv_storyboard_revision_application_v0_8_6.json'));
+  $('applyBoardExport').addEventListener('click',()=>download(result?.storyboard,'mv_storyboard_revised_v0_8_7.json'));
+  $('applyHistoryExport').addEventListener('click',()=>download(result?.history,'mv_storyboard_revision_application_v0_8_7.json'));
   root.MVApplyUI={acceptProposal:openProposal,editorChanged(value){if(!proposal||(value&&equal(proposal,value)))return;editorStale=true;result=null;if(!$('applyEditorStale')){const notice=el('p','作成画面が変更されています。「編集した改稿案を適用前チェックへ渡す」で再確認してください。');notice.id='applyEditorStale';$('applyBlockers').append(notice);}$('applyFinal').checked=false;$('applyFinal').disabled=true;$('applyGenerate').disabled=true;$('applyBoardExport').disabled=true;$('applyHistoryExport').disabled=true;$('applyReady').textContent='作成画面が変更されています。「編集した改稿案を適用前チェックへ渡す」で再確認してください。';},setAnalysis(value){if(!equal(analysis,value)){analysis=value?clone(value):null;reset();render();}},setBoard(value){if(boardOrigin==='imported')return;if(!equal(board,value)){board=value?clone(value):null;reset();render();}}};
 })(globalThis);
