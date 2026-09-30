@@ -2,6 +2,7 @@
 (function(root){
   'use strict';
   const R=typeof module==='object'&&module.exports?require('./references.js'):root.MVReferences;
+  const I=typeof module==='object'&&module.exports?require('./cut-identity'):root.MVCutIdentity;
   const clone=x=>JSON.parse(JSON.stringify(x));
   const decisions={unreviewed:'未判断',keep_original:'元コンテを維持',adopt_proposal:'改稿案を採用',reconsider:'再検討'};
   const topics={timing:'時刻・CUT境界',actions:'動作の連続性',subjects:'人物・被写体',props:'小道具',wardrobe:'衣装',camera:'カメラ方向'};
@@ -13,24 +14,7 @@
     for(const t of h.targets){if(!t||!['string','number'].includes(typeof t.cut_id)||ids.has(t.cut_id)||!t.original_cut||typeof t.original_cut!=='object'||Array.isArray(t.original_cut)||!Array.isArray(t.review_entries))throw Error('改稿対象のID・original_cut・review_entriesが不正または重複しています。');ids.add(t.cut_id);}
     return h;
   }
-  function neighbors(item,board){
-    const cuts=Array.isArray(board)?board:board?.cuts;
-    const original=item.original_cut;
-    const positions=Array.isArray(cuts)?cuts.map((c,i)=>key(c)===item.cut_id?i:-1).filter(i=>i>=0):[];
-    const result={};
-    for(const side of ['previous','next']){
-      const declared=original[side+'_cut_id']??original.connections?.[side+'_cut_id'];
-      let candidate=null,basis=null,reason='前後CUTの元データがありません。';
-      if(declared!==undefined){
-        basis='explicit_cut_id';const matches=(cuts||[]).filter(c=>key(c)===declared);
-        if(matches.length===1)candidate=matches[0];else reason='明示された接続先IDのデータがない、または重複しています。';
-      }else if(positions.length===1){
-        basis='source_storyboard_order';candidate=cuts[positions[0]+(side==='previous'?-1:1)]||null;reason='元コンテ配列の端です。接続の意図は未確認です。';
-      }else if(positions.length>1)reason='元コンテの対象IDが重複しています。';
-      result[side]={basis,declared_id:declared??null,status:'unconfirmed',reason:candidate?'記載情報を提示。演出上の接続は制作者が確認してください。':reason,original_cut:candidate?clone(candidate):null};
-    }
-    return result;
-  }
+  function neighbors(item,board){return I.neighbors(item,board);}
   function timing(item){
     const values=c=>({start:c?.start_sec??c?.start,end:c?.end_sec??c?.end});
     const draft=values(item.draft_cut),findings=[];

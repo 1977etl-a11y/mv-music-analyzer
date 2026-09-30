@@ -184,6 +184,8 @@ const root=path.join(__dirname,'..');
     await reviewContext.close();
     const proposalContext=await browser.newContext({viewport:{width:390,height:844}}),proposalPage=await proposalContext.newPage();proposalPage.on('pageerror',e=>errors.push(e.message));await proposalPage.goto(page.url());
     const handoff=JSON.parse(JSON.stringify(require('../sample_revision_handoff_v0_8_3.synthetic.json')));handoff.targets[0].original_cut.actions.push({subject:'右ヒール（合成）',action:'踏む',start_sec:2.3917});
+    const applyBoard=Array.from({length:44},(_,i)=>i===1?structuredClone(handoff.targets[0].original_cut):{id:'apply_'+i,cut_number:'CUT '+(i+1),start_sec:i,end_sec:i+1,action:'unchanged',audio_event_refs:['unchanged_'+i]});
+    await proposalPage.locator('#storyboardFile').setInputFiles({name:'source44.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(applyBoard))});
     await proposalPage.locator('#proposalFile').setInputFiles({name:'handoff.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(handoff))});
     await proposalPage.waitForFunction(()=>document.getElementById('proposalStatus').textContent.includes('改稿対象 1 CUT'));
     assert.equal(await proposalPage.locator('#proposalEditor [data-path="start_sec"]').inputValue(),'1');
@@ -198,7 +200,7 @@ const root=path.join(__dirname,'..');
     for(const width of [320,390]){await proposalPage.setViewportSize({width,height:844});assert.equal(await proposalPage.locator('#proposalPanel').evaluate(el=>el.scrollWidth<=el.clientWidth),true);}
     assert.equal(await proposalPage.evaluate(()=>MVStoryboardBaseline.load()),null);
     { // v0.8.5: independent source, explicit confirmations, field-only export, IDB unchanged.
-    const applyBoard=Array.from({length:44},(_,i)=>i===1?structuredClone(item.original_cut):{id:'apply_'+i,cut_number:'CUT '+(i+1),start_sec:i,end_sec:i+1,action:'unchanged',audio_event_refs:['unchanged_'+i]});
+
     await proposalPage.evaluate(value=>MVStoryboardBaseline.save(value),reviewFixture.baseline);
     await proposalPage.locator('#storyboardFile').setInputFiles({name:'source44.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(applyBoard))});
     await proposalPage.locator('#storyboardAnalysisFile').setInputFiles({name:'application-analysis.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(require('./application-fixture.cjs').analysis()))});
@@ -250,6 +252,13 @@ const root=path.join(__dirname,'..');
       await late.locator('[data-check-topic="actions"]').selectOption('consistent');await late.locator('#applyUseCurrent').click();await late.waitForFunction(()=>document.getElementById('applyStatus').textContent.includes('適用可能 1 CUT'));const bad=structuredClone(data.board);bad.cuts[1].actions[0].action='different original';await upload('#applySourceFile',bad);await late.waitForFunction(()=>document.getElementById('applyStatus').textContent.includes('適用可能 0 CUT'));await upload('#applySourceFile',data.board);await late.waitForFunction(()=>document.getElementById('applyStatus').textContent.includes('適用可能 1 CUT'));
       assert.equal(await late.locator('#applyBoardExport').isDisabled(),true);await late.locator('#applyFinal').check();await late.locator('#applyGenerate').click();const wait=late.waitForEvent('download');await late.locator('#applyBoardExport').click();const f=await wait,stream=await f.createReadStream();let text='';for await(const chunk of stream)text+=chunk;const expected=structuredClone(data.board);expected.cuts[1].actions[0].action='右踵を二度踏む';assert.deepEqual(JSON.parse(text),expected);assert.deepEqual(await late.evaluate(()=>MVStoryboardBaseline.load()),reviewFixture.baseline);assert.deepEqual(await late.evaluate(()=>MVProposalUI.getProposal()),savedEditor);
       await lateContext.close();
+    }
+    { // v0.8.8: provided raw CUT structure, saved auxiliary fields, late import and diagnostic UI.
+      const ctx=await browser.newContext({viewport:{width:390,height:844}}),p=await ctx.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(page.url());
+      const data=require('./source-identity-fixture.cjs').setup(),upload=(id,obj)=>p.locator(id).setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(obj))});
+      await upload('#proposalSavedFile',data.proposal);await p.waitForFunction(()=>document.getElementById('proposalReason').value.length>0);const saved=await p.evaluate(()=>MVProposalUI.getProposal());await p.locator('#applyUseCurrent').click();await upload('#applySourceFile',data.board);await p.waitForFunction(()=>document.getElementById('applyStatus').textContent.includes('適用可能 1 CUT'));assert.deepEqual(await p.evaluate(()=>MVProposalUI.getProposal()),saved);assert.equal(await p.locator('#applyGenerate').isDisabled(),true);
+      for(const index of [0,1,2]){const bad=structuredClone(data.board);bad[index].action='changed production';await upload('#applySourceFile',bad);await p.waitForFunction(()=>document.getElementById('applyStatus').textContent.includes('適用可能 0 CUT'));assert.match(await p.locator('#applyList').textContent(),/saved:.*current:/);assert.equal(await p.locator('#applyFinal').isDisabled(),true);}
+      await upload('#applySourceFile',data.board);await p.waitForFunction(()=>document.getElementById('applyStatus').textContent.includes('適用可能 1 CUT'));await p.locator('#applyFinal').check();await p.locator('#applyGenerate').click();const pending=p.waitForEvent('download');await p.locator('#applyBoardExport').click();const download=await pending,stream=await download.createReadStream();let text='';for await(const c of stream)text+=c;const expected=structuredClone(data.board);expected[1].composition='left';assert.deepEqual(JSON.parse(text),expected);assert.deepEqual(await p.evaluate(()=>MVProposalUI.getProposal()),saved);await ctx.close();
     }
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({browser:browser.version(),viewport:'390x844',synthetic_ui:'passed',download:'passed',service_worker:'offline_reload_passed',synthetic_decode:decoded,page_errors:errors}));
