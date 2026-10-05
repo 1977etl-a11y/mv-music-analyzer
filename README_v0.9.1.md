@@ -16,6 +16,30 @@
 - 211参照を値比較、比較不可0、event_changed 1件、影響CUT 06/07、レビュー時刻差-0.04秒
 - 他210参照に差分なし、baselineと全入力は非変更
 
-実baseline・修正版解析一式は未提供のため、この環境では実ファイルそのものの比較は未実施。ユーザー報告の条件とコードで成立することを確認した。コンパクト基準で保存時pointer/indexを復元できない場合は対応しない。新IDへコンテ参照を変更した場合のreference_added/reference_removedは従来どおり別扱い。
+実装時点では、実baseline・修正版解析一式がこの環境に未提供のため、ユーザー報告の条件を合成データで再現して確認した。その後の実データ検証結果は下記の2026-10-05追記を参照。コンパクト基準で保存時pointer/indexを復元できない場合は対応しない。新IDへコンテ参照を変更した場合のreference_added/reference_removedは従来どおり別扱い。
 
 変更：storyboard-baseline.js（比較内fallbackのみ）、impact-review.js（remapの保持）、tests/srt-remap.test.cjs、バージョン・キャッシュ情報。既存改稿案読み込み条件・適用判定には変更なし。
+
+
+## 検証記録（2026-10-05追記）
+
+**v0.9.1を現時点の検証済み安定版として記録する。** 以下の実データ比較はユーザーによる検証完了報告に基づく。実装時の合成回帰テストとは区別する。
+
+### 既存baselineを使用した実データ比較
+
+- 2026-09-27の既存baselineをそのまま使用し、211/211件の参照値比較に成功。
+- SRT cueの開始時刻17.04秒 → 17.00秒（−40ms）に伴うID変更を、旧ID `srt_de9bbac2e3d0a3fc5beeab127c1c3b48` から新ID `srt_93927bc2b7547684936f1cf205962c68` へremap。
+- `event_deleted`ではなく`event_changed`として検出。
+- `unavailable_reference_count: 0`。
+- 影響CUTは06 / 07。
+- baseline・入力データは非変更。baselineの再生成・上書きは行っていない。
+
+### metadata nullの調査結果
+
+- 今回のmetadata nullは、配列形式の元コンテにトップレベルのid/title/versionが存在しないためであり、改訂版出力がmetadataを消失させる不具合ではない。
+- baseline.boardのmetadataは別管理であり、配列形式の入力へ自動補完しない。
+- metadata付きオブジェクト入力 → 改訂版生成 → JSON serialize → 再読込のround-tripで、id/title/versionの保持を確認。v0.9.0時点と現行コードの両方で、schemaなし／既存schema付きの合成44 CUTを検証した。
+- 検証値はid `waratte_keruwa_storyboard`、title `笑って蹴るわ`、version `1.0`。44 CUTと未知のトップレベル情報を維持し、変更は指定したCUT 02.actionのみ。元入力も非変更。
+- 配列入力は配列出力、オブジェクト入力はオブジェクト出力を維持する。metadata保持のための出力修正・baselineフォールバックは不要と判断した。
+
+今回の追記は検証記録のみ。アプリコード、ID生成、比較・適用処理、保存データは変更していない。
