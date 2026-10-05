@@ -14,7 +14,7 @@
         const group=cuts.get(key),cut=authored.get(key);
         const fields=event.fields||[];
         const shifts=fields.filter(f=>/(^|\.)(start_sec|end_sec)$/.test(f.field)&&typeof f.before==='number'&&typeof f.after==='number').map(f=>({field:f.field,delta_sec:Math.round((f.after-f.before)*1e6)/1e6}));
-        const item={event_id:event.reference_id,change:event.change,fields:copy(fields),time_shifts:shifts,
+        const item={event_id:event.reference_id,change:event.change,...(event.remap?{remap:copy(event.remap)}:{}),fields:copy(fields),time_shifts:shifts,
           review_candidates:shifts.length?['動作開始のタイミング','カメラ切り替えのタイミング','音響との同期・意図的な時間差']:['参照イベントと演出意図の対応','動作の強度・継続やカット切り替え'],
           authored_items:cut?copy({references:S.extractReferences(cut).references.filter(r=>r.target_id===event.reference_id),relations:(cut.relations||[]).filter(r=>(r.targets||[]).some(t=>t.type==='analysis'&&t.id===event.reference_id)),mappings:(cut.mappings||[]).filter(m=>(m.analysis_ids||[]).includes(event.reference_id)),actions:cut.actions||[],shot:cut.shot||{}}):null};
         if(!group.events.some(existing=>R.stableId('change',existing)===R.stableId('change',item)))group.events.push(item);

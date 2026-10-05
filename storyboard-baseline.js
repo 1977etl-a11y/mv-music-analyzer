@@ -64,6 +64,28 @@
     }
     return {values,sources,unavailable};
   }
+  // Comparison-only fallback. Never writes IDs or saved records.
+  function remapSrt(record,analysis,id,prior,compatible){
+    const fail=reason=>({reason});
+    if(!compatible)return fail('source_or_conditions_changed');
+    const archived=record.analysis;
+    if(!archived?.unified_timeline?.references)return fail('missing_saved_analysis_for_srt_remap');
+    if(MVReferences.stableId('identity',record.baseline.analysis)!==MVReferences.stableId('identity',MVStoryboard.identity(archived)))return fail('saved_analysis_identity_mismatch');
+    const old=MVStoryboard.resolve(archived,id);
+    if(!old||old.kind!=='srt_cue'||!/^\/vocal_asr_timeline\/entries\/\d+$/.test(old.ref.pointer))return fail('invalid_saved_srt_pointer');
+    if(differences(prior,MVStoryboard.snapshot(archived,id)).length)return fail('saved_srt_snapshot_conflict');
+    const text=cue=>typeof cue.raw_text==='string'?cue.raw_text:typeof cue.text==='string'?cue.text:null;
+    const index=old.value.cue_index,body=text(old.value);
+    if(!Number.isInteger(index)||body===null)return fail('missing_saved_srt_identity');
+    const candidates=Object.entries(analysis.unified_timeline.references).filter(([,ref])=>ref.kind==='srt_cue').map(([key])=>({id:key,found:MVStoryboard.resolve(analysis,key)})).filter(c=>c.found&&(c.found.ref.pointer===old.ref.pointer||c.found.value.cue_index===index));
+    if(!candidates.length)return fail('srt_remap_candidate_missing');
+    if(candidates.length!==1)return fail('srt_remap_ambiguous');
+    const candidate=candidates[0],now=candidate.found;
+    if(now.ref.pointer!==old.ref.pointer||now.value.cue_index!==index||text(now.value)!==body)return fail('srt_remap_identity_conflict');
+    // Also detect duplicate/unindexed cues at the same cue index.
+    if(!Array.isArray(analysis.vocal_asr_timeline?.entries)||analysis.vocal_asr_timeline.entries.filter(c=>c?.cue_index===index).length!==1||archived.vocal_asr_timeline.entries.filter(c=>c?.cue_index===index).length!==1)return fail('srt_remap_ambiguous');
+    return {snapshot:MVStoryboard.snapshot(analysis,candidate.id),remap:{old_reference_id:id,new_reference_id:candidate.id,kind:'srt_cue',pointer:old.ref.pointer,cue_index:index,method:'saved_analysis_pointer_cue_index_exact_text'}};
+  }
   function compare(record,board,analysis){
     if(!board||!analysis?.unified_timeline?.references)throw Error('現在の解析JSONとコンテを読み込んでください。保存基準だけでは現在の解析値を比較できません。');
     const stored=record.baseline.references,resolved=baselineValues(record),values=resolved.values;
@@ -86,13 +108,15 @@
       affectedIndex.get(id).set(key(c,i),{cut_id:key(c,i),cut_number:c.cut_number??c.cut??key(c,i)});
     }});
     const affected=id=>[...(affectedIndex.get(id)?.values()||[])];
-    const eventChanges=[],unavailable=[];let valueCount=0;
+    const eventChanges=[],unavailable=[],remaps=[];let valueCount=0;
     for(const id of allTargets){
-      const prior=values[id],current=MVStoryboard.snapshot(analysis,id),was=originalTargets.has(id),is=currentTargets.has(id);
+      const prior=values[id],was=originalTargets.has(id),is=currentTargets.has(id);let current=MVStoryboard.snapshot(analysis,id);
       const entry={reference_id:id,affected_cuts:affected(id)};
       if(!was&&is)eventChanges.push({...entry,change:'reference_added'});
       if(was&&!is)eventChanges.push({...entry,change:'reference_removed'});
-      if(!current){const change=prior?'event_deleted':'unresolved_reference';eventChanges.push({...entry,change});unavailable.push({...entry,reason:change});continue;}
+      let remapFailure=null;
+      if(!current&&prior?.kind==='srt_cue'){const result=remapSrt(record,analysis,id,prior,compatible);if(result.snapshot){current=result.snapshot;entry.remap=result.remap;remaps.push(result.remap);}else remapFailure=result.reason;}
+      if(!current){const change=prior?'event_deleted':'unresolved_reference';eventChanges.push({...entry,change});unavailable.push({...entry,reason:remapFailure??change});continue;}
       if(!was||!is)continue;
       if(!prior){unavailable.push({...entry,reason:resolved.unavailable[id]??'missing_snapshot'});continue;}
       if(!compatible){unavailable.push({...entry,reason:'source_or_conditions_changed'});continue;}
@@ -101,7 +125,7 @@
       if(fields.length)eventChanges.push({...entry,change:'event_changed',fields});
     }
     const status=!compatible?'解析値の比較不可：音源・解析条件が異なります':valueCount===0?'解析値の比較不可':unavailable.length?'一部比較不可':eventChanges.length?'比較済み・差分あり':'比較済み・差分0件';
-    return {saved_at:record.saved_at,analysis_status:status,cut_status:changes.length?'CUT差分あり':'CUT比較済み・差分0件',compared_reference_count:allTargets.size,value_compared_reference_count:valueCount,stored_reference_count:Object.keys(stored).length,legacy_reference_count:Object.values(resolved.sources).filter(s=>s.origin==='analysis').length,baseline_value_sources:resolved.sources,cut_changes:changes,event_changes:eventChanges,unavailable_references:unavailable,identity_changes:identityChanges,analysis_comparison:analysisReport,storyboard_metadata_issues:metadataIssues,note:'参照IDの照合件数と実際の値比較件数は別です。旧形式の保存済み解析値は由来を明示して読み取ります。現在値による代用はしません。比較は読み取り専用です。'};
+    return {saved_at:record.saved_at,analysis_status:status,cut_status:changes.length?'CUT差分あり':'CUT比較済み・差分0件',compared_reference_count:allTargets.size,value_compared_reference_count:valueCount,stored_reference_count:Object.keys(stored).length,legacy_reference_count:Object.values(resolved.sources).filter(s=>s.origin==='analysis').length,baseline_value_sources:resolved.sources,cut_changes:changes,event_changes:eventChanges,unavailable_references:unavailable,unavailable_reference_count:unavailable.length,reference_remaps:remaps,identity_changes:identityChanges,analysis_comparison:analysisReport,storyboard_metadata_issues:metadataIssues,note:'参照IDの照合件数と実際の値比較件数は別です。旧形式の保存済み解析値は由来を明示して読み取ります。現在値による代用はしません。比較は読み取り専用です。'};
   }
   globalThis.MVStoryboardBaseline={check,create,compare,baselineValues,load:()=>access(),save:record=>access(check(record)),recreate:(record,expected)=>access(check(record),MVReferences.stableId('baseline',expected))};
 })();
