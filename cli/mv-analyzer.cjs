@@ -2,11 +2,12 @@
 'use strict';
 
 /*
- * MV Music Analyzer CLI - Phase 1
+ * MV Music Analyzer CLI - Phase 2
  * Browser-free entry point for agent/Codex use.
  *
- * Current command:
+ * Commands:
  *   validate --analysis <analysis.json> --storyboard <storyboard.json>
+ *   compare / impact-review --baseline <baseline.json> --analysis <analysis.json> --storyboard <storyboard.json>
  *
  * Policy:
  * - Read-only. Never writes baseline, storyboard, or analysis.
@@ -24,8 +25,11 @@ function usage() {
     '',
     'Usage:',
     '  node cli/mv-analyzer.cjs validate --analysis <analysis.json> --storyboard <storyboard.json>',
+    '  node cli/mv-analyzer.cjs compare --baseline <baseline.json> --analysis <analysis.json> --storyboard <storyboard.json>',
+    '  node cli/mv-analyzer.cjs impact-review --baseline <baseline.json> --analysis <analysis.json> --storyboard <storyboard.json>',
     '',
     'Options:',
+    '  --baseline     Baseline JSON exported by the PWA (compare / impact-review)',
     '  --analysis     MV Music Analyzer analysis JSON',
     '  --storyboard   Storyboard JSON (top-level CUT array or object with cuts)',
     '  --output       New output JSON path (must not exist). Stdout on success.',
@@ -33,7 +37,7 @@ function usage() {
     '  --compact      Compact JSON',
     '  -h, --help     Show this help',
     '',
-    'Phase 1 is read-only and does not create or replace a saved baseline.'
+    'Read-only: never creates or replaces a saved baseline; no IndexedDB access.'
   ].join('\n');
 }
 
@@ -48,7 +52,7 @@ function parseArgs(argv) {
     if (arg === '-h' || arg === '--help') out.help = true;
     else if (arg === '--pretty') out.pretty = true;
     else if (arg === '--compact') out.pretty = false;
-    else if (['--analysis', '--storyboard', '--output'].includes(arg)) {
+    else if (['--analysis', '--storyboard', '--baseline', '--output'].includes(arg)) {
       const value = argv[++i];
       if (!value || value.startsWith('-')) throw new Error(`${arg} にファイルパスが必要です。`);
       if (Object.hasOwn(out, arg.slice(2))) throw new Error(`重複したオプションです: ${arg}`);
@@ -91,6 +95,7 @@ function storyboardInputKind(parsed) {
 }
 
 function runValidate(args) {
+  if (args.baseline) throw new Error('validate は --baseline を使用しません。');
   const MVStoryboard = require('../storyboard');
   if (!args.analysis) throw new Error('--analysis が必要です。');
   if (!args.storyboard) throw new Error('--storyboard が必要です。');
@@ -125,6 +130,19 @@ function runValidate(args) {
   };
 }
 
+function runComparison(args, command) {
+  for (const name of ['baseline', 'analysis', 'storyboard']) {
+    if (!args[name]) throw new Error(`--${name} が必要です。`);
+  }
+  const S = require('../storyboard');
+  const B = require('./baseline-core.cjs');
+  const record = B.check(readJson(args.baseline, '比較基準JSON').json);
+  const analysis = readJson(args.analysis, '解析JSON').json;
+  const board = S.importJSON(readJson(args.storyboard, 'コンテJSON').text);
+  const comparison = B.compare(record, board, analysis);
+  return command === 'compare' ? comparison : require('../impact-review').build(comparison, board);
+}
+
 function main() {
   try {
     const args = parseArgs(process.argv.slice(2));
@@ -137,6 +155,7 @@ function main() {
     const command = args._[0];
     let result;
     if (command === 'validate') result = runValidate(args);
+    else if (command === 'compare' || command === 'impact-review') result = runComparison(args, command);
     else throw new Error(`未対応のコマンドです: ${command}`);
 
     const text = JSON.stringify(result, null, args.pretty ? 2 : 0) + '\n';
