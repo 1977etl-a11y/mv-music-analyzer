@@ -2,7 +2,7 @@
 'use strict';
 
 /*
- * MV Music Analyzer CLI - Phase 3A
+ * MV Music Analyzer CLI - Phase 3B
  * Browser-free entry point for agent/Codex use.
  *
  * Commands:
@@ -31,7 +31,14 @@ function usage() {
     '  node cli/mv-analyzer.cjs revision-handoff --review <review.json> --storyboard <storyboard.json>',
     '  node cli/mv-analyzer.cjs proposal-create --handoff <handoff.json> --storyboard <storyboard.json>',
     '',
+    '  node cli/mv-analyzer.cjs proposal-edit --proposal <proposal.json> --storyboard <storyboard.json> --edits <edits.json>',
+    '  node cli/mv-analyzer.cjs preflight --proposal <proposal.json> --storyboard <storyboard.json> [--analysis <analysis.json>]',
+    '',
+    'Preflight is a technical inspection, not proof of human approval. No apply command.',
+    '',
     'Options:',
+    '  --proposal     Revision proposal JSON',
+    '  --edits        Explicit primitive field edits JSON',
     '  --review       Author-reviewed impact review JSON',
     '  --handoff      Revision handoff JSON',
     '  --baseline     Baseline JSON exported by the PWA (compare / impact-review)',
@@ -57,7 +64,7 @@ function parseArgs(argv) {
     if (arg === '-h' || arg === '--help') out.help = true;
     else if (arg === '--pretty') out.pretty = true;
     else if (arg === '--compact') out.pretty = false;
-    else if (['--analysis', '--storyboard', '--baseline', '--review', '--handoff', '--output'].includes(arg)) {
+    else if (['--analysis', '--storyboard', '--baseline', '--review', '--handoff', '--proposal', '--edits', '--output'].includes(arg)) {
       const value = argv[++i];
       if (!value || value.startsWith('-')) throw new Error(`${arg} にファイルパスが必要です。`);
       if (Object.hasOwn(out, arg.slice(2))) throw new Error(`重複したオプションです: ${arg}`);
@@ -157,6 +164,17 @@ function runRevision(args, command) {
   return input === 'review' ? core.handoff(value, board) : core.proposal(value, board);
 }
 
+function runProposal(args, command) {
+  for (const name of ['proposal','storyboard',...(command === 'proposal-edit' ? ['edits'] : [])]) {
+    if (!args[name]) throw new Error('--' + name + ' が必要です。');
+  }
+  const core = require('./proposal-core.cjs');
+  const proposal = readJson(args.proposal, '改稿案JSON').json;
+  const board = require('./revision-core.cjs').readBoard(readJson(args.storyboard, 'コンテJSON').text);
+  if (command === 'proposal-edit') return core.edit(proposal, board, readJson(args.edits, '編集JSON').json);
+  return core.preflight(proposal, board, args.analysis ? readJson(args.analysis, '解析JSON').json : null);
+}
+
 function main() {
   try {
     const args = parseArgs(process.argv.slice(2));
@@ -172,15 +190,18 @@ function main() {
       compare: ['baseline', 'analysis', 'storyboard'],
       'impact-review': ['baseline', 'analysis', 'storyboard'],
       'revision-handoff': ['review', 'storyboard'],
-      'proposal-create': ['handoff', 'storyboard']
+      'proposal-create': ['handoff', 'storyboard'],
+      'proposal-edit': ['proposal', 'storyboard', 'edits'],
+      preflight: ['proposal', 'storyboard', 'analysis']
     };
-    if (inputs[command]) for (const key of ['analysis','storyboard','baseline','review','handoff']) {
+    if (inputs[command]) for (const key of ['analysis','storyboard','baseline','review','handoff','proposal','edits']) {
       if (args[key] && !inputs[command].includes(key)) throw new Error(command + ' は --' + key + ' を使用しません。');
     }
     let result;
     if (command === 'validate') result = runValidate(args);
     else if (command === 'compare' || command === 'impact-review') result = runComparison(args, command);
     else if (command === 'revision-handoff' || command === 'proposal-create') result = runRevision(args, command);
+    else if (command === 'proposal-edit' || command === 'preflight') result = runProposal(args, command);
     else throw new Error(`未対応のコマンドです: ${command}`);
 
     const text = JSON.stringify(result, null, args.pretty ? 2 : 0) + '\n';
