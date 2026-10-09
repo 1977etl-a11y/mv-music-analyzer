@@ -2,7 +2,7 @@
 'use strict';
 
 /*
- * MV Music Analyzer CLI - Phase 2
+ * MV Music Analyzer CLI - Phase 3A
  * Browser-free entry point for agent/Codex use.
  *
  * Commands:
@@ -28,7 +28,12 @@ function usage() {
     '  node cli/mv-analyzer.cjs compare --baseline <baseline.json> --analysis <analysis.json> --storyboard <storyboard.json>',
     '  node cli/mv-analyzer.cjs impact-review --baseline <baseline.json> --analysis <analysis.json> --storyboard <storyboard.json>',
     '',
+    '  node cli/mv-analyzer.cjs revision-handoff --review <review.json> --storyboard <storyboard.json>',
+    '  node cli/mv-analyzer.cjs proposal-create --handoff <handoff.json> --storyboard <storyboard.json>',
+    '',
     'Options:',
+    '  --review       Author-reviewed impact review JSON',
+    '  --handoff      Revision handoff JSON',
     '  --baseline     Baseline JSON exported by the PWA (compare / impact-review)',
     '  --analysis     MV Music Analyzer analysis JSON',
     '  --storyboard   Storyboard JSON (top-level CUT array or object with cuts)',
@@ -52,7 +57,7 @@ function parseArgs(argv) {
     if (arg === '-h' || arg === '--help') out.help = true;
     else if (arg === '--pretty') out.pretty = true;
     else if (arg === '--compact') out.pretty = false;
-    else if (['--analysis', '--storyboard', '--baseline', '--output'].includes(arg)) {
+    else if (['--analysis', '--storyboard', '--baseline', '--review', '--handoff', '--output'].includes(arg)) {
       const value = argv[++i];
       if (!value || value.startsWith('-')) throw new Error(`${arg} にファイルパスが必要です。`);
       if (Object.hasOwn(out, arg.slice(2))) throw new Error(`重複したオプションです: ${arg}`);
@@ -143,6 +148,15 @@ function runComparison(args, command) {
   return command === 'compare' ? comparison : require('../impact-review').build(comparison, board);
 }
 
+function runRevision(args, command) {
+  const input = command === 'revision-handoff' ? 'review' : 'handoff';
+  for (const name of [input, 'storyboard']) if (!args[name]) throw new Error('--' + name + ' が必要です。');
+  const core = require('./revision-core.cjs');
+  const value = readJson(args[input], input + ' JSON').json;
+  const board = core.readBoard(readJson(args.storyboard, 'コンテJSON').text);
+  return input === 'review' ? core.handoff(value, board) : core.proposal(value, board);
+}
+
 function main() {
   try {
     const args = parseArgs(process.argv.slice(2));
@@ -153,9 +167,20 @@ function main() {
 
     if (args._.length !== 1) throw new Error('コマンドを1つ指定してください。余分な位置引数は受け付けません。');
     const command = args._[0];
+    const inputs = {
+      validate: ['analysis', 'storyboard'],
+      compare: ['baseline', 'analysis', 'storyboard'],
+      'impact-review': ['baseline', 'analysis', 'storyboard'],
+      'revision-handoff': ['review', 'storyboard'],
+      'proposal-create': ['handoff', 'storyboard']
+    };
+    if (inputs[command]) for (const key of ['analysis','storyboard','baseline','review','handoff']) {
+      if (args[key] && !inputs[command].includes(key)) throw new Error(command + ' は --' + key + ' を使用しません。');
+    }
     let result;
     if (command === 'validate') result = runValidate(args);
     else if (command === 'compare' || command === 'impact-review') result = runComparison(args, command);
+    else if (command === 'revision-handoff' || command === 'proposal-create') result = runRevision(args, command);
     else throw new Error(`未対応のコマンドです: ${command}`);
 
     const text = JSON.stringify(result, null, args.pretty ? 2 : 0) + '\n';
@@ -166,7 +191,8 @@ function main() {
     const payload = {
       schema: 'mv_analyzer_cli.error.v1',
       ok: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
+      ...(error.details ? {errors: error.details} : {})
     };
     process.stderr.write(JSON.stringify(payload, null, 2) + '\n');
     process.exitCode = 1;
