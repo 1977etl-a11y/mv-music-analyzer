@@ -1,0 +1,40 @@
+name: Phase 4A CLI and MCP tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+# CI can read code but cannot push, merge, or approve changes.
+permissions:
+  contents: read
+
+jobs:
+  cli-mcp:
+    name: Node regression and MCP stdio
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out pull request code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Install locked MCP dependencies (without lifecycle scripts)
+        run: npm ci --prefix mcp --ignore-scripts
+
+      - name: Run Node regression tests
+        run: node --test tests/*.test.cjs
+
+      - name: Run MCP stdio integration tests
+        run: npm --prefix mcp test
